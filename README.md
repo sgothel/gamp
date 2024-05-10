@@ -25,7 +25,17 @@ on mentioned platforms.
 functionality including linear algebra and geometry.
 
 ## Online WebAssembly Examples
-* None yet
+* [RedSquare](https://jausoft.com/projects/gamp/redsquare01.html)
+
+## Earlier Work
+[gfxbox2](https://jausoft.com/cgit/cs_class/gfxbox2.git/about/) of our CS class
+evaluated the C++ to WebAssembly path earlier.
+
+## Status
+This project is currently very much unstable and heavily *WIP*.
+
+All APIs, if any, will change - but I thought it is nice to share the
+development with whoever might be interested.
 
 ## Supported Platforms
 - C++20 or better, see [jaulib C++ Minimum Requirements](https://jausoft.com/cgit/jaulib.git/about/README.md#cpp_min_req).
@@ -107,6 +117,10 @@ Following debug presets are defined in `CMakePresets.json`
 - `release-clang`
   - compiler: `clang`
   - enabled `clang-tidy`
+- `release-wasm`
+  - compiler: `clang / emscripten`
+  - disabled `clang-tidy`
+  - needs to be run by `emcmake`
 
 Kick-off the workflow by e.g. using preset `release-gcc` to configure, build, test, install and building documentation.
 You may skip `install` and `doc` by dropping it from `--target`.
