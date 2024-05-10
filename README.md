@@ -1,4 +1,4 @@
-# Gamp: A Graphics, Audio, Multimedia and Processing Library for C++ and WebAssembly
+# Gamp: Graphics, Audio, Multimedia and Processing Library for C++ and WebAssembly
 
 [Original document location](https://jausoft.com/cgit/gamp.git/about/).
 
