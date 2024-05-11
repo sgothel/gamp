@@ -121,26 +121,31 @@ bool gamp::init_gfx_subsystem(const char* title, int wwidth, int wheight, bool e
         return false;
     }
     
-    // Create OpenGLES 2 context on SDL window
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    // Create OpenGL ES 3 or ES 2 context on SDL window
     SDL_GL_SetSwapInterval( enable_vsync ? 1 : 0 );
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     sdl_glc = SDL_GL_CreateContext(sdl_win);    
     if( nullptr == sdl_glc ) {
-        printf("SDL: Error creating GL context: %s\n", SDL_GetError());
-        SDL_DestroyWindow(sdl_win);
-        return false;
+        printf("SDL: Error creating GL ES 3 context: %s\n", SDL_GetError());
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        sdl_glc = SDL_GL_CreateContext(sdl_win);
+        if( nullptr == sdl_glc ) {
+            printf("SDL: Error creating GL ES 2 context: %s\n", SDL_GetError());
+            SDL_DestroyWindow(sdl_win);
+            return false;
+        }        
     }    
-    if( false ) {
     if( 0 != SDL_GL_MakeCurrent(sdl_win, sdl_glc) ) {
         printf("SDL: Error making GL context current: %s\n", SDL_GetError());
         SDL_GL_DeleteContext(sdl_glc);
         SDL_DestroyWindow(sdl_win);
         return false;        
-    }
     }
     const GLubyte* gl_version = glGetString(GL_VERSION);
     if( nullptr == gl_version ) {

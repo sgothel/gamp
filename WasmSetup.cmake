@@ -16,7 +16,8 @@ if (EMSCRIPTEN)
     # set(EMS_FLAGS "--use-port=sdl2 --use-port=sdl2_image --use-port=sdl2_ttf")
     set(EMS_FLAGS "-s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -Wno-unused-command-line-argument")
     set(EMS_FLAGS "${EMS_FLAGS} -s WASM=1 -s LZ4=1 -s EXPORTED_RUNTIME_METHODS=cwrap")
-    set(EMS_FLAGS "${EMS_FLAGS} -s FULL_ES2=1") # or even FULL_ES3 ?
+    # set(EMS_FLAGS "${EMS_FLAGS} -s FULL_ES2=1") # would use client-side memory like FULL_ES3 -> bad performance
+    set(EMS_FLAGS "${EMS_FLAGS} -s MAX_WEBGL_VERSION=2") # WebGL 2 -> ES3
     set(EMS_FLAGS "${EMS_FLAGS} -s ALLOW_MEMORY_GROWTH=1")
     # set(EMS_FLAGS "${EMS_FLAGS} -pthread") # fights w/ ALLOW_MEMORY_GROWTH
     # set(EMS_FLAGS "${EMS_FLAGS} -s MEMORY64=1") # wasm64 end-to-end: wasm32 object file can't be linked in wasm64 mode
