@@ -39,6 +39,9 @@
 #include <iostream>
 #include <cctype>
 
+#include <jau/environment.hpp>
+#include <jau/os/os_support.hpp>
+
 #include <jau/math/vec2f.hpp>
 #include <jau/math/vec3f.hpp>
 #include <jau/math/vec4f.hpp>
@@ -57,47 +60,6 @@
  * Basic computer graphics math and utilities helping with the framebuffer and I/O tooling.
  */
 namespace gamp {
-    inline constexpr float epsilon() noexcept {
-        float a = 1.0f;
-        float b;
-        do {
-            b = a;
-            a = a / 2.0f;
-        } while(1.0f + a != 1.0f);
-        return b;
-    }
-
-    /** Returns true of the given float is less than float epsilon. */
-    inline constexpr bool is_zero(const float v) noexcept {
-        return std::abs(v) < std::numeric_limits<float>::epsilon();
-    }
-    /** Returns true of the given double  is less than double epsilon. */
-    inline constexpr bool is_zero(const double v) noexcept {
-        return std::abs(v) < std::numeric_limits<double>::epsilon();
-    }
-
-    /**
-     * Return true if both values are equal, i.e. their absolute delta is less than float epsilon,
-     * false otherwise.
-     */
-    inline constexpr bool equals(const float a, const float b) noexcept {
-        return std::abs(a - b) < std::numeric_limits<float>::epsilon();
-    }
-
-    /**
-     * Return zero if both values are equal, i.e. their absolute delta is less than float epsilon,
-     * -1 if a < b and 1 otherwise.
-     */
-    inline constexpr int compare(const float a, const float b) noexcept {
-        if( std::abs(a - b) < std::numeric_limits<float>::epsilon() ) {
-            return 0;
-        } else if (a < b) {
-            return -1;
-        } else {
-            return 1;
-        }
-    }
-
     /** Returns the rounded float value cast to int. */
     inline constexpr int round_to_int(const float v) noexcept {
         return (int)std::round(v);
@@ -117,15 +79,6 @@ namespace gamp {
         return rad * 180.0f / (float)M_PI;
     }
 
-    enum class orientation_t {
-        /** Collinear **/
-        COL,
-        /** Clockwise **/
-        CLW,
-        /** Counter-Clockwise **/
-        CCW
-    };
-
     /** Width of the window, coordinate in window units. */
     extern int win_width;
     /** Height of the window, coordinate in window units. */
@@ -144,7 +97,7 @@ namespace gamp {
     extern pixel_buffer_t fb_pixels;
     /** Display frames per seconds */
     extern int display_frames_per_sec;
-    /** Optional custom forced frames per seconds, pass to swap_gpu_buffer() by default. */
+    /** Optional custom forced frames per seconds, pass to swap_gpu_buffer() by default. Defaults to -1, i.e. automatic fps. */
     extern int forced_fps;
     extern int font_height;
 
@@ -154,10 +107,26 @@ namespace gamp {
 
     /** GFX Toolkit: Initialize a window of given size with a usable framebuffer. */
     bool init_gfx_subsystem(const char* title, int window_width, int window_height, bool enable_vsync=true);
-    /** GFX Toolkit: Swap GPU back to front framebuffer while maintaining vertical monitor synchronization if possible. */
-    void swap_gpu_buffer(int fps=forced_fps) noexcept;
-    float get_gpu_fps() noexcept;
-
+    /** GFX Toolkit: Swap GPU back to front framebuffer using given fps, maintaining vertical monitor synchronization if possible. fps <= 0 implies automatic fps. */
+    void swap_gpu_buffer(int fps) noexcept;
+    /** GFX Toolkit: Swap GPU back to front framebuffer using forced_fps, maintaining vertical monitor synchronization if possible. */
+    inline void swap_gpu_buffer() noexcept { swap_gpu_buffer(forced_fps); }
+    
+    /** Returns frames per seconds, averaged over get_gpu_stat_period(). */
+    float get_gpu_stats_fps() noexcept;
+    /** Returns rendering costs per frame in seconds, averaged over get_gpu_stat_period(). */
+    double get_gpu_stats_frame_costs() noexcept;
+    /** Returns active sleeping period per frame in seconds, averaged over get_gpu_stat_period(). Only reasonable if swap_gpu_buffer() has been called with fps > 0. */
+    double get_gpu_stats_frame_sleep() noexcept;
+    /** Sets the period length to average get_gpu_fps(), get_gpu_frame_costs(), get_gpu_frame_sleep() statistics. Defaults to 5s.*/
+    void set_gpu_stats_period(int64_t milliseconds) noexcept;
+    /** Returns the current period length for statistics in milliseconds, see set_gpu_stat_period(). Defaults is 5s. */
+    int64_t get_gpu_stats_period() noexcept;
+    /** Print statistics on the console to stdout after get_gpu_stat_period(). */
+    void set_gpu_stats_show(bool enable) noexcept;
+    /** Returns whether statistics are printed on the console, see set_show_gpu_stats(). */
+    bool get_gpu_stats_show() noexcept;
+    
     //
     // input
     //
@@ -341,84 +310,7 @@ namespace gamp {
             // std::cout << "Input " << to_string(event) << std::endl;
         }
         return one;
-    }
-    
-    //
-    // Misc
-    //
-
-    inline constexpr const int64_t NanoPerMilli = 1000000L;
-    inline constexpr const int64_t MilliPerOne = 1000L;
-    inline constexpr const int64_t NanoPerOne = NanoPerMilli*MilliPerOne;
-
-    /** Return current milliseconds, since Unix epoch. */
-    uint64_t getCurrentMilliseconds() noexcept;
-    /** Return current milliseconds, since program launch. */
-    uint64_t getElapsedMillisecond() noexcept;
-    /** Sleep for the givn milliseconds. */
-    void milli_sleep(uint64_t td) noexcept;
-
-    void log_printf(const uint64_t elapsed_ms, const char * format, ...) noexcept;
-    void log_printf(const char * format, ...) noexcept;
-
-    //
-    // Cut from jaulib
-    //
-
-    template <typename T>
-    constexpr ssize_t sign(const T x) noexcept
-    {
-        return (T(0) < x) - (x < T(0));
-    }
-
-    template <typename T>
-    constexpr T invert_sign(const T x) noexcept
-    {
-        return std::numeric_limits<T>::min() == x ? std::numeric_limits<T>::max() : -x;
-    }
-
-    template<typename T>
-    constexpr size_t digits10(const T x, const ssize_t x_sign, const bool sign_is_digit=true) noexcept
-    {
-        if( x_sign == 0 ) {
-            return 1;
-        }
-        if( x_sign < 0 ) {
-            return 1 + static_cast<size_t>( std::log10<T>( invert_sign<T>( x ) ) ) + ( sign_is_digit ? 1 : 0 );
-        } else {
-            return 1 + static_cast<size_t>( std::log10<T>(                 x   ) );
-        }
-    }
-
-    template< class value_type,
-              std::enable_if_t< std::is_integral_v<value_type>,
-                                bool> = true>
-    std::string to_decstring(const value_type& v, const char separator=',', const size_t width=0) noexcept {
-        const ssize_t v_sign = sign<value_type>(v);
-        const size_t digit10_count1 = digits10<value_type>(v, v_sign, true /* sign_is_digit */);
-        const size_t digit10_count2 = v_sign < 0 ? digit10_count1 - 1 : digit10_count1; // less sign
-
-        const size_t comma_count = 0 == separator ? 0 : ( digit10_count1 - 1 ) / 3;
-        const size_t net_chars = digit10_count1 + comma_count;
-        const size_t total_chars = std::max<size_t>(width, net_chars);
-        std::string res(total_chars, ' ');
-
-        value_type n = v;
-        size_t char_iter = 0;
-
-        for(size_t digit10_iter = 0; digit10_iter < digit10_count2 /* && char_iter < total_chars */; digit10_iter++ ) {
-            const int digit = v_sign < 0 ? invert_sign( n % 10 ) : n % 10;
-            n /= 10;
-            if( 0 < digit10_iter && 0 == digit10_iter % 3 ) {
-                res[total_chars-1-(char_iter++)] = separator;
-            }
-            res[total_chars-1-(char_iter++)] = '0' + digit;
-        }
-        if( v_sign < 0 /* && char_iter < total_chars */ ) {
-            res[total_chars-1-(char_iter++)] = '-';
-        }
-        return res;
-    }
+    }    
 }
 
 #endif /*  GAMP_HPP_ */

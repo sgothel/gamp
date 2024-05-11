@@ -25,56 +25,13 @@
 
 #include <cstdint>
 #include <ctime>
+#include <jau/environment.hpp>
 
 int gamp::win_width=0;
 int gamp::win_height=0;
 float gamp::devicePixelRatio[] = { 1, 1 };
 int gamp::display_frames_per_sec=60;
 int gamp::forced_fps = -1;
-
-/**
- * See <http://man7.org/linux/man-pages/man2/clock_gettime.2.html>
- * <p>
- * Regarding avoiding kernel via VDSO,
- * see <http://man7.org/linux/man-pages/man7/vdso.7.html>,
- * clock_gettime seems to be well supported at least on kernel >= 4.4.
- * Only bfin and sh are missing, while ia64 seems to be complicated.
- */
-uint64_t gamp::getCurrentMilliseconds() noexcept {
-    struct timespec t;
-    ::clock_gettime(CLOCK_MONOTONIC, &t);
-    return static_cast<uint64_t>( t.tv_sec ) * (uint64_t)MilliPerOne +
-           static_cast<uint64_t>( t.tv_nsec ) / (uint64_t)NanoPerMilli;
-}
-
-static uint64_t _exe_start_time = gamp::getCurrentMilliseconds();
-
-uint64_t gamp::getElapsedMillisecond() noexcept {
-    return getCurrentMilliseconds() - _exe_start_time;
-}
-
-void gamp::milli_sleep(uint64_t td_ms) noexcept {
-    const int64_t td_ns_0 = (int64_t)( (td_ms * (uint64_t)NanoPerMilli) % (uint64_t)NanoPerOne );
-    struct timespec ts;
-    ts.tv_sec = static_cast<decltype(ts.tv_sec)>(td_ms/(uint64_t)MilliPerOne); // signed 32- or 64-bit integer
-    ts.tv_nsec = td_ns_0;
-    ::nanosleep( &ts, nullptr );
-}
-
-void gamp::log_printf(const uint64_t elapsed_ms, const char * format, ...) noexcept {
-    fprintf(stderr, "[%s] ", to_decstring(elapsed_ms, ',', 9).c_str());
-    va_list args;
-    va_start (args, format);
-    vfprintf(stderr, format, args);
-    va_end (args);
-}
-void gamp::log_printf(const char * format, ...) noexcept {
-    fprintf(stderr, "[%s] ", to_decstring(getElapsedMillisecond(), ',', 9).c_str());
-    va_list args;
-    va_start (args, format);
-    vfprintf(stderr, format, args);
-    va_end (args);
-}
 
 //
 //

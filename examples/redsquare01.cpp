@@ -21,13 +21,12 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "gamp/gamp.hpp"
+#include <gamp/gamp.hpp>
+
 #include <random>
 #include <cstdio>
 #include <cmath>
 #include <iostream>
-
-#include <jau/os/os_support.hpp>
 
 #include <GLES2/gl2.h>
 #include <SDL2/SDL_opengles2.h>
@@ -44,16 +43,9 @@ static_assert(sizeof(GLfloat) == sizeof(float) );
 // 2 <= ES < 3: #version 100
 // ES >= 3: #version 300 es
 //
-// ES2 precision:
-//   precision highp float;
-//   precision highp int;
-//   // precision lowp sampler2D;
-//   // precision lowp samplerCube;
 // ES2/ES3 precision:
 //   precision highp float;
 //   precision highp int;
-//   // precision lowp sampler2D;
-//   // precision lowp samplerCube;
 static const GLchar* vertexSource =
     "#version 100\n"
     "precision highp float;\n"
@@ -77,15 +69,16 @@ static const GLchar* vertexSource =
 
 // Fragment/pixel shader
 //
-// ES2/ES3 precision
+// ES2 precision
 //   precision mediump float;
 //   precision mediump int;
-//   precision lowp sampler2D;
-//   // precision lowp samplerCube;
+// ES3 precision:
+//   precision highp float;
+//   precision highp int;
 static const GLchar* fragmentSource =
     "#version 100\n"
-    "precision highp float;\n"
-    "precision highp int;\n"
+    "precision mediump float;\n"
+    "precision mediump int;\n"
     "\n"
     "#if __VERSION__ >= 130\n"
     "  #define varying in\n"
@@ -208,12 +201,11 @@ bool initialize(RenderContext& rc)
     return shaderProgram;
 }
 
-static uint64_t t0; // [ms]
-
 void mainloop() {
-    static uint64_t t_last = gamp::getElapsedMillisecond(); // [ms]
+    static uint64_t t_sum = 0;
+    static uint64_t t_last = jau::environment::getElapsedMillisecond(); // [ms]
     static gamp::input_event_t event;
-    static RenderContext renderContext(initialize);    
+    static RenderContext renderContext(initialize);
 
     gamp::handle_events(event);
     if( event.pressed_and_clr( gamp::input_event_type_t::WINDOW_CLOSE_REQ ) ) {
@@ -227,11 +219,10 @@ void mainloop() {
         reshape(renderContext);
     }
     const bool animating = !event.paused();
-    (void)animating;
 
-    const uint64_t t1 = gamp::getElapsedMillisecond(); // [ms]
-    const float dt = (float)( t1 - t_last ) / 1000.0f; // [s]
-    (void)dt;
+    const uint64_t t1 = jau::environment::getElapsedMillisecond(); // [ms]
+    const uint64_t dt = animating ? t1 - t_last : 0; // [ms]
+    t_sum += dt;
     t_last = t1;
 
     {
@@ -241,7 +232,7 @@ void mainloop() {
         pmv.getMv().loadIdentity();
         pmv.translateMv(0, 0, -10);
         
-        const float ang = gamp::adeg_to_rad(static_cast<float>(t1 - t0) * 360.0f) / 4000.0f;
+        const float ang = gamp::adeg_to_rad(static_cast<float>(t_sum) * 360.0f) / 4000.0f;
         pmv.rotateMv(ang, 0, 0, 1);
         pmv.rotateMv(ang, 0, 1, 0);
             
@@ -269,14 +260,19 @@ int main(int argc, char *argv[])
             } else if( 0 == strcmp("-height", argv[i]) && i+1<argc) {
                 win_height = atoi(argv[i+1]);
                 ++i;
+            } else if( 0 == strcmp("-fps", argv[i]) && i+1<argc) {
+                gamp::forced_fps = atoi(argv[i+1]);
+                ++i;
             }
         }
+        printf("-fps: %d\n", gamp::forced_fps);
     }
+    gamp::set_gpu_stats_show(true);
+    
     if( !gamp::init_gfx_subsystem("gamp example01", win_width, win_height, true /* vsync */) ) {
         printf("Exit...");
         return 1;
-    }
-
+    }    
     {
         const int w = gamp::viewport.width();
         const int h = gamp::viewport.width();
@@ -284,8 +280,6 @@ int main(int argc, char *argv[])
         printf("FB %d x %d [w x h], aspect %f [w/h]; Win %d x %d\n", w, h, a, gamp::win_width, gamp::win_height);
     }
 
-    t0 = gamp::getElapsedMillisecond(); // [ms]
-    
     #if defined(__EMSCRIPTEN__)
         emscripten_set_main_loop(mainloop, 0, 1);
     #else

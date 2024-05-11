@@ -23,6 +23,9 @@
  */
 #include "gamp/gamp.hpp"
 
+#include <jau/basic_types.hpp>
+#include <jau/environment.hpp>
+#include <jau/fraction_type.hpp>
 #include <thread>
 
 #include <GLES2/gl2.h>
@@ -37,11 +40,10 @@ static Uint32 sdl_win_id = 0;
 static SDL_GLContext sdl_glc = nullptr;
 static SDL_Renderer* sdl_rend = nullptr;
 
-static float gpu_fps = 0.0f;
-static int gpu_frame_count = 0;
-static uint64_t gpu_fps_t0 = 0;
-static uint64_t gpu_swap_t0 = 0;
-static uint64_t gpu_swap_t1 = 0;
+static float gpu_stats_fps = 0.0f;
+static double gpu_stats_frame_costs_in_sec = 0.0, gpu_stats_frame_slept_in_sec = 0.0;
+static int gpu_stats_frame_count = 0;
+static jau::fraction_timespec gpu_fps_t0, gpu_swap_t0;
 
 jau::math::Recti gamp::viewport;
 
@@ -152,11 +154,10 @@ bool gamp::init_gfx_subsystem(const char* title, int wwidth, int wheight, bool e
     // const Uint32 render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
     sdl_rend = SDL_GetRenderer(sdl_win); // SDL_CreateRenderer(sdl_win, -1, render_flags);
     
-    gpu_fps = 0.0f;
-    gpu_fps_t0 = getCurrentMilliseconds();
+    gpu_stats_fps = 0.0f;
+    gpu_fps_t0 = jau::getMonotonicTime();
     gpu_swap_t0 = gpu_fps_t0;
-    gpu_swap_t1 = gpu_fps_t0;
-    gpu_frame_count = 0;
+    gpu_stats_frame_count = 0;
 
     on_window_resized(wwidth, wheight);
     return true;
@@ -201,38 +202,75 @@ extern "C" {
     }
 }
 
+using namespace jau::int_literals;
+using namespace jau::fractions_i64_literals;
+
+static jau::fraction_timespec td_net_costs = 0_s;
+static jau::fraction_timespec td_slept = 0_s;
+static jau::fraction_timespec gpu_stats_period = 5_s;
+static bool gpu_stats_show = false;
+
 void gamp::swap_gpu_buffer(int fps) noexcept {
     SDL_GL_SwapWindow(sdl_win);
-    gpu_swap_t0 = getCurrentMilliseconds();
-    ++gpu_frame_count;
-    const uint64_t td = gpu_swap_t0 - gpu_fps_t0;
-    if( td >= 5000 ) {
-        gpu_fps = (float)gpu_frame_count / ( (float)td / 1000.0f );
-        gpu_fps_t0 = gpu_swap_t0;
-        gpu_frame_count = 0;
-    }
-    if( 0 < fps ) {
-        const int64_t fudge_ns = gamp::NanoPerMilli / 4;
-        const uint64_t ms_per_frame = (uint64_t)std::round(1000.0 / fps);
-        const uint64_t ms_this_frame =  gpu_swap_t0 - gpu_swap_t1;
-        int64_t td_ns = int64_t( ms_per_frame - ms_this_frame ) * gamp::NanoPerMilli;
-        if( td_ns > fudge_ns ) {
-            const int64_t td_ns_0 = td_ns%gamp::NanoPerOne;
-            struct timespec ts;
-            ts.tv_sec = static_cast<decltype(ts.tv_sec)>(td_ns/gamp::NanoPerOne); // signed 32- or 64-bit integer
-            ts.tv_nsec = td_ns_0 - fudge_ns;
-            nanosleep( &ts, nullptr );
-            // gamp::log_printf("soft-sync [exp %zd > has %zd]ms, delay %" PRIi64 "ms (%lds, %ldns)\n",
-            //         ms_per_frame, ms_this_frame, td_ns/gamp::NanoPerMilli, ts.tv_sec, ts.tv_nsec);
+    jau::fraction_timespec gpu_swap_t1 = jau::getMonotonicTime();    
+    const jau::fraction_timespec td_last_frame = gpu_swap_t1 - gpu_swap_t0;
+    td_net_costs += td_last_frame;
+    ++gpu_stats_frame_count;
+    const jau::fraction_timespec td = gpu_swap_t1 - gpu_fps_t0;
+    if( td >= gpu_stats_period ) {
+        const double gpu_frame_count_d = gpu_stats_frame_count;
+        gpu_stats_fps = (float)gpu_stats_frame_count / ( (float)td.tv_sec + ( (float)td.tv_nsec / 1000000000.0f ) );
+        gpu_stats_frame_costs_in_sec = ( (double)td_net_costs.tv_sec + ( (double)td_net_costs.tv_nsec / 1000000000.0f ) ) / gpu_frame_count_d;         
+        gpu_stats_frame_slept_in_sec = ( (double)td_slept.tv_sec + ( (double)td_slept.tv_nsec / 1000000000.0f ) ) / gpu_frame_count_d;
+        if( gpu_stats_show ) {
+            jau::fprintf_td(gpu_swap_t1.to_ms(), stdout, "fps: %f (req %d), frames %d, td %s, costs %fms/frame, slept %fms/frame\n", 
+                gpu_stats_fps, fps, gpu_stats_frame_count, td.to_string().c_str(), gpu_stats_frame_costs_in_sec*1000.0, gpu_stats_frame_slept_in_sec*1000.0);
         }
-        gpu_swap_t1 = gamp::getCurrentMilliseconds();
+        gpu_fps_t0 = gpu_swap_t1;
+        gpu_stats_frame_count = 0;
+        td_net_costs = 0_s;
+        td_slept = 0_s;
+    }
+    if( 0 < fps ) {        
+        const jau::fraction_timespec fudge(1_ms / 4_i64);
+        // const int64_t fudge_ns = gamp::NanoPerMilli / 4;
+        // const uint64_t ms_per_frame = (uint64_t)std::round(1000.0 / fps);
+        const jau::fraction_timespec td_per_frame(1_s / (int64_t)fps);
+        const jau::fraction_timespec tdd = td_per_frame - td_last_frame;
+        if( tdd > fudge ) {
+            jau::sleep( tdd, false ); // allow IRQ
+            td_slept += tdd;
+            // gpu_swap_t0 += tdd; // accurate enough?
+            gpu_swap_t0 = jau::getMonotonicTime();
+            // jau::fprintf_td(gpu_swap_t0.to_ms(), stdout, "soft-sync.1 [exp %" PRIi64 " > has %" PRIi64 "]us, delay %" PRIi64 "us\n",
+            //                 td_per_frame.to_us(), td_this_frame.to_us(), tdd.to_us());
+        } else {
+            gpu_swap_t0 = gpu_swap_t1;    
+        }
     } else {
-        gpu_swap_t1 = gpu_swap_t0;
+        gpu_swap_t0 = jau::getMonotonicTime();
     }
 }
 
-float gamp::get_gpu_fps() noexcept {
-    return gpu_fps;
+float gamp::get_gpu_stats_fps() noexcept {
+    return gpu_stats_fps;
+}
+
+double gamp::get_gpu_stats_frame_costs() noexcept {
+    return gpu_stats_frame_costs_in_sec;   
+}
+double gamp::get_gpu_stats_frame_sleep() noexcept {
+    return gpu_stats_frame_slept_in_sec;
+}
+
+void gamp::set_gpu_stats_period(int64_t milliseconds) noexcept {
+    gpu_stats_period = 1_ms * milliseconds;
+}
+int64_t gamp::get_gpu_stats_period() noexcept {
+    return gpu_stats_period.to_ms();
+}
+void gamp::set_gpu_stats_show(bool enable) noexcept {
+    gpu_stats_show = enable;
 }
 
 static input_event_type_t to_event_type(SDL_Scancode scancode) {
