@@ -41,6 +41,7 @@
 
 #include <jau/environment.hpp>
 #include <jau/os/os_support.hpp>
+#include <jau/float_math.hpp>
 
 #include <jau/math/vec2f.hpp>
 #include <jau/math/vec3f.hpp>
@@ -60,25 +61,6 @@
  * Basic computer graphics math and utilities helping with the framebuffer and I/O tooling.
  */
 namespace gamp {
-    /** Returns the rounded float value cast to int. */
-    inline constexpr int round_to_int(const float v) noexcept {
-        return (int)std::round(v);
-    }
-    /** Returns the rounded double value cast to int. */
-    inline constexpr int round_to_int(const double v) noexcept {
-        return (int)std::round(v);
-    }
-
-    /** Converts arc-degree to radians */
-    inline constexpr float adeg_to_rad(const float arc_degree) noexcept {
-        return arc_degree * (float)M_PI / 180.0f;
-    }
-
-    /** Converts radians to arc-degree */
-    inline constexpr float rad_to_adeg(const float rad) noexcept {
-        return rad * 180.0f / (float)M_PI;
-    }
-
     /** Width of the window, coordinate in window units. */
     extern int win_width;
     /** Height of the window, coordinate in window units. */

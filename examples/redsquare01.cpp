@@ -141,7 +141,7 @@ void reshape(RenderContext& rc) {
     const float aspect2 = ( (float) rc.viewport().width() / (float) rc.viewport().height() ) / aspect;
     const float zNear=1.0f;
     const float zFar=100.0f;
-    rc.pmv().perspectiveP(gamp::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
+    rc.pmv().perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
     
     updatePMv(rc.pmv());
 }
@@ -232,7 +232,7 @@ void mainloop() {
         pmv.getMv().loadIdentity();
         pmv.translateMv(0, 0, -10);
         
-        const float ang = gamp::adeg_to_rad(static_cast<float>(t_sum) * 360.0f) / 4000.0f;
+        const float ang = jau::adeg_to_rad(static_cast<float>(t_sum) * 360.0f) / 4000.0f;
         pmv.rotateMv(ang, 0, 0, 1);
         pmv.rotateMv(ang, 0, 1, 0);
             
