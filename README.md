@@ -18,8 +18,7 @@ allowing a similar workflow in the native space *and* browser environment via [W
 
 Ironically this will bring back *runs everywhere* including *the web*.
 
-Initial goal is to reimplement [Graph/GraphUI](https://jausoft.com/blog/tag/graph_type_rendering/)
-on mentioned platforms.
+Initial goal is to reimplement [Graph/GraphUI](https://jausoft.com/blog/tag/graph_type_rendering/).
 
 *Gamp* uses [jaulib](https://jausoft.com/cgit/jaulib.git/about/) for general purpose 
 functionality including linear algebra and geometry.
