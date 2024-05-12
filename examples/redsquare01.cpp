@@ -1,6 +1,6 @@
 /*
- * Author: Sven Gothel <sgothel@jausoft.com>
- * Copyright (c) 2022 Gothel Software e.K.
+ * Author: Sven Gothel <sgothel@jausoft.com> and Svenson Han Gothel
+ * Copyright (c) 2022-2024 Gothel Software e.K.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the

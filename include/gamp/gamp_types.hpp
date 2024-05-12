@@ -21,31 +21,43 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "gamp/gamp.hpp"
+#ifndef JAU_GAMP_TYPES_HPP_
+#define JAU_GAMP_TYPES_HPP_
 
+#include <cinttypes>
+#include <cmath>
+#include <cstdarg>
 #include <cstdint>
-#include <ctime>
+#include <limits>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <type_traits>
+#include <vector>
+
+#include <jau/cpp_lang_util.hpp>
 #include <jau/environment.hpp>
+#include <jau/os/os_support.hpp>
 
-int gamp::win_width=0;
-int gamp::win_height=0;
-float gamp::devicePixelRatio[] = { 1, 1 };
-int gamp::display_frames_per_sec=60;
-int gamp::forced_fps = -1;
+#include <jau/float_math.hpp>
+#include <jau/math/vec2f.hpp>
+#include <jau/math/vec2i.hpp>
+#include <jau/math/vec3f.hpp>
+#include <jau/math/vec4f.hpp>
+#include <jau/math/mat4f.hpp>
+#include <jau/math/recti.hpp>
+#include <jau/math/util/pmvmat4f.hpp>
 
-//
-//
-//
-std::string gamp::input_event_t::to_string() const noexcept {
-    return "event[p1 "+std::to_string(has_any_p1())+
-            ", pressed "+std::to_string(m_pressed)+", p1_mask "+std::to_string(p1_mask)+
-            ", p2 "+std::to_string(has_any_p2())+
-            ", paused "+std::to_string(paused())+
-            ", close "+std::to_string(pressed( gamp::input_event_type_t::WINDOW_CLOSE_REQ ))+
-            ", last "+std::to_string((int)last)+", key "+std::to_string(last_key_code)+
-            ", text "+text+
-            ", ptr["+std::to_string(pointer_id)+" "+std::to_string(pointer_x)+"/"+
-            std::to_string(pointer_y)+"]]"
-            ;
-}
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#else
+#define EMSCRIPTEN_KEEPALIVE
+#endif
 
+namespace gamp {
+    /** A native handle type, big enough to store a pointer. */
+    typedef uintptr_t handle_t;
+
+}  // namespace gamp
+
+#endif /*  JAU_GAMP_TYPES_HPP_ */
