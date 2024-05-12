@@ -13,11 +13,9 @@
 #        modernize-use-default-member-init.UseAssignment: true
 
 # Tell clangd to use the compile_commands.json file in the build/default folder
-#  Add: [-isystem, /usr/local/projects/jausoft/gamp/jaulib/include]
-#  Add: [-isystem, ../jaulib/include]
 CompileFlags:
-  CompilationDatabase: build/default
-  Add: [-isystem, /usr/local/projects/jausoft/gamp/jaulib/include]
+  CompilationDatabase: @CMAKE_CURRENT_BINARY_DIR@
+  Add: [@gamp_clangd_source_args@]
 
 Diagnostics:
   UnusedIncludes: Strict

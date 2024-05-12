@@ -5,4 +5,5 @@ snaps/
 /compile_commands.json
 *~
 *.log
+.clangd
 
