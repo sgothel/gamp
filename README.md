@@ -13,8 +13,8 @@
 This project's canonical repositories is hosted on [Gothel Software](https://jausoft.com/cgit/gamp.git/).
 
 ## Goals
-*Gamp* intends to replicate [JogAmp](https://jogamp.org/)'s experiences to C++ in a condensed form,
-allowing a similar workflow in the native space *and* browser environment via [WebAssembly](https://webassembly.org/).
+*Gamp* intends to replicate [JogAmp](https://jogamp.org/)'s experience to C++ in a condensed form,
+allowing a similar workflow on native targets *and* within the browser via [WebAssembly](https://webassembly.org/).
 
 Ironically this will bring back *runs everywhere* including *the web*.
 
@@ -244,4 +244,8 @@ or *just* help to fund the ongoing effort.
 
 ## Common issues
 *Bugtracker etc to be setup at a later stage*.
+
+## Changes
+
+See [Changes](CHANGES.md).
 
