@@ -44,14 +44,14 @@ development with whoever might be interested.
 ### Build Dependencies
 - CMake >= 3.21 (2021-07-14)
 - C++ compiler
-  - gcc >= 11 (C++20), recommended >= 12
-  - clang >= 13 (C++20), recommended >= 16
+  - gcc >= 11 (C++20), recommended >= 12.2.0
+  - clang >= 13 (C++20), recommended >= 18.1.6
 - Optional for `lint` validation
-  - clang-tidy >= 16
+  - clang-tidy >= 18.1.6
 - Optional for `eclipse` and `vscodium` integration
-  - clangd >= 16
-  - clang-tools >= 16
-  - clang-format >= 16
+  - clangd >= 18.1.6
+  - clang-tools >= 18.1.6
+  - clang-format >= 18.1.6
 - Optional
   - libunwind8 >= 1.2.1
   - libcurl4 >= 7.74 (tested, lower may work)
@@ -65,7 +65,7 @@ Installing build dependencies for Debian >= 12 and Ubuntu >= 22:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.sh}
 apt install git
 apt install build-essential g++ gcc libc-dev libpthread-stubs0-dev 
-apt install clang-16 clang-tidy-16 clangd-16 clang-tools-16 clang-format-16
+apt install clang-18 clang-tidy-18 clangd-18 clang-tools-18 clang-format-18
 apt install libunwind8 libunwind-dev
 apt install cmake cmake-extras extra-cmake-modules pkg-config
 apt install libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
