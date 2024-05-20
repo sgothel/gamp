@@ -246,8 +246,6 @@ void mainloop() {
 
 int main(int argc, char *argv[])
 {
-    printf("%s\n", jau::os::get_platform_info().c_str());
-    
     int win_width = 1920, win_height = 1000;
     #if defined(__EMSCRIPTEN__)
         win_width = 1024, win_height = 576; // 16:9

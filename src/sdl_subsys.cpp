@@ -30,7 +30,7 @@
 #include <jau/secmem.hpp>
 
 #include <cstdint>
-#include <thread>
+#include "gamp/version.hpp"
 
 #include <GLES2/gl2.h>
 #include <SDL2/SDL.h>
@@ -94,6 +94,9 @@ static void on_window_resized(int wwidth, int wheight) noexcept {
 }
 
 bool gamp::init_gfx_subsystem(const char* title, int wwidth, int wheight, bool enable_vsync) {
+    printf("Gamp API %s, lib %s\n", gamp::VERSION_API, gamp::VERSION);    
+    printf("%s\n", jau::os::get_platform_info().c_str());
+    
     if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {  // SDL_INIT_EVERYTHING
         printf("SDL: Error initializing: %s\n", SDL_GetError());
         return false;
