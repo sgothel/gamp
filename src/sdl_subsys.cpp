@@ -27,6 +27,7 @@
 #include <jau/environment.hpp>
 #include <jau/fraction_type.hpp>
 #include <jau/math/vec2i.hpp>
+#include <jau/secmem.hpp>
 
 #include <cstdint>
 #include <thread>
@@ -85,7 +86,7 @@ static void on_window_resized(int wwidth, int wheight) noexcept {
     {
         SDL_DisplayMode mode;
         const int win_display_idx = SDL_GetWindowDisplayIndex(sdl_win);
-        bzero(&mode, sizeof(mode));
+        jau::zero_bytes_sec(&mode, sizeof(mode));
         SDL_GetCurrentDisplayMode(win_display_idx, &mode);  // SDL_GetWindowDisplayMode(..) fails on some systems (wrong refresh_rate and logical size
         printf("WindowDisplayMode: %d x %d @ %d Hz @ display %d\n", mode.w, mode.h, mode.refresh_rate, win_display_idx);
         display_frames_per_sec = mode.refresh_rate;
@@ -426,6 +427,8 @@ bool gamp::handle_one_event(input_event_t& event) noexcept {
                     case SDL_WINDOWEVENT_SIZE_CHANGED:
                         printf("Window SizeChanged: %d x %d\n", sdl_event.window.data1, sdl_event.window.data2);
                         break;
+                        
+                    default: break;
                 }
                 break;
 
@@ -443,6 +446,8 @@ bool gamp::handle_one_event(input_event_t& event) noexcept {
                 event.set(to_event_type(scancode), to_ascii(scancode));
                 //       printf("%d", scancode);
             } break;
+            
+            default: break;
         }
         return true;
     } else {

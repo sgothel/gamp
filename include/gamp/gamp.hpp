@@ -25,6 +25,7 @@
 #define JAU_GAMP_HPP_
 
 #include <gamp/gamp_types.hpp>
+#include <gamp/version.hpp>
 
 /**
  * Basic computer graphics math and utilities helping with the framebuffer and I/O tooling.
