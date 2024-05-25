@@ -28,8 +28,9 @@ JaulibSetup()
 
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.clangd)
 # Fixup clangd w/ absolute path
-set (gamp_clangd_source_args "-isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/include, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/src, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/java_jni/jni, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/java_jni/jni/jau, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/test")
-set (gamp_clangd_source_args "${gamp_clangd_source_args} -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/include, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/src, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/test")
+set (gamp_clangd_source_args "-isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/include, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/src, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/java_jni/jni, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/java_jni/jni/jau")
+set (gamp_clangd_source_args "${gamp_clangd_source_args}, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/include/catch2_jau, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/test")
+set (gamp_clangd_source_args "${gamp_clangd_source_args}, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/include, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/src, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/test")
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/clangd.in
                 ${CMAKE_CURRENT_SOURCE_DIR}/.clangd)
 endif()
@@ -58,6 +59,12 @@ message(STATUS "${PROJECT_NAME} SYSTEM_USR_DIR ${SYSTEM_USR_DIR}")
 message(STATUS "${PROJECT_NAME} SYS_INCLUDE_DIRS ${SYS_INCLUDE_DIRS}")
 message(STATUS "${PROJECT_NAME} CMAKE_CXX_STANDARD_LIBRARIES = ${CMAKE_CXX_STANDARD_LIBRARIES}")
 
-# add_subdirectory (jaulib)
 add_subdirectory (src)
 add_subdirectory (examples)
+
+if (BUILD_TESTING)
+  add_subdirectory (jaulib)
+  enable_testing ()
+  # add_subdirectory (test)
+endif(BUILD_TESTING)
+

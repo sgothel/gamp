@@ -1,5 +1,5 @@
 #include <gamp/version.hpp>
 
-const char* gamp::VERSION = "@gamp_VERSION_LONG@";
+const jau::util::VersionNumber gamp::VERSION("@gamp_VERSION_LONG@");
 const char* gamp::VERSION_SHORT = "@gamp_VERSION_SHORT@";
 const char* gamp::VERSION_API = "@gamp_VERSION_API@";

@@ -94,7 +94,7 @@ static void on_window_resized(int wwidth, int wheight) noexcept {
 }
 
 bool gamp::init_gfx_subsystem(const char* title, int wwidth, int wheight, bool enable_vsync) {
-    printf("Gamp API %s, lib %s\n", gamp::VERSION_API, gamp::VERSION);    
+    printf("Gamp API %s, lib %s\n", gamp::VERSION_API, gamp::VERSION.toString().c_str());    
     printf("%s\n", jau::os::get_platform_info().c_str());
     
     if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {  // SDL_INIT_EVERYTHING

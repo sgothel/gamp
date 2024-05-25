@@ -24,8 +24,10 @@
 #ifndef JAU_GAMP_VERSION_HPP_
 #define JAU_GAMP_VERSION_HPP_
 
+#include <jau/util/VersionNumber.hpp>
+
 namespace gamp {
-    extern const char* VERSION;
+    extern const jau::util::VersionNumber VERSION;
     extern const char* VERSION_SHORT;
     extern const char* VERSION_API;
 } /* namespace gamp */
