@@ -49,6 +49,7 @@ namespace gamp {
     extern int display_frames_per_sec;
     /** Optional custom forced frames per seconds, pass to swap_gpu_buffer() by default. Defaults to -1, i.e. automatic fps. */
     extern int forced_fps;
+    extern jau::util::VersionNumber gl_version;
     extern int font_height;
 
     //

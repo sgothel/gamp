@@ -32,6 +32,7 @@ int gamp::win_height=0;
 float gamp::devicePixelRatio[] = { 1, 1 };
 int gamp::display_frames_per_sec=60;
 int gamp::forced_fps = -1;
+jau::util::VersionNumber gamp::gl_version;
 
 //
 //

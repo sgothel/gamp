@@ -28,6 +28,7 @@
 #include <jau/fraction_type.hpp>
 #include <jau/math/vec2i.hpp>
 #include <jau/secmem.hpp>
+#include <jau/util/VersionNumber.hpp>
 
 #include <cstdint>
 #include "gamp/version.hpp"
@@ -156,14 +157,15 @@ bool gamp::init_gfx_subsystem(const char* title, int wwidth, int wheight, bool e
         SDL_DestroyWindow(sdl_win);
         return false;
     }
-    const GLubyte* gl_version = glGetString(GL_VERSION);
-    if (nullptr == gl_version) {
+    const char* gl_version_cstr = reinterpret_cast<const char*>( glGetString(GL_VERSION) );
+    if (nullptr == gl_version_cstr) {
         printf("SDL: Error retrieving GL version: %s\n", SDL_GetError());
         SDL_GL_DeleteContext(sdl_glc);
         SDL_DestroyWindow(sdl_win);
         return false;
     }
-    printf("SDL GL context: %s\n", gl_version);
+    gl_version = jau::util::VersionNumber( gl_version_cstr );
+    printf("SDL GL context: %s\n", gl_version.toString().c_str());
 
     // const Uint32 render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
     sdl_rend = SDL_GetRenderer(sdl_win);  // SDL_CreateRenderer(sdl_win, -1, render_flags);
