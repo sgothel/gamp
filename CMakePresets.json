@@ -17,7 +17,7 @@
         "USE_LIBUNWIND": "ON",
         "USE_LIBCURL": "OFF",
         "BUILDJAVA": "OFF",
-        "BUILD_TESTING": "OFF"
+        "BUILD_TESTING": "ON"
       }
     },
     {

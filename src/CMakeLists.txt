@@ -25,20 +25,20 @@ set (gamp_LIB_SRCS
 )
 
 if (EMSCRIPTEN)
-add_library (gamp STATIC ${gamp_LIB_SRCS})
-target_link_libraries (
-  gamp
-  ${LIBUNWIND_LIBNAME}
-  ${CMAKE_THREAD_LIBS_INIT}
-)
+  add_library (gamp STATIC ${gamp_LIB_SRCS})
+  target_link_options(gamp PUBLIC ${gamp_STATIC_LINKER_FLAGS})
 else()
-add_library (gamp SHARED ${gamp_LIB_SRCS})
+  add_library (gamp SHARED ${gamp_LIB_SRCS})
+  target_link_options(gamp PUBLIC ${gamp_SHARED_LINKER_FLAGS})
+endif()
+
+target_compile_options(gamp PUBLIC ${gamp_CXX_FLAGS})
+
 target_link_libraries (
   gamp
   ${LIBUNWIND_LIBNAME}
   ${CMAKE_THREAD_LIBS_INIT}
 )
-endif()
 
 if( (USE_STRIP) AND (NOT EMSCRIPTEN) )
 add_custom_command(TARGET gamp POST_BUILD
