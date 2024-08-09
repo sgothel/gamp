@@ -12,7 +12,7 @@
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_INSTALL_PREFIX": "dist/debug",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/debug",
         "JAU_CMAKE_FIX_INSTALL_PREFIX": "ON",
         "USE_LIBUNWIND": "ON",
         "USE_LIBCURL": "OFF",
@@ -26,7 +26,7 @@
       "displayName": "Debug (clang, clang-tidy, C++20)",
       "binaryDir": "${sourceDir}/build/debug-clang",
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "dist/debug-clang",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/debug-clang",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_CXX_CLANG_TIDY": "clang-tidy;-p;${sourceDir}/build/debug-clang"
@@ -38,7 +38,7 @@
       "displayName": "Debug (gcc, C++20)",
       "binaryDir": "${sourceDir}/build/debug-gcc",
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "dist/debug-gcc",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/debug-gcc",
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++"
       }
@@ -50,7 +50,7 @@
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_INSTALL_PREFIX": "dist/release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/release",
         "JAU_CMAKE_FIX_INSTALL_PREFIX": "ON"
       }
     },
@@ -60,7 +60,7 @@
       "displayName": "Release (clang, clang-tidy, C++20)",
       "binaryDir": "${sourceDir}/build/release-clang",
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "dist/release-clang",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/release-clang",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_CXX_CLANG_TIDY": "clang-tidy;-p;${sourceDir}/build/release-clang"
@@ -72,7 +72,7 @@
       "displayName": "Release (gcc, C++20)",
       "binaryDir": "${sourceDir}/build/release-gcc",
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "dist/release-gcc",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/release-gcc",
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++"
       }
@@ -83,7 +83,7 @@
       "displayName": "Release (emscripten, C++20)",
       "binaryDir": "${sourceDir}/build/release-wasm",
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "dist/release-wasm",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/release-wasm",
         "JAU_CMAKE_FIX_INSTALL_PREFIX": "ON",
         "USE_LIBUNWIND": "OFF"
       }
