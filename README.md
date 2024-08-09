@@ -99,6 +99,7 @@ Following debug presets are defined in `CMakePresets.json`
   - default compiler
   - C++20
   - debug enabled
+  - disabled `clang-tidy`
 - `debug-gcc`
   - inherits from `debug`
   - compiler: `gcc`
@@ -110,6 +111,7 @@ Following debug presets are defined in `CMakePresets.json`
 - `release`
   - inherits from `debug`
   - debug disabled
+  - disabled `clang-tidy`
 - `release-gcc`
   - compiler: `gcc`
   - disabled `clang-tidy`
@@ -128,6 +130,8 @@ cmake --preset release-gcc
 cmake --build --preset release-gcc --parallel
 cmake --build --preset release-gcc --target test install doc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You may utilize `scripts/build-preset.sh` for an initial build, install and test workflow.
 
 <a name="cmake_presets_hardcoded"></a>
 
@@ -230,10 +234,10 @@ vi ../direct_bt.code-workspace
 ~~~~~~~~~~~~~
 Then you can open it via `File . Open Workspace from File...` menu item.
 - All listed extensions are referenced in this workspace file to be installed via the IDE
-- The [local settings.json](.vscode/settings.json) has `clang-tidy` enabled
-  - If using `clang-tidy` is too slow, just remove it from the settings file.
-  - `clangd` will still contain a good portion of `clang-tidy` checks
-
+- Select one of the [CMake Presets](README.md#cmake_presets_optional) for
+  - Configuration
+  - Build
+  - Test
 
 ## Support & Sponsorship
 *Gamp* is lead by [Gothel Software](https://jausoft.com/).

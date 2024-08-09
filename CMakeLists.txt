@@ -56,14 +56,13 @@ endif()
 
 JaulibSetup()
 
-if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.clangd)
 # Fixup clangd w/ absolute path
 set (gamp_clangd_source_args "-isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/include, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/src, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/java_jni/jni, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/java_jni/jni/jau")
 set (gamp_clangd_source_args "${gamp_clangd_source_args}, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/include/catch2_jau, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/test")
 set (gamp_clangd_source_args "${gamp_clangd_source_args}, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/include, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/src, -isystem, ${CMAKE_CURRENT_SOURCE_DIR}/test")
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/clangd.in
-                ${CMAKE_CURRENT_SOURCE_DIR}/.clangd)
-endif()
+                ${CMAKE_CURRENT_BINARY_DIR}/.clangd)
+file(COPY_FILE ${CMAKE_CURRENT_BINARY_DIR}/.clangd ${CMAKE_CURRENT_SOURCE_DIR}/.clangd)
 
 # this is the library version, derived from git tag and revision
 set (gamp_VERSION_MAJOR      ${VERSION_MAJOR})

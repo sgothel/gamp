@@ -2,7 +2,7 @@
   "folders": [
     {
       "name": "gamp",
-      "path": "/usr/local/projects/gamp"
+      "path": "/usr/local/projects/jausoft/gamp"
     }
   ],
   "settings": {
@@ -49,7 +49,8 @@
     "ShortcutMenuBar.userButton02Command": "clangd.memoryUsage",
     "ShortcutMenuBar.userButton03Command": "workbench.action.reloadWindow",
     "ShortcutMenuBar.userButton04Command": "clangd.restart",
-    "clang-tidy.buildPath": "${workspaceFolder}/build/vscode",
+    // "clang-tidy.buildPath": "${workspaceFolder}/build/default",
+    // "C_Cpp.default.cppStandard": "c++20",
   },
   "extensions": {
     "recommendations": [

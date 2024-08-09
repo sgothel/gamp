@@ -4,11 +4,20 @@ sdir=`dirname $(readlink -f $0)`
 rootdir=`dirname $sdir`
 bname=`basename $0 .sh`
 
-. $sdir/setup-machine-arch.sh
+. $rootdir/jaulib/scripts/setup-machine-arch.sh
 
-tripleid="$os_name-$archabi-gcc"
+tripleid="$os_name-$archabi"
 
-logfile=$rootdir/$bname-$tripleid.log
+if [ ! -z "$1" ] ; then
+    preset_name=$1
+    shift 1
+else
+    echo "ERROR: No preset passed as 1st argument, use one of:"
+    cmake --list-presets
+    return 1
+fi
+
+logfile=$rootdir/${bname}-${preset_name}-${tripleid}.log
 rm -f $logfile
 
 CPU_COUNT=`getconf _NPROCESSORS_ONLN`
@@ -27,8 +36,8 @@ buildit() {
     echo logfile $logfile
     echo CPU_COUNT $CPU_COUNT
 
-    dist_dir="dist-$tripleid"
-    build_dir="build-$tripleid"
+    dist_dir="dist/${preset_name}-${tripleid}"
+    build_dir="build/preset_name}"
     echo dist_dir $dist_dir
     echo build_dir $build_dir
 
@@ -40,15 +49,14 @@ buildit() {
         echo "time command not available"
     fi
 
-    cd $rootdir/$build_dir
-    ${time_cmd} make -j $CPU_COUNT install
+    cd $rootdir
+
+    ${time_cmd} cmake --build --preset ${preset_name} --target install --parallel
     if [ $? -eq 0 ] ; then
-        echo "REBUILD SUCCESS $bname $tripleid"
-        cd $rootdir
+        echo "REBUILD SUCCESS $bname, preset $preset_name, $tripleid"
         return 0
     else
-        echo "REBUILD FAILURE $bname $tripleid"
-        cd $rootdir
+        echo "REBUILD FAILURE $bname, preset $preset_name, $tripleid"
         return 1
     fi
 }
