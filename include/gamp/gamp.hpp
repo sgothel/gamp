@@ -43,6 +43,9 @@ namespace gamp {
     // gfx toolkit dependent API
     //
 
+    /** Returns the elapsed monotonic time since `init_gfx_subsystem`, synchronized with the gfx subsystem timer. */
+    jau::fraction_timespec getElapsedMonotonicTime() noexcept;
+
     /** Monitor frames per seconds */
     int monitor_fps() noexcept;
 

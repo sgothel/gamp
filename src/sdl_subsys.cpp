@@ -38,13 +38,12 @@
 #include <gamp/wt/wtkeyevent.hpp>
 #include <gamp/wt/wtwinevent.hpp>
 #include <gamp/wt/wtwindow.hpp>
-#include <memory>
-#include <vector>
 #include "gamp/version.hpp"
 
 #include <GLES2/gl2.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengles2.h>
+#include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
 
 #include <SDL2/SDL_scancode.h>
@@ -79,7 +78,7 @@ static jau::cow_darray<gamp::wt::WindowRef> window_list;
 static void reset_gpu_fps(int fps) {
     gpu_fps = float(fps);
     gpu_fdur = jau::fraction_timespec(1.0/double(fps));
-    gpu_fps_t0 = jau::getMonotonicTime();
+    gpu_fps_t0 = getElapsedMonotonicTime();
     gpu_swap_t0 = gpu_fps_t0;
     gpu_swap_t1 = gpu_fps_t0;
     gpu_fps_resync = true;
@@ -139,6 +138,11 @@ static void on_window_resized(gamp::wt::Window* win, int wwidth, int wheight, co
 
 static std::atomic_bool gfx_subsystem_init_called = false;
 static std::atomic_bool gfx_subsystem_init = false;
+static jau::fraction_timespec init_gfx_t0;
+
+jau::fraction_timespec gamp::getElapsedMonotonicTime() noexcept {
+    return jau::getMonotonicTime() - init_gfx_t0;
+}
 
 bool gamp::is_gfx_subsystem_initialized() noexcept {
     return gfx_subsystem_init;
@@ -153,8 +157,25 @@ bool gamp::init_gfx_subsystem(const char* exe_path) {
     printf("Gamp API %s, lib %s\n", gamp::VERSION_API, gamp::VERSION.toString().c_str());
     printf("%s\n", jau::os::get_platform_info().c_str());
 
-    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {  // SDL_INIT_EVERYTHING
-        printf("SDL: Error initializing: %s\n", SDL_GetError());
+    if (SDL_Init(SDL_INIT_TIMER) != 0) {  // SDL_INIT_EVERYTHING
+        printf("SDL: Error initializing TIMER: %s\n", SDL_GetError());
+        return false;
+    }
+    {
+        init_gfx_t0 = jau::getMonotonicTime();
+        jau::fraction_timespec jau_t1 = getElapsedMonotonicTime();
+        const uint32_t sdl_ms = SDL_GetTicks();
+        const int64_t s = sdl_ms/1000;
+        const int64_t ns = ( sdl_ms - s*1000 ) *1'000'000;
+        const jau::fraction_timespec sdl_t1(s, ns);
+        // printf("SDL Timer-Sync: jau_t0: %s\n", init_gfx_t0.to_string().c_str());
+        // printf("SDL Timer-Sync: jau_t1: %s\n", jau_t1.to_string().c_str());
+        // printf("SDL Timer-Sync: sdl_t1: %s\n", sdl_t1.to_string().c_str());
+        const jau::fraction_timespec td = jau_t1 - sdl_t1;
+        printf("SDL Timer-Sync:     td: %s\n", td.to_string().c_str());
+    }
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {  // SDL_INIT_EVERYTHING
+        printf("SDL: Error initializing VIDEO/EVENTS: %s\n", SDL_GetError());
         return false;
     }
 #if 0
@@ -173,6 +194,9 @@ bool gamp::init_gfx_subsystem(const char* exe_path) {
 }
 
 gamp::wt::WindowRef gamp::createWindow(const char* title, int wwidth, int wheight, bool enable_vsync) {
+    if( !is_gfx_subsystem_initialized() ) {
+        return nullptr;
+    }
     if (enable_vsync) {
         SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
     }
@@ -242,7 +266,7 @@ gamp::wt::WindowRef gamp::createWindow(const char* title, int wwidth, int wheigh
     jau::math::Vec2i surface_size(wwidth, wheight);
     gamp::wt::WindowRef res = gamp::wt::Window::create((handle_t)sdl_win, window_bounds, (handle_t)sdl_win, surface_size, (handle_t)sdl_glc);
 
-    on_window_resized(res.get(), wwidth, wheight, jau::getMonotonicTime(), true);
+    on_window_resized(res.get(), wwidth, wheight, getElapsedMonotonicTime(), true);
 
     reset_gpu_fps(gpu_forced_fps_ > 0 ? gpu_forced_fps_ : monitor_frames_per_sec);
     window_list.push_back(res);
@@ -255,42 +279,40 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE int get_forced_fps() noexcept { return gpu_forced_fps(); }
 
     EMSCRIPTEN_KEEPALIVE void set_window_size(int ww, int wh, float devPixelRatioX, float devPixelRatioY) noexcept {
-        if( window_list.size() == 0 ) {
-            return;
+        jau::math::Vec2i win_size;
+        gamp::wt::WindowRef win = window_list.size() > 0 ? (*window_list.snapshot())[0] : nullptr;
+        const bool initial_call = !is_gfx_subsystem_initialized() || !win || !win->isValid();
+        if( win && win->isValid() ) {
+            win_size = win->getWindowSize();
         }
-        gamp::wt::WindowRef win = (*window_list.snapshot())[0];
-        if( !win || !win->isValid() ) {
-            return;
-        }
-        jau::math::Vec2i win_size = win->getWindowSize();
         static bool warn_once = true;
         if (win_size.x != ww || win_size.y != wh ||
-            devicePixelRatio[0] != devPixelRatioX || devicePixelRatio[1] != devPixelRatioY) {
+            devicePixelRatio.x != devPixelRatioX || devicePixelRatio.y != devPixelRatioY) {
             if (devPixelRatioX >= 0.5f && devPixelRatioY >= 0.5f) {
-                devicePixelRatio[0] = devPixelRatioX;
-                devicePixelRatio[1] = devPixelRatioY;
+                devicePixelRatio.x = devPixelRatioX;
+                devicePixelRatio.y = devPixelRatioY;
             }
             if (std::abs(win_size.x - ww) > 1 || std::abs(win_size.y - wh) > 1) {
-                if (0 == win_size.x || 0 == win_size.y) {
-                    printf("JS Window Initial Size: Win %d x %d -> %d x %d, devPixelRatio %f / %f\n",
-                           win_size.x, win_size.y, ww, wh, devicePixelRatio[0], devicePixelRatio[1]);
+                if( initial_call || 0 == win_size.x || 0 == win_size.y) {
+                    printf("JS Window Initial Size: Win %d x %d -> %d x %d, devPixelRatio %s\n",
+                           win_size.x, win_size.y, ww, wh, devicePixelRatio.toString().c_str());
                     win_size.x = ww;
                     win_size.y = wh;
                 } else {
-                    printf("JS Window Resized: Win %d x %d -> %d x %d, devPixelRatio %f / %f\n",
-                           win_size.x, win_size.y, ww, wh, devicePixelRatio[0], devicePixelRatio[1]);
+                    printf("JS Window Resized: Win %d x %d -> %d x %d, devPixelRatio %s\n",
+                           win_size.x, win_size.y, ww, wh, devicePixelRatio.toString().c_str());
                     SDL_SetWindowSize(reinterpret_cast<SDL_Window*>(win->windowHandle()), ww, wh); // NOLINT
                     warn_once = true;
-                    on_window_resized(win.get(), ww, wh, jau::getMonotonicTime(), true);
+                    on_window_resized(win.get(), ww, wh, getElapsedMonotonicTime(), true);
                 }
             } else if (warn_once) {
                 warn_once = false;
-                printf("JS Window Resize Ignored: Win %d x %d -> %d x %d, devPixelRatio %f / %f\n",
-                       win_size.x, win_size.y, ww, wh, devicePixelRatio[0], devicePixelRatio[1]);
+                printf("JS Window Resize Ignored: Win %d x %d -> %d x %d, devPixelRatio %s\n",
+                       win_size.x, win_size.y, ww, wh, devicePixelRatio.toString().c_str());
             }
         } else {
-            printf("JS Window Resize Same-Size: Win %d x %d -> %d x %d, devPixelRatio %f / %f\n",
-                   win_size.x, win_size.y, ww, wh, devicePixelRatio[0], devicePixelRatio[1]);
+            printf("JS Window Resize Same-Size: Win %d x %d -> %d x %d, devPixelRatio %s\n",
+                   win_size.x, win_size.y, ww, wh, devicePixelRatio.toString().c_str());
         }
     }
 }
@@ -304,7 +326,7 @@ void gamp::swap_gpu_buffer(int fps) noexcept {
             SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(win->windowHandle())); // NOLINT
         }
     }
-    gpu_swap_t0 = jau::getMonotonicTime();
+    gpu_swap_t0 = getElapsedMonotonicTime();
     ++gpu_frame_count;
     constexpr jau::fraction_timespec fps_resync(3, 0); // 3s
     constexpr jau::fraction_timespec fps_avg_period(5, 0); // 5s
@@ -333,7 +355,7 @@ void gamp::swap_gpu_buffer(int fps) noexcept {
             // pixel::log_printf("soft-sync [exp %zd > has %zd]ms, delay %" PRIi64 "ms (%lds, %ldns)\n",
             //         ms_per_frame, ms_this_frame, td_ns/pixel::NanoPerMilli, ts.tv_sec, ts.tv_nsec);
         }
-        gpu_swap_t1 = jau::getMonotonicTime();
+        gpu_swap_t1 = getElapsedMonotonicTime();
     } else {
         gpu_swap_t1 = gpu_swap_t0;
     }
@@ -521,7 +543,7 @@ static uint16_t to_ascii(SDL_Scancode scancode, const gamp::wt::InputModifier& m
     return 0;
 }
 
-gamp::wt::Window* getWin(Uint32 id) {
+static gamp::wt::Window* getWin(Uint32 id) {
     SDL_Window *p = SDL_GetWindowFromID(id);
     if( !p ) {
         return nullptr;
@@ -536,6 +558,9 @@ gamp::wt::Window* getWin(Uint32 id) {
 }
 
 size_t gamp::handle_events() noexcept {
+    if( !is_gfx_subsystem_initialized() ) {
+        return 0;
+    }
     size_t event_count = 0;
     SDL_Event sdl_event;
 
@@ -565,7 +590,7 @@ size_t gamp::handle_events() noexcept {
                             } catch (std::exception &err) {
                                 ERR_PRINT("gamp::handle_events: Caught exception %s", err.what());
                             }
-                            printf("Window Close Requested: %zu windows\n", window_list.size());
+                            printf("Window Close Requested: %zu windows\n", (size_t)window_list.size());
                           } break;
                         case SDL_WINDOWEVENT_SHOWN:
                             printf("Window Shown\n");
@@ -637,13 +662,13 @@ void gamp::mainloop_default() noexcept {
         #endif
     }
     for(const gamp::wt::WindowRef& win : *window_list.snapshot() ) {
-        win->display(jau::getMonotonicTime());
+        win->display(getElapsedMonotonicTime());
     }
     gamp::swap_gpu_buffer();
 }
 
 void gamp::shutdown() noexcept {
-    const jau::fraction_timespec when = jau::getMonotonicTime();
+    const jau::fraction_timespec when = getElapsedMonotonicTime();
     for(const gamp::wt::WindowRef& win : *window_list.snapshot() ) {
         win->notifyWindowEvent(EVENT_WINDOW_DESTROY_NOTIFY, when);
     }

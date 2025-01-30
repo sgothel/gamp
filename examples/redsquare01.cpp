@@ -297,7 +297,7 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
     main_win->addRenderListener(std::make_shared<MyRenderListener>());
 
     #if defined(__EMSCRIPTEN__)
-        emscripten_set_main_loop(gamp::mainloop_default(), 0, 1);
+        emscripten_set_main_loop(gamp::mainloop_default, 0, 1);
     #else
         while( true ) { gamp::mainloop_default(); }
     #endif
