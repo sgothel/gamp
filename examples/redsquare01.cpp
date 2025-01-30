@@ -23,10 +23,14 @@
  */
 #include <gamp/gamp.hpp>
 
-#include <random>
+#include <gamp/wt/wtevent.hpp>
+#include <gamp/wt/wtkeyevent.hpp>
 #include <cstdio>
 #include <cmath>
-#include <iostream>
+#include <gamp/wt/wtwindow.hpp>
+#include <memory>
+#include <jau/basic_types.hpp>
+#include <jau/fraction_type.hpp>
 
 #include <GLES2/gl2.h>
 #include <SDL2/SDL_opengles2.h>
@@ -84,7 +88,7 @@ static const GLchar* fragmentSource =
     "  #define varying in\n"
     "  out vec4 mgl_FragColor;\n"
     "#else\n"
-    "  #define mgl_FragColor gl_FragColor\n"   
+    "  #define mgl_FragColor gl_FragColor\n"
     "#endif\n"
     "\n"
     "varying vec4 frontColor;\n"
@@ -104,147 +108,155 @@ static std::vector<Vec4f> colors2 = { Vec4f( 1, 0, 0, 1),
                                       Vec4f( 1, 0, 0, 1),
                                       Vec4f( 1, 0, 0, 1) };
 
-class RenderContext {
+using namespace gamp::wt::event;
+static gamp::wt::WindowRef main_win;
+static bool animating = true;
+
+class MyKeyListener : public KeyListener {
   public:
-    typedef bool (*init_func)(RenderContext& pmv);
-    
-  private:    
-    Recti& m_viewport;
+    void keyPressed(const KeyEvent& e, const KeyboardTracker& kt) override {
+        printf("KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.getPressedKeyCodes().bitCount());
+        if( e.keySym() == gamp::wt::event::VKeyCode::VK_ESCAPE ) {
+            gamp::shutdown();
+        } else if( e.keySym() == gamp::wt::event::VKeyCode::VK_PAUSE || e.keySym() == gamp::wt::event::VKeyCode::VK_P ) {
+            animating = !animating;
+        } else if( e.keySym() == gamp::wt::event::VKeyCode::VK_W ) {
+            gamp::wt::WindowRef win = e.source().lock();
+            printf("Source: %s\n", win ? win->toString().c_str() : "null");
+        }
+    }
+    void keyReleased(const KeyEvent& e, const KeyboardTracker& kt) override {
+        printf("KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.getPressedKeyCodes().bitCount());
+    }
+};
+typedef std::shared_ptr<MyKeyListener> MyKeyListenerRef;
+
+class MyRenderListener : public gamp::wt::RenderListener {
+  private:
+    Recti m_viewport;
     PMVMat4f m_pmv;
     bool m_initialized;
-    
-  public:    
-    RenderContext(init_func init)
-    : m_viewport(gamp::viewport), m_pmv(), m_initialized(false) {
-        m_initialized = init(*this);
+    jau::fraction_timespec t_last;
+
+    void updatePMv()  {
+        if( !m_initialized ) {
+            return;
+        }
+        const PMVMat4f::SyncMats4& spmv = m_pmv.getSyncPMv();
+        glUniformMatrix4fv(u_pmv, (GLsizei)spmv.matrixCount(), false, spmv.floats());
     }
+
+  public:
+    MyRenderListener()
+    : m_pmv(), m_initialized(false) {  }
+
     Recti& viewport() noexcept { return m_viewport; }
     const Recti& viewport() const noexcept { return m_viewport; }
-    
+
     PMVMat4f& pmv() noexcept { return m_pmv; }
     const PMVMat4f& pmv() const noexcept { return m_pmv; }
-    
-    bool initialized() const noexcept { return m_initialized; }
+
+    void init(const gamp::wt::WindowRef&, const jau::fraction_timespec& when) override {
+        printf("RL::init: %s\n", toString().c_str());
+        t_last = when;
+        // Create and compile vertex shader
+        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertexShader, 1, &vertexSource, nullptr);
+        glCompileShader(vertexShader);
+
+        // Create and compile fragment shader
+        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
+        glCompileShader(fragmentShader);
+
+        // Link vertex and fragment shader into shader program and use it
+        GLuint shaderProgram = glCreateProgram();
+        glAttachShader(shaderProgram, vertexShader);
+        glAttachShader(shaderProgram, fragmentShader);
+        glLinkProgram(shaderProgram);
+        glUseProgram(shaderProgram);
+
+        // Get shader variables and initialize them
+
+        u_pmv = glGetUniformLocation(shaderProgram, "mgl_PMVMatrix");
+        a_vertices = glGetAttribLocation(shaderProgram, "mgl_Vertex");
+        a_colors = glGetAttribLocation(shaderProgram, "mgl_Color");
+
+        {
+            // Create vertex buffer object and copy vertex data into it
+            GLuint vbos[2];
+            glGenBuffers(2, vbos);
+
+            // Specify the layout of the shader vertex data (positions only, 3 floats)
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
+            glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices2.size() * Vec3f::byte_size), vertices2.data(), GL_STATIC_DRAW);
+            glEnableVertexAttribArray(a_vertices);
+            glVertexAttribPointer(a_vertices, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+            // Specify the layout of the shader vertex data (positions only, 4 floats)
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
+            glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(colors2.size() * Vec4f::byte_size), colors2.data(), GL_STATIC_DRAW);
+            glEnableVertexAttribArray(a_colors);
+            glVertexAttribPointer(a_colors, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+        }
+
+        m_pmv.getP().loadIdentity();
+        m_pmv.getMv().loadIdentity();
+        m_pmv.translateMv(0, 0, -10);
+
+        glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+        glEnable(GL_DEPTH_TEST);
+
+        m_initialized = 0 != shaderProgram;
+
+    }
+
+    void dispose(const gamp::wt::WindowRef&, const jau::fraction_timespec& /*when*/) override {
+        printf("RL::dispose: %s\n", toString().c_str());
+        m_initialized = false;
+    }
+
+    void display(const gamp::wt::WindowRef&, const jau::fraction_timespec& when) override {
+        // printf("RL::display: %s, %s\n", toString().c_str(), win->toString().c_str());
+        if( !m_initialized ) {
+            return;
+        }
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        m_pmv.getMv().loadIdentity();
+        m_pmv.translateMv(0, 0, -10);
+        static float t_sum_ms = 0;
+        if( animating ) {
+            t_sum_ms += float( (when - t_last).to_ms() );
+        }
+        const float ang = jau::adeg_to_rad(t_sum_ms * 360.0f) / 4000.0f;
+        m_pmv.rotateMv(ang, 0, 0, 1);
+        m_pmv.rotateMv(ang, 0, 1, 0);
+        updatePMv();
+
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        t_last = when;
+    }
+
+    void reshape(const gamp::wt::WindowRef&, const jau::math::Recti& viewport, const jau::fraction_timespec& /*when*/) override {
+        printf("RL::reshape: %s\n", toString().c_str());
+        m_viewport = viewport;
+
+        m_pmv.getP().loadIdentity();
+
+        const float aspect = 1.0f;
+        const float fovy_deg=45.0f;
+        const float aspect2 = ( (float) m_viewport.width() / (float) m_viewport.height() ) / aspect;
+        const float zNear=1.0f;
+        const float zFar=100.0f;
+        m_pmv.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
+
+        updatePMv();
+    }
+
 };
 
-void updatePMv(const PMVMat4f& pmv)
-{
-    const PMVMat4f::SyncMats4& spmv = pmv.getSyncPMv();
-    glUniformMatrix4fv(u_pmv, (GLsizei)spmv.matrixCount(), false, spmv.floats());
-}
-
-void reshape(RenderContext& rc) {
-    rc.pmv().getP().loadIdentity();
-
-    const float aspect = 1.0f;
-    const float fovy_deg=45.0f;
-    const float aspect2 = ( (float) rc.viewport().width() / (float) rc.viewport().height() ) / aspect;
-    const float zNear=1.0f;
-    const float zFar=100.0f;
-    rc.pmv().perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
-    
-    updatePMv(rc.pmv());
-}
-
-bool initialize(RenderContext& rc)
-{
-    // Create and compile vertex shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexSource, nullptr);
-    glCompileShader(vertexShader);
-
-    // Create and compile fragment shader
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
-    glCompileShader(fragmentShader);
-
-    // Link vertex and fragment shader into shader program and use it
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    glUseProgram(shaderProgram);
-
-    // Get shader variables and initialize them
-    
-    u_pmv = glGetUniformLocation(shaderProgram, "mgl_PMVMatrix");
-    a_vertices = glGetAttribLocation(shaderProgram, "mgl_Vertex");
-    a_colors = glGetAttribLocation(shaderProgram, "mgl_Color");
-    
-    {
-        // Create vertex buffer object and copy vertex data into it
-        GLuint vbos[2];
-        glGenBuffers(2, vbos);
-        
-        // Specify the layout of the shader vertex data (positions only, 3 floats)
-        glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
-        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices2.size() * Vec3f::byte_size), vertices2.data(), GL_STATIC_DRAW);
-        glEnableVertexAttribArray(a_vertices);
-        glVertexAttribPointer(a_vertices, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-        
-        // Specify the layout of the shader vertex data (positions only, 4 floats)
-        glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
-        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(colors2.size() * Vec4f::byte_size), colors2.data(), GL_STATIC_DRAW);
-        glEnableVertexAttribArray(a_colors);
-        glVertexAttribPointer(a_colors, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
-    }
-        
-    PMVMat4f& pmv = rc.pmv();
-    pmv.getP().loadIdentity();
-    pmv.getMv().loadIdentity();
-    pmv.translateMv(0, 0, -10);
-    reshape(rc);    
-
-    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
-    glEnable(GL_DEPTH_TEST);
-    
-    return shaderProgram;
-}
-
-void mainloop() {
-    static uint64_t t_sum = 0;
-    static uint64_t t_last = jau::environment::getElapsedMillisecond(); // [ms]
-    static gamp::input_event_t event;
-    static RenderContext renderContext(initialize);
-
-    gamp::handle_events(event);
-    if( event.pressed_and_clr( gamp::input_event_type_t::WINDOW_CLOSE_REQ ) ) {
-        printf("Exit Application\n");
-        #if defined(__EMSCRIPTEN__)
-            emscripten_cancel_main_loop();
-        #else
-            exit(0);
-        #endif
-    } else if( event.pressed_and_clr( gamp::input_event_type_t::WINDOW_RESIZED ) ) {
-        reshape(renderContext);
-    }
-    const bool animating = !event.paused();
-
-    const uint64_t t1 = jau::environment::getElapsedMillisecond(); // [ms]
-    const uint64_t dt = animating ? t1 - t_last : 0; // [ms]
-    t_sum += dt;
-    t_last = t1;
-
-    {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    
-        
-        PMVMat4f& pmv = renderContext.pmv();
-        pmv.getMv().loadIdentity();
-        pmv.translateMv(0, 0, -10);
-        
-        const float ang = jau::adeg_to_rad(static_cast<float>(t_sum) * 360.0f) / 4000.0f;
-        pmv.rotateMv(ang, 0, 0, 1);
-        pmv.rotateMv(ang, 0, 1, 0);
-            
-        updatePMv(pmv);
-        
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    }
-
-    gamp::swap_gpu_buffer();
-}
-
-int main(int argc, char *argv[])
+int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
     int win_width = 1920, win_height = 1000;
     #if defined(__EMSCRIPTEN__)
@@ -259,28 +271,34 @@ int main(int argc, char *argv[])
                 win_height = atoi(argv[i+1]);
                 ++i;
             } else if( 0 == strcmp("-fps", argv[i]) && i+1<argc) {
-                gamp::forced_fps = atoi(argv[i+1]);
+                gamp::set_gpu_forced_fps( atoi(argv[i+1]) );
                 ++i;
             }
         }
-        printf("-fps: %d\n", gamp::forced_fps);
-    }
-    gamp::set_gpu_stats_show(true);
-    
-    if( !gamp::init_gfx_subsystem("gamp example01", win_width, win_height, true /* vsync */) ) {
-        printf("Exit...");
-        return 1;
-    }    
-    {
-        const int w = gamp::viewport.width();
-        const int h = gamp::viewport.width();
-        const float a = (float)w / (float)h;
-        printf("FB %d x %d [w x h], aspect %f [w/h]; Win %d x %d\n", w, h, a, gamp::win_width, gamp::win_height);
+        printf("-fps: %d\n", gamp::gpu_forced_fps());
     }
 
+    if( !gamp::init_gfx_subsystem(argv[0]) ) {
+        printf("Exit (0)...");
+        return 1;
+    }
+    main_win = gamp::createWindow("gamp example01", win_width, win_height, true /* vsync */);
+    if( !main_win ) {
+        printf("Exit (1)...");
+        return 1;
+    }
+    {
+        const int w = main_win->surfaceSize().x;
+        const int h = main_win->surfaceSize().y;
+        const float a = (float)w / (float)h;
+        printf("FB %d x %d [w x h], aspect %f [w/h]; Win %s\n", w, h, a, main_win->windowBounds().toString().c_str());
+    }
+    main_win->addKeyListener(std::make_shared<MyKeyListener>());
+    main_win->addRenderListener(std::make_shared<MyRenderListener>());
+
     #if defined(__EMSCRIPTEN__)
-        emscripten_set_main_loop(mainloop, 0, 1);
+        emscripten_set_main_loop(gamp::mainloop_default(), 0, 1);
     #else
-        while( true ) { mainloop(); }
+        while( true ) { gamp::mainloop_default(); }
     #endif
 }

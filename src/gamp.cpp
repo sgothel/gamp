@@ -23,30 +23,32 @@
  */
 #include "gamp/gamp.hpp"
 
-#include <cstdint>
 #include <ctime>
 #include <jau/environment.hpp>
+#include <jau/file_util.hpp>
 
-int gamp::win_width=0;
-int gamp::win_height=0;
-float gamp::devicePixelRatio[] = { 1, 1 };
-int gamp::display_frames_per_sec=60;
-int gamp::forced_fps = -1;
-jau::util::VersionNumber gamp::gl_version;
+static std::string m_asset_dir;
 
 //
 //
 //
-std::string gamp::input_event_t::to_string() const noexcept {
-    return "event[p1 "+std::to_string(has_any_p1())+
-            ", pressed "+std::to_string(m_pressed)+", p1_mask "+std::to_string(p1_mask)+
-            ", p2 "+std::to_string(has_any_p2())+
-            ", paused "+std::to_string(paused())+
-            ", close "+std::to_string(pressed( gamp::input_event_type_t::WINDOW_CLOSE_REQ ))+
-            ", last "+std::to_string((int)last)+", key "+std::to_string(last_key_code)+
-            ", text "+text+
-            ", ptr["+std::to_string(pointer_id)+" "+std::to_string(pointer_x)+"/"+
-            std::to_string(pointer_y)+"]]"
-            ;
+
+std::string gamp::lookup_and_register_asset_dir(const char* exe_path, const char* asset_file, const char* asset_install_subdir) noexcept {
+    m_asset_dir = jau::fs::lookup_asset_dir(exe_path, asset_file, asset_install_subdir);
+    return m_asset_dir;
+}
+std::string gamp::asset_dir() noexcept { return m_asset_dir; }
+
+std::string gamp::resolve_asset(const std::string &asset_file, bool lookup_direct) noexcept {
+    if( lookup_direct && jau::fs::exists(asset_file) ) {
+        return asset_file;
+    }
+    if( m_asset_dir.size() ) {
+        std::string fname1 = m_asset_dir+"/"+asset_file;
+        if( jau::fs::exists(fname1) ) {
+            return fname1;
+        }
+    }
+    return "";
 }
 
