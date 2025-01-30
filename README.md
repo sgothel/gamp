@@ -84,8 +84,8 @@ For Debian you can use this [clang alternatives setup script](https://jausoft.co
 #### Build preparations
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.sh}
-git clone --recurse-submodules git://jausoft.com/srv/scm/direct_bt.git
-cd direct_bt
+git clone --recurse-submodules git://jausoft.com/srv/scm/gamp.git
+cd gamp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 <a name="cmake_presets_optional"></a>
@@ -168,18 +168,6 @@ See [jaulib CMake variables](https://jausoft.com/cgit/jaulib.git/about/README.md
 ### Unit Testing
 *TBD*
 
-### Cross Build
-*TBD*
-
-Also provided is a [cross-build script](https://jausoft.com/cgit/direct_bt.git/tree/scripts/build-cross.sh)
-using chroot into a target system using [QEMU User space emulation](https://qemu-project.gitlab.io/qemu/user/main.html)
-and [Linux kernel binfmt_misc](https://wiki.debian.org/QemuUserEmulation)
-to run on other architectures than the host.
-
-You may use [our pi-gen branch](https://jausoft.com/cgit/pi-gen.git/about/) to produce 
-a Raspi-arm64, Raspi-armhf or PC-amd64 target image.
-
-
 ## Build Status
 *Will be updated*
 
@@ -226,11 +214,11 @@ IDE integration configuration files are provided for
   - [cschlosser.doxdocgen](https://github.com/cschlosser/doxdocgen)
   - [jerrygoyal.shortcut-menu-bar](https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension)
 
-For VSCodium one might copy the [example root-workspace file](https://jausoft.com/cgit/direct_bt.git/tree/.vscode/direct_bt.code-workspace_example)
+For VSCodium one might copy the [example root-workspace file](https://jausoft.com/cgit/gamp.git/tree/.vscode/gamp.code-workspace_example)
 to the parent folder of this project (*note the filename change*) and adjust the `path` to your filesystem.
 ~~~~~~~~~~~~~
-cp .vscode/direct_bt.code-workspace_example ../direct_bt.code-workspace
-vi ../direct_bt.code-workspace
+cp .vscode/gamp.code-workspace_example ../gamp.code-workspace
+vi ../gamp.code-workspace
 ~~~~~~~~~~~~~
 Then you can open it via `File . Open Workspace from File...` menu item.
 - All listed extensions are referenced in this workspace file to be installed via the IDE
