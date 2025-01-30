@@ -9,6 +9,11 @@ if (EMSCRIPTEN)
   set(USE_LIBUNWIND OFF CACHE BOOL "" FORCE)
 endif()
 
+# Enforce debug mode and disabled testing (low power machines, ..)
+#
+# set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
+# set(BUILD_TESTING OFF CACHE STRING "" FORCE)
+
 include(jaulib/JaulibSetup.cmake)
 JaulibPreset()
 
