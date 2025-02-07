@@ -37,7 +37,9 @@
 // #include <SDL2/SDL_opengles2.h>
 
 // #include <gamp/renderer/gl/glarraydata.hpp>
-// #include <gamp/renderer/gl/glarraydatawrapper.hpp>
+// #include <gamp/renderer/gl/util/glbuffers.hpp>
+// #include <gamp/renderer/gl/util/glarraydatawrapper.hpp>
+// #include <gamp/renderer/gl/util/glarraydatamutable.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;
