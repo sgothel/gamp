@@ -274,7 +274,7 @@ namespace gamp::render::gl {
          * Disclaimer: The validation might not satisfy updated OpenGL specifications.
          * </p>
          */
-        constexpr bool isValidArrayDataType(GLenum index, size_t comps, GLenum type,
+        constexpr bool isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                                             bool isVertexAttribPointer, bool throwException) const {
             if( isGLES1() ) {
                 if(isVertexAttribPointer) {
@@ -587,6 +587,7 @@ namespace gamp::render::gl {
     inline std::ostream& operator<<(std::ostream& out, const GLProfile& v) {
         return out << v.toString();
     }
+    typedef GLProfile GL;
 
 } // namespace gamp::render::gl
 
