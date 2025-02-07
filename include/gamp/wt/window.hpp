@@ -291,7 +291,7 @@ namespace gamp::wt {
 
             size_t removeAllRenderListener() {
                 const size_t count = m_render_listener.size();
-                m_render_listener.clear();
+                m_render_listener.clear(true);
                 return count;
             }
 
@@ -331,7 +331,7 @@ namespace gamp::wt {
                     }
                 }
                 if( clearRenderListener ) {
-                    m_render_listener.clear();
+                    m_render_listener.clear(true);
                 }
             }
 

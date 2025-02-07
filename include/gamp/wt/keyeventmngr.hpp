@@ -117,7 +117,7 @@ namespace gamp::wt {
 
         size_t removeAllListener() {
             const size_t count = m_keyListener.size();
-            m_keyListener.clear();
+            m_keyListener.clear(true);
             return count;
         }
 

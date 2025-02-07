@@ -92,7 +92,7 @@ namespace gamp::wt {
 
         size_t removeAllListener() {
             const size_t count = m_windowListener.size();
-            m_windowListener.clear();
+            m_windowListener.clear(true);
             return count;
         }
 
