@@ -33,8 +33,11 @@
 #include <gamp/wt/keyevent.hpp>
 #include <gamp/wt/window.hpp>
 
-#include <GLES2/gl2.h>
-#include <SDL2/SDL_opengles2.h>
+#include <gamp/renderer/gl/glheader.hpp>
+// #include <SDL2/SDL_opengles2.h>
+
+// #include <gamp/renderer/gl/glarraydata.hpp>
+// #include <gamp/renderer/gl/glarraydatawrapper.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;

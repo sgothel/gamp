@@ -33,6 +33,9 @@
 #include <jau/util/VersionNumber.hpp>
 
 #include <cstdint>
+#include <gamp/renderer/gl/gltypes.hpp>
+#include <gamp/renderer/gl/glversionnum.hpp>
+
 #include "gamp/version.hpp"
 
 #include <GLES2/gl2.h>
@@ -104,11 +107,11 @@ static void on_window_resized(gamp::wt::Window* win, int wwidth, int wheight, co
     window_size.set(wwidth, wheight);
 
     // printf("SDL: Couldn't fetch renderer (window resize): %s\n", SDL_GetError());
-    int fb_width = static_cast<int>(static_cast<float>(wwidth) * devicePixelRatio[0]);
-    int fb_height = static_cast<int>(static_cast<float>(wheight) * devicePixelRatio[1]);
+    int fb_width = static_cast<int>(static_cast<float>(wwidth) * devicePixelRatio.x);
+    int fb_height = static_cast<int>(static_cast<float>(wheight) * devicePixelRatio.y);
     if( verbose ) {
         printf("DevicePixelRatio Size %f x %f -> %d x %d\n",
-               devicePixelRatio[0], devicePixelRatio[1], fb_width, fb_height);
+               devicePixelRatio.x, devicePixelRatio.y, fb_width, fb_height);
     }
 
     glViewport(0, 0, fb_width, fb_height);
@@ -127,6 +130,9 @@ static void on_window_resized(gamp::wt::Window* win, int wwidth, int wheight, co
         if( mode.refresh_rate > 0 ) {
             monitor_frames_per_sec = mode.refresh_rate;
         }
+    }
+    if( verbose ) {
+        printf("Window Resized: %s\n", win->toString().c_str());
     }
     win->notifyWindowResize(when, window_size, surface_size);
 }
@@ -227,14 +233,17 @@ gamp::wt::WindowRef gamp::createWindow(const char* title, int wwidth, int wheigh
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    std::string_view glp_v = render::gl::GLProfile::GLES3;
     sdl_glc = SDL_GL_CreateContext(sdl_win);
     if (nullptr == sdl_glc) {
         printf("SDL: Error creating GL ES 3 context: %s\n", SDL_GetError());
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        glp_v = render::gl::GLProfile::GLES2;
         sdl_glc = SDL_GL_CreateContext(sdl_win);
         if (nullptr == sdl_glc) {
+            glp_v = render::gl::GLProfile::GL_UNDEF;
             printf("SDL: Error creating GL ES 2 context: %s\n", SDL_GetError());
             SDL_DestroyWindow(sdl_win);
             return nullptr;
@@ -253,13 +262,16 @@ gamp::wt::WindowRef gamp::createWindow(const char* title, int wwidth, int wheigh
         SDL_DestroyWindow(sdl_win);
         return nullptr;
     }
-    jau::util::VersionNumber gl_version = jau::util::VersionNumber( gl_version_cstr );
-    printf("SDL GL context: %s\n", gl_version.toString().c_str());
+    gamp::render::gl::GLVersionNumber gl_version = gamp::render::gl::GLVersionNumber::create(gl_version_cstr);
+    render::gl::GLProfile glp(glp_v, gl_version);
+
+    // jau::util::VersionNumber gl_version = jau::util::VersionNumber( gl_version_cstr );
+    printf("SDL GL context: %s, %s\n", gl_version.toString().c_str(), glp.toString().c_str());
 
     gpu_frame_count = 0;
     jau::math::Recti window_bounds(64, 64, wwidth, wheight);
     jau::math::Vec2i surface_size(wwidth, wheight);
-    gamp::wt::WindowRef res = gamp::wt::Window::create((handle_t)sdl_win, window_bounds, (handle_t)sdl_win, surface_size, (handle_t)sdl_glc);
+    gamp::wt::WindowRef res = gamp::wt::Window::create((handle_t)sdl_win, window_bounds, (handle_t)sdl_win, surface_size, (handle_t)sdl_glc, glp, gl_version);
 
     on_window_resized(res.get(), wwidth, wheight, getElapsedMonotonicTime(), true);
 
@@ -570,7 +582,7 @@ size_t gamp::handle_events() noexcept {
                 for(const gamp::wt::WindowRef& win : *window_list.snapshot() ) {
                     win->notifyWindowEvent(EVENT_WINDOW_DESTROY_NOTIFY, when);
                 }
-                window_list.clear();
+                window_list.clear(true);
               } break;
 
             case SDL_WINDOWEVENT: {
@@ -667,5 +679,5 @@ void gamp::shutdown() noexcept {
     for(const gamp::wt::WindowRef& win : *window_list.snapshot() ) {
         win->notifyWindowEvent(EVENT_WINDOW_DESTROY_NOTIFY, when);
     }
-    window_list.clear();
+    window_list.clear(true);
 }

@@ -1,6 +1,6 @@
 /*
  * Author: Sven Gothel <sgothel@jausoft.com>
- * Copyright (c) 2022 Gothel Software e.K.
+ * Copyright (c) 2022-2025 Gothel Software e.K.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -21,15 +21,15 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef JAU_GAMP_VERSION_HPP_
-#define JAU_GAMP_VERSION_HPP_
 
-#include <jau/util/VersionNumber.hpp>
+#ifndef GAMP_GLHEADER_HPP_
+#define GAMP_GLHEADER_HPP_
 
-namespace gamp {
-    extern const jau::util::VersionNumberString VERSION;
-    extern const char* VERSION_SHORT;
-    extern const char* VERSION_API;
-} /* namespace gamp */
+#include <GLES2/gl2.h>
+#include <GLES3/gl31.h>
+#include <GLES3/gl32.h>
 
-#endif /* JAU_GAMP_VERSION_HPP_ */
+#include <GL/gl.h>
+#include <GL/glext.h>
+
+#endif /* GAMP_GLHEADER_HPP_ */

@@ -29,6 +29,7 @@
 #include <jau/math/vec2i.hpp>
 #include <jau/string_util.hpp>
 
+#include <gamp/renderer/gl/gltypes.hpp>
 #include <gamp/wt/surface.hpp>
 #include <gamp/wt/winevent.hpp>
 #include <gamp/wt/wineventmngr.hpp>
@@ -127,6 +128,8 @@ namespace gamp::wt {
         private:
             handle_t m_window_handle;
             handle_t m_rendering_context;
+            gamp::render::gl::GLProfile m_glprofile;
+            gamp::render::gl::GLVersionNumber m_glversion;
 
             /// Window client-area top-left position and size in window units
             Recti m_window_bounds;
@@ -174,9 +177,11 @@ namespace gamp::wt {
         public:
             /** Private ctor for single Window::create() method w/o public ctor. */
             Window(Private, handle_t window_handle, const Recti& window_bounds,
-                   handle_t surface_handle, const Vec2i& surface_size, handle_t rendering_context)
+                   handle_t surface_handle, const Vec2i& surface_size,
+                   handle_t rendering_context, gamp::render::gl::GLProfile glp, gamp::render::gl::GLVersionNumber glv)
             : Surface(Surface::Private(), surface_handle, surface_size),
-              m_window_handle(window_handle), m_rendering_context(rendering_context),
+              m_window_handle(window_handle),
+              m_rendering_context(rendering_context), m_glprofile(glp), m_glversion(std::move(glv)),
               m_window_bounds(window_bounds), m_state(WindowState::none),
               m_win_selflistener(std::make_shared<SelfWinListener>(this))
             {
@@ -185,9 +190,10 @@ namespace gamp::wt {
             }
 
             static WindowRef create(handle_t window_handle, const Recti& window_bounds,
-                                    handle_t surface_handle, const Vec2i& surface_size, handle_t rendering_context) {
+                                    handle_t surface_handle, const Vec2i& surface_size, handle_t rendering_context,
+                                    const gamp::render::gl::GLProfile& glp, const gamp::render::gl::GLVersionNumber& glv) {
                 return std::make_shared<Window>(Private(), window_handle, window_bounds,
-                                                surface_handle, surface_size, rendering_context);
+                                                surface_handle, surface_size, rendering_context, glp, glv);
             }
 
             Window(const Window&) = delete;
@@ -197,6 +203,9 @@ namespace gamp::wt {
              * Releases this instance.
              */
             ~Window() noexcept override = default;
+
+            constexpr const gamp::render::gl::GLProfile& glProfile() const noexcept { return m_glprofile; }
+            constexpr const gamp::render::gl::GLVersionNumber& glVersion() const noexcept { return m_glversion; }
 
             /**
              * Returns the associated {@link Surface} of this {@link SurfaceHolder}.
@@ -349,8 +358,9 @@ namespace gamp::wt {
                 std::string res = "Window[";
                 res.append(to_string(m_state))
                    .append(", handle ").append(jau::to_hexstring(m_window_handle))
-                   .append(", rctx ").append(jau::to_hexstring(m_rendering_context))
-                   .append(", bounds ").append(m_window_bounds.toString())
+                   .append(", rctx[").append(jau::to_hexstring(m_rendering_context))
+                   .append(", ").append(m_glprofile.toString()).append(", ").append(m_glversion.toString())
+                   .append("], bounds ").append(m_window_bounds.toString())
                    .append(", listener[render ").append(std::to_string(m_render_listener.size()))
                    .append(", window ").append(std::to_string(windowListenerCount()))
                    .append(", key ").append(std::to_string(keyListenerCount()))
