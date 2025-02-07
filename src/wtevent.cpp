@@ -22,7 +22,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <gamp/wt/wtkeyevent.hpp>
+#include <gamp/wt/keyevent.hpp>
 
 using namespace jau;
 using namespace gamp::wt::event;

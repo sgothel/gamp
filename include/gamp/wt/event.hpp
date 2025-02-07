@@ -26,6 +26,7 @@
 
 #include <string>
 #include <vector>
+
 #include <jau/enum_util.hpp>
 #include <jau/int_math_ct.hpp>
 #include <jau/fraction_type.hpp>

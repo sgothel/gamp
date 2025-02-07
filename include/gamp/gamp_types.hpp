@@ -24,16 +24,9 @@
 #ifndef JAU_GAMP_TYPES_HPP_
 #define JAU_GAMP_TYPES_HPP_
 
-#include <cinttypes>
 #include <cmath>
 #include <cstdarg>
 #include <cstdint>
-#include <limits>
-#include <memory>
-#include <mutex>
-#include <string>
-#include <type_traits>
-#include <vector>
 
 #include <jau/cpp_lang_util.hpp>
 #include <jau/environment.hpp>

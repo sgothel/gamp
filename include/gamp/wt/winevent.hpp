@@ -32,7 +32,7 @@
 #include <jau/cow_darray.hpp>
 #include <jau/math/recti.hpp>
 
-#include <gamp/wt/wtevent.hpp>
+#include <gamp/wt/event.hpp>
 
 namespace gamp::wt::event {
     class WindowEvent : public WTEvent {

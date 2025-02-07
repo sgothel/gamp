@@ -23,14 +23,15 @@
  */
 #include <gamp/gamp.hpp>
 
-#include <gamp/wt/wtevent.hpp>
-#include <gamp/wt/wtkeyevent.hpp>
 #include <cstdio>
 #include <cmath>
-#include <gamp/wt/wtwindow.hpp>
 #include <memory>
 #include <jau/basic_types.hpp>
 #include <jau/fraction_type.hpp>
+
+#include <gamp/wt/event.hpp>
+#include <gamp/wt/keyevent.hpp>
+#include <gamp/wt/window.hpp>
 
 #include <GLES2/gl2.h>
 #include <SDL2/SDL_opengles2.h>

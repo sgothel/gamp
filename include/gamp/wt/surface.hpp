@@ -24,12 +24,13 @@
 #ifndef GAMP_WTSURFACE_HPP_
 #define GAMP_WTSURFACE_HPP_
 
-#include <gamp/gamp_types.hpp>
 #include <jau/fraction_type.hpp>
 #include <jau/int_types.hpp>
 #include <jau/locks.hpp>
 #include <memory>
 #include <thread>
+
+#include <gamp/gamp_types.hpp>
 
 namespace gamp::wt {
     class Window;

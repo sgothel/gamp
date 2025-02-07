@@ -31,8 +31,8 @@
 #include <jau/fraction_type.hpp>
 #include <jau/cow_darray.hpp>
 
-#include <gamp/wt/wtevent.hpp>
-#include <gamp/wt/wtkeyevent.hpp>
+#include <gamp/wt/event.hpp>
+#include <gamp/wt/keyevent.hpp>
 
 namespace gamp::wt {
 

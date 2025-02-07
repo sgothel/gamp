@@ -1,6 +1,6 @@
 /*
  * Author: Sven Gothel <sgothel@jausoft.com> and Svenson Han Gothel
- * Copyright (c) 2022-2024 Gothel Software e.K.
+ * Copyright (c) 2022-2025 Gothel Software e.K.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -27,10 +27,10 @@
 #include <gamp/gamp_types.hpp>
 #include <gamp/version.hpp>
 
-#include <gamp/wt/wtevent.hpp>
-#include <gamp/wt/wtkeyevent.hpp>
-#include <gamp/wt/wtwinevent.hpp>
-#include <gamp/wt/wtwindow.hpp>
+#include <gamp/wt/event.hpp>
+#include <gamp/wt/keyevent.hpp>
+#include <gamp/wt/winevent.hpp>
+#include <gamp/wt/window.hpp>
 
 /**
  * Basic computer graphics math and utilities helping with the framebuffer and I/O tooling.

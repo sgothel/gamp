@@ -21,7 +21,6 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <algorithm>
 #include <gamp/gamp.hpp>
 
 #include <jau/basic_types.hpp>
@@ -34,10 +33,6 @@
 #include <jau/util/VersionNumber.hpp>
 
 #include <cstdint>
-#include <gamp/wt/wtevent.hpp>
-#include <gamp/wt/wtkeyevent.hpp>
-#include <gamp/wt/wtwinevent.hpp>
-#include <gamp/wt/wtwindow.hpp>
 #include "gamp/version.hpp"
 
 #include <GLES2/gl2.h>

@@ -33,7 +33,7 @@
 #include <jau/fraction_type.hpp>
 #include <jau/string_util.hpp>
 
-#include <gamp/wt/wtevent.hpp>
+#include <gamp/wt/event.hpp>
 
 namespace gamp::wt::event {
 

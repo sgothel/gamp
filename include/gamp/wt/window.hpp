@@ -24,15 +24,15 @@
 #ifndef GAMP_WTWINDOW_HPP_
 #define GAMP_WTWINDOW_HPP_
 
-#include <gamp/wt/wtsurface.hpp>
-
-#include <gamp/wt/wtwinevent.hpp>
-#include <gamp/wt/wtwineventmngr.hpp>
-#include <gamp/wt/wtkeyeventmngr.hpp>
 #include <jau/basic_types.hpp>
 #include <jau/fraction_type.hpp>
 #include <jau/math/vec2i.hpp>
 #include <jau/string_util.hpp>
+
+#include <gamp/wt/surface.hpp>
+#include <gamp/wt/winevent.hpp>
+#include <gamp/wt/wineventmngr.hpp>
+#include <gamp/wt/keyeventmngr.hpp>
 
 namespace gamp::wt {
     class Window;
