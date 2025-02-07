@@ -13,6 +13,8 @@ endif()
 #
 # set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
 # set(BUILD_TESTING OFF CACHE STRING "" FORCE)
+# set(CMAKE_C_COMPILER" "gcc" CACHE STRING "" FORCE)
+# set(CMAKE_CXX_COMPILER "g++" CACHE STRING "" FORCE)
 
 include(jaulib/JaulibSetup.cmake)
 JaulibPreset()
