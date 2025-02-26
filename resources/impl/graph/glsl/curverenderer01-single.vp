@@ -1,0 +1,37 @@
+// Copyright (c) 2010-2025 Gothel Software e.K.
+
+#if __VERSION__ >= 130
+  #define attribute in
+  #define varying out
+#endif
+
+#include uniforms.glsl
+#include attributes.glsl
+#include varyings.glsl
+
+void main(void)
+{
+    gl_Position = gcu_PMVMatrix01[0] * gcu_PMVMatrix01[1] * gca_Vertices;
+#if 1
+    gcv_CurveParam = gca_CurveParams;
+#else
+    if( gcv_CurveParams.x <= -10.0 ) {
+        // vec4 tc = gcu_PMVMatrix01[0] * gcu_PMVMatrix01[1] * vec4(gca_CurveParams.xy, gca_Vertices.z, 1);
+        // gcv_CurveParams = vec3(tc.xy, gca_CurveParams.z);
+        gcv_CurveParam = gca_CurveParams;
+    } else {
+        gcv_CurveParam = gca_CurveParams;
+    }
+#endif
+
+#ifdef USE_FRUSTUM_CLIPPING
+    gcv_ClipCoord = (gcu_PMVMatrix01[1] * gca_Vertices).xyz; // Mv
+#endif
+
+#ifdef USE_COLOR_TEXTURE
+    gcv_ColorTexCoord = ( gca_Vertices.xy - gcu_ColorTexBBox[0] ) / ( gcu_ColorTexBBox[1] - gcu_ColorTexBBox[0] );
+#endif
+#ifdef USE_COLOR_CHANNEL
+    gcv_Color = gca_Colors;
+#endif
+}

@@ -27,15 +27,24 @@
 #include <gamp/gamp_types.hpp>
 #include <gamp/version.hpp>
 
-#include <gamp/wt/event.hpp>
-#include <gamp/wt/keyevent.hpp>
-#include <gamp/wt/winevent.hpp>
+#include <gamp/wt/event/event.hpp>
+#include <gamp/wt/event/keyevent.hpp>
+#include <gamp/wt/event/winevent.hpp>
 #include <gamp/wt/window.hpp>
 
 /**
- * Basic computer graphics math and utilities helping with the framebuffer and I/O tooling.
+ * Gamp: Graphics, Audio, Multimedia and Processing Framework (Native C++, WebAssembly, ...)
+ *
+ * *Gamp* addresses native hardware accelerated graphics, audio, multimedia and processing.
+ * It is implemented in C++, supports WebAssembly and perhaps interfacing w/ other languages/systems.
  */
 namespace gamp {
+    /** @defgroup Gamp Gamp Root
+     *  Graphics, Audio, Multimedia and Processing Framework
+     *
+     *  @{
+     */
+
     std::string lookup_and_register_asset_dir(const char* exe_path, const char* asset_file="fonts/freefont/FreeSansBold.ttf", const char* asset_install_subdir="gamp") noexcept;
     std::string asset_dir() noexcept;
     std::string resolve_asset(const std::string &asset_file, bool lookup_direct=false) noexcept;
@@ -68,18 +77,32 @@ namespace gamp {
     bool is_gfx_subsystem_initialized() noexcept;
     /** GFX Toolkit: Initialize the subsystem once. */
     bool init_gfx_subsystem(const char* exe_path);
-    /** GFX Toolkit: Create a window. */
-    gamp::wt::WindowRef createWindow(const char* title, int wwidth, int wheight, bool enable_vsync=true);
-    /** GFX Toolkit: Swap GPU back to front framebuffer using given fps, maintaining vertical monitor synchronization if possible. fps <= 0 implies automatic fps. */
+    /**
+     * GFX Toolkit: Swap GPU back to front framebuffer of all windows using given fps, maintaining vertical monitor synchronization if possible. fps <= 0 implies automatic fps.
+     *
+     * Should not be called by user, instead use mainloop_default().
+     *
+     * @param fps use gpu_forced_fps()
+     *
+     * @see mainloop_default()
+     */
     void swap_gpu_buffer(int fps) noexcept;
-    /** GFX Toolkit: Swap GPU back to front framebuffer using forced_fps, maintaining vertical monitor synchronization if possible. */
-    inline void swap_gpu_buffer() noexcept { swap_gpu_buffer(gpu_forced_fps()); }
 
     /** Returns the measured gpu fps each 5s, starting with monitor_fps() */
     float gpu_avg_fps() noexcept;
     /** Returns the measured gpu frame duration in [s] each 5s, starting with 1/gpu_avg_fps() */
     const jau::fraction_timespec& gpu_avg_framedur() noexcept;
 
+    /**
+     * Performs the whole tasks for all created gamp::wt::Window instances
+     * - handle events and propagates them to registered listener at each window
+     * - renders all gamp::wt::Window first
+     *   - calling each gamp::wt::Window::display() method, serving gamp::wt::RenderListener
+     * - swaps front/back buffer of all gamp::wt::Window instances
+     * - adjust timers for whole set
+     *
+     * @see swap_gpu_buffer()
+     */
     void mainloop_default() noexcept;
     void shutdown() noexcept;
 
@@ -97,6 +120,7 @@ namespace gamp {
      */
     size_t handle_events() noexcept;
 
+    /**@}*/
 }  // namespace gamp
 
 #endif /*  JAU_GAMP_HPP_ */

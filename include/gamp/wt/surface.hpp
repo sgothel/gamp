@@ -27,12 +27,17 @@
 #include <jau/fraction_type.hpp>
 #include <jau/int_types.hpp>
 #include <jau/locks.hpp>
+#include <gamp/renderer/gl/glprofile.hpp>
 #include <memory>
 #include <thread>
 
 #include <gamp/gamp_types.hpp>
 
 namespace gamp::wt {
+    /** \addtogroup Gamp_WT
+     *
+     *  @{
+     */
     class Window;
     class Surface;
     typedef std::shared_ptr<Surface> SurfaceRef;
@@ -57,11 +62,16 @@ namespace gamp::wt {
             }
 
         private:
+            int m_swapInterval = -1;
             handle_t m_surface_handle;
             /// Surface client-area size in pixel units
             Vec2i m_surface_size;
+            gamp::render::gl::GL m_renderContext;
 
             jau::RecursiveLock m_surface_lock;
+
+            void disposeImpl(handle_t) noexcept {}
+            bool setSwapIntervalImpl(int v) noexcept;
 
         protected:
             struct Private{ explicit Private() = default; };
@@ -93,6 +103,71 @@ namespace gamp::wt {
                     nativeSurfaceLock();
                 }
             }
+
+            virtual void disposedNotified(const jau::fraction_timespec&) noexcept {
+                m_surface_handle = 0;
+                m_renderContext.releasedNotify();
+            }
+            virtual void dispose(const jau::fraction_timespec&) noexcept {
+                m_renderContext.dispose();
+                if( m_surface_handle ) {
+                    disposeImpl(m_surface_handle);
+                    m_surface_handle = 0;
+                }
+            }
+
+            const SurfaceRef shared() { return shared_from_this(); }
+
+            bool createContext(gamp::render::gl::GLProfileMask profileMask, gamp::render::gl::GLContextFlags contextFlags) {
+                gamp::render::gl::GL gl = createContext(shared(), profileMask, contextFlags, nullptr);
+                if( gl.isValid() ) {
+                    ownRenderingContext(std::move(gl));
+                    return true;
+                }
+                return false;
+            }
+            static gamp::render::gl::GL createContext(const wt::SurfaceRef& surface,
+                                                      gamp::render::gl::GLProfileMask profileMask,
+                                                      gamp::render::gl::GLContextFlags contextFlags,
+                                                      gamp::render::gl::GL* shareWith) noexcept;
+
+            void ownRenderingContext(gamp::render::gl::GL&& gl) noexcept {
+                m_renderContext = std::move(gl);
+            }
+            constexpr const gamp::render::gl::GL& renderContext() const noexcept { return m_renderContext; }
+            constexpr gamp::render::gl::GL& renderContext() noexcept { return m_renderContext; }
+
+            /**
+             * Returns desired or determined swap interval. Defaults to -1, i.e. adaptive swap interval.
+             *
+             * Use setSwapInterval() to set the swap interval.
+             *
+             * *  [1..n] denotes the swap interval
+             * *  0 indicates no swap interval, e.g. by failed setSwapInterval()
+             * * -1 indicates adaptive swap interval
+             */
+            constexpr int swapInterval() const noexcept { return m_swapInterval; }
+
+            /** Returns true if swap interval could be set with the native toolkit post createContext(). See swapInterval(). */
+            bool setSwapInterval(int v) noexcept {
+                if( m_renderContext.isValid() ) {
+                    return setSwapIntervalImpl(v);
+                }
+                m_swapInterval=v;
+                return false;
+            }
+
+            /**
+             * Returns <code>true</code> if the drawable is rendered in
+             * OpenGL's coordinate system, <i>origin at bottom left</i>.
+             * Otherwise returns <code>false</code>, i.e. <i>origin at top left</i>.
+             *
+             * Default impl. is <code>true</code>, i.e. OpenGL coordinate system.
+             *
+             * Currently only MS-Windows bitmap offscreen drawable uses a non OpenGL orientation and hence returns <code>false</code>.<br/>
+             * This removes the need of a vertical flip when used in AWT or Windows applications.
+             */
+            constexpr bool isGLOriented() const noexcept { return true; }
 
             /** Returns the surface size of the client area excluding insets (window decorations) in pixel units. */
             constexpr const Vec2i& surfaceSize() const noexcept { return m_surface_size; }
@@ -198,11 +273,13 @@ namespace gamp::wt {
             std::string toString() const noexcept {
                 std::string res = "Surface[";
                 res.append("handle ").append(jau::to_hexstring(m_surface_handle))
+                   .append(", ").append(m_renderContext.toString())
                    .append(", size ").append(m_surface_size.toString())
                    .append("]");
                 return res;
             }
     };
+    /**@}*/
 }  // namespace gamp::wt
 
 #endif /*  GAMP_WTSURFACE_HPP_ */

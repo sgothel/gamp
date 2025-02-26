@@ -27,9 +27,14 @@
 #include <jau/util/VersionNumber.hpp>
 
 namespace gamp {
+    /** \addtogroup Gamp
+     *
+     *  @{
+     */
     extern const jau::util::VersionNumberString VERSION;
     extern const char* VERSION_SHORT;
     extern const char* VERSION_API;
+    /**@}*/
 } /* namespace gamp */
 
 #endif /* JAU_GAMP_VERSION_HPP_ */

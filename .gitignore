@@ -2,6 +2,7 @@
 build*/
 dist*/
 snaps/
+scripts-jau/
 /compile_commands.json
 *~
 *.log

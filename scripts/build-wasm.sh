@@ -30,7 +30,7 @@ buildit() {
     if [ -x /usr/bin/time ] ; then
         time_cmd="time"
         echo "time command available: ${time_cmd}"
-    else 
+    else
         time_cmd=""
         echo "time command not available"
     fi

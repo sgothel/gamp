@@ -1,30 +1,37 @@
-# Gamp: Graphics, Audio, Multimedia and Processing Library for C++ and WebAssembly
+# Gamp: Graphics, Audio, Multimedia and Processing Framework
 
 [Original document location](https://jausoft.com/cgit/gamp.git/about/).
 
 *gamp /gămp/* noun
 - A large baggy umbrella.
 > said to allude to Mrs. Gamp's umbrella, in Dickens's *Martin Chuzzlewit.*
-- often: one that is untidily or loosely tied up 
+- often: one that is untidily or loosely tied up
 > if you carry an umbrella use it tightly rolled and never as a gamp
 > — S. D. Barney
+
+... further *Gamp* stands for *Graphics, Audio, Multimedia and Processing*,
+the same way as [JogAmp](https://jogamp.org/), but natively plus using [WebAssembly](https://webassembly.org/).
 
 ## Git Repository
 This project's canonical repositories is hosted on [Gothel Software](https://jausoft.com/cgit/gamp.git/).
 
 ## Goals
-*Gamp* intends to replicate [JogAmp](https://jogamp.org/)'s experience to C++ in a condensed form,
+*Gamp* addresses hardware accelerated graphics, audio, multimedia and processing.
+It is implemented in C++, supports WebAssembly and perhaps interfacing w/ other languages/systems.
+
+*Gamp* replicates [JogAmp](https://jogamp.org/)'s experience natively via C++ in a condensed form,
 allowing a similar workflow on native targets *and* within the browser via [WebAssembly](https://webassembly.org/).
 
 Ironically this will bring back *runs everywhere* including *the web*.
 
 Initial goal is to reimplement [Graph/GraphUI](https://jausoft.com/blog/tag/graph_type_rendering/).
 
-*Gamp* uses [jaulib](https://jausoft.com/cgit/jaulib.git/about/) for general purpose 
+*Gamp* uses [jaulib](https://jausoft.com/cgit/jaulib.git/about/) for general purpose
 functionality including linear algebra and geometry.
 
 ## Online WebAssembly Examples
-* [RedSquare](https://jausoft.com/projects/gamp/redsquare01.html)
+* [Gears](https://jausoft.com/projects/gamp/GearsES2.html) ([source](../tree/demos/GearsES2.hpp)).
+* [RedSquare](https://jausoft.com/projects/gamp/RedSquareES2.html) ([source](../tree/demos/RedSquareES2.hpp)).
 
 ## Earlier Work
 [gfxbox2](https://jausoft.com/cgit/cs_class/gfxbox2.git/about/) of our CS class
@@ -35,6 +42,56 @@ This project is currently very much unstable and heavily *WIP*.
 
 All APIs, if any, will change - but I thought it is nice to share the
 development with whoever might be interested.
+
+### TODO List
+- [x] Windowing Toolkit (WT) abstraction w/ `Surface `and `Window`
+- [x] Basic `OpenGL` abstraction w/ `GLProfile` and `GL `context (bound to `Surface`)
+- [x] Event and listener (Window, Key, Pointer and Render)
+  - `RenderListener` covers `GLEventListener` semantics
+- [x] `SDL2` based mainloop implementation for the above
+  - Compatible with WebAssembly / emscripten
+- [x] `OpenGL` attribute array data objects for client and VBO server objects + interleaved sub-arrays
+  - `GLArrayData`, ... `GLArrayDataServer<T>`
+- [x] `OpenGL` uniform data objects
+  - `GLUniformData`, ... `GLUniformSyncMatrices4f`
+- [x] Shader support: `ShaderCode`, `-Program`, `-State`
+  - Seamless shader file reading, configuration to match OpenGL profile
+  - Shader state management: Shader switching and keeping attributes and uniforms in sync
+    - Requires using above `GLArrayData` and `GLUniformData`
+- [ ] Offscreen `Surface` / `FBObject`
+- [ ] Shared `OpenGL` Context
+  - Prepared, untested
+- [ ] Primitive rendering API (poly-lines, circle/ball, boxes, textures)
+  - Allow supporting simple applications like gfxbox2 utilizing Gamp
+- [ ] `OpenAL` Support
+  - Add OO abstraction to simplify usage
+- [ ] `GraphUI` Support
+  - [ ] Basic Graph
+  - [ ] `TTF` Font
+  - [ ] `FFMpeg` video playback
+  - [ ] `GraphUI` Scenegraph
+- [ ] Replace `SDL2` with `SDL3`
+
+## API Documentation
+[C++ API](https://jausoft.com/projects/gamp/build/documentation/cpp/html/index.html) documentation,
+with [topics](https://jausoft.com/projects/gamp/build/documentation/cpp/html/topics.html):
+
+* [Gamp](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp.html)
+  * [Windowing Toolkit](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp__WT.html)
+  * [GL Rendering](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp__GL.html)
+  * [GL Data](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp__GLData.html)
+  * [GL Shader](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp__GLSL.html)
+  * [GL Implementation Details](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp__GLImpl.html)
+* jaulib (standalone [topics](https://jausoft.com/projects/jaulib/build/documentation/cpp/html/topics.html)), excerpts:
+  * [Data Structures](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__DataStructs.html)
+  * [File Utilities](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__FileUtils.html)
+  * [Fraction Arithmetic and Time](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Fractions.html)
+  * [Function Wrapper](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__FunctionWrap.html)
+  * [IO Utilities](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__IOUtils.html)
+  * [Math](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Math.html)
+    * [Integer types and arithmetic](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Integer.html)
+    * [Float types and arithmetic](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Floats.html)
+    * [Constant Time (CT) Operations](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__ConstantTime.html)
 
 ## Supported Platforms
 - C++20 or better, see [jaulib C++ Minimum Requirements](https://jausoft.com/cgit/jaulib.git/about/README.md#cpp_min_req).
@@ -64,7 +121,7 @@ development with whoever might be interested.
 Installing build dependencies for Debian >= 12 and Ubuntu >= 22:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.sh}
 apt install git
-apt install build-essential g++ gcc libc-dev libpthread-stubs0-dev 
+apt install build-essential g++ gcc libc-dev libpthread-stubs0-dev
 apt install clang-18 clang-tidy-18 clangd-18 clang-tools-18 clang-format-18
 apt install libunwind8 libunwind-dev
 apt install cmake cmake-extras extra-cmake-modules pkg-config
@@ -73,11 +130,11 @@ apt install doxygen graphviz
 apt install emscripten
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If using optional clang toolchain, 
+If using optional clang toolchain,
 perhaps change the clang version-suffix of above clang install line to the appropriate version.
 
 After complete clang installation, you might want to setup the latest version as your default.
-For Debian you can use this [clang alternatives setup script](https://jausoft.com/cgit/jaulib.git/tree/scripts/setup_clang_alternatives.sh).
+For Debian you can use this [clang alternatives setup script](../../jaulib.git/tree/scripts/setup_clang_alternatives.sh).
 
 ### Build Procedure
 
@@ -91,7 +148,7 @@ cd gamp
 <a name="cmake_presets_optional"></a>
 
 #### CMake Build via Presets
-Analog to [jaulib CMake build presets](https://jausoft.com/cgit/jaulib.git/about/README.md#cmake_presets_optional) ...
+Analog to [jaulib CMake build presets](../../jaulib.git/about/README.md#cmake_presets_optional) ...
 
 Following debug presets are defined in `CMakePresets.json`
 - `debug`
@@ -136,11 +193,11 @@ You may utilize `scripts/build-preset.sh` for an initial build, install and test
 <a name="cmake_presets_hardcoded"></a>
 
 #### CMake Build via Hardcoded Presets
-Analog to [jaulib CMake hardcoded presets](https://jausoft.com/cgit/jaulib.git/about/README.md#cmake_presets_hardcoded) ...
+Analog to [jaulib CMake hardcoded presets](../../jaulib.git/about/README.md#cmake_presets_hardcoded) ...
 
-Besides above `CMakePresets.json` presets, 
+Besides above `CMakePresets.json` presets,
 `JaulibSetup.cmake` contains hardcoded presets for *undefined variables* if
-- `CMAKE_INSTALL_PREFIX` and `CMAKE_CXX_CLANG_TIDY` cmake variables are unset, or 
+- `CMAKE_INSTALL_PREFIX` and `CMAKE_CXX_CLANG_TIDY` cmake variables are unset, or
 - `JAU_CMAKE_ENFORCE_PRESETS` cmake- or environment-variable is set to `TRUE` or `ON`
 
 The hardcoded presets resemble `debug-clang` [presets](README.md#cmake_presets_optional).
@@ -161,7 +218,7 @@ the headers and library objects respectively in your dist location.
 Our cmake configure has a number of options, *cmake-gui* or *ccmake* can show
 you all the options. The interesting ones are detailed below:
 
-See [jaulib CMake variables](https://jausoft.com/cgit/jaulib.git/about/README.md#cmake_variables) for details.
+See [jaulib CMake variables](../../jaulib.git/about/README.md#cmake_variables) for details.
 
 <a name="unit_testing"></a>
 
@@ -173,10 +230,10 @@ See [jaulib CMake variables](https://jausoft.com/cgit/jaulib.git/about/README.md
 
 ## IDE Integration
 
-### Eclipse 
+### Eclipse
 Tested Eclipse 2024-03 (4.31).
 
-IDE integration configuration files are provided for 
+IDE integration configuration files are provided for
 - [Eclipse](https://download.eclipse.org/eclipse/downloads/) with extensions
   - [CDT](https://github.com/eclipse-cdt/) or [CDT @ eclipse.org](https://projects.eclipse.org/projects/tools.cdt)
   - [CDT-LSP](https://github.com/eclipse-cdt/cdt-lsp) *recommended*
@@ -187,7 +244,7 @@ IDE integration configuration files are provided for
   - `CMake Support`, install `C/C++ CMake Build Support` with ID `org.eclipse.cdt.cmake.feature.group`
     - Usable via via [Hardcoded CMake Presets](README.md#cmake_presets_hardcoded) with `debug-clang`
 
-The [Hardcoded CMake Presets](README.md#cmake_presets_hardcoded) will 
+The [Hardcoded CMake Presets](README.md#cmake_presets_hardcoded) will
 use `build/default` as the default build folder with debug enabled.
 
 Make sure to set the environment variable `CMAKE_BUILD_PARALLEL_LEVEL`
@@ -196,16 +253,16 @@ This will enable parallel build with the IDE.
 
 You can import the project to your workspace via `File . Import...` and `Existing Projects into Workspace` menu item.
 
-For Eclipse one might need to adjust some setting in the `.project` and `.cproject` (CDT) 
+For Eclipse one might need to adjust some setting in the `.project` and `.cproject` (CDT)
 via Eclipse settings UI, but it should just work out of the box.
 
-Otherwise recreate the Eclipse project by 
-- delete `.project` and `.cproject` 
+Otherwise recreate the Eclipse project by
+- delete `.project` and `.cproject`
 - `File . New . C/C++ Project` and `Empty or Existing CMake Project` while using this project folder.
 
 ### VSCodium or VS Code
 
-IDE integration configuration files are provided for 
+IDE integration configuration files are provided for
 - [VSCodium](https://vscodium.com/) or [VS Code](https://code.visualstudio.com/) with extensions
   - [vscode-clangd](https://github.com/clangd/vscode-clangd)
   - [twxs.cmake](https://github.com/twxs/vs.language.cmake)
@@ -214,7 +271,7 @@ IDE integration configuration files are provided for
   - [cschlosser.doxdocgen](https://github.com/cschlosser/doxdocgen)
   - [jerrygoyal.shortcut-menu-bar](https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension)
 
-For VSCodium one might copy the [example root-workspace file](https://jausoft.com/cgit/gamp.git/tree/.vscode/gamp.code-workspace_example)
+For VSCodium one might copy the [example root-workspace file](../tree/.vscode/gamp.code-workspace_example)
 to the parent folder of this project (*note the filename change*) and adjust the `path` to your filesystem.
 ~~~~~~~~~~~~~
 cp .vscode/gamp.code-workspace_example ../gamp.code-workspace
@@ -230,7 +287,7 @@ Then you can open it via `File . Open Workspace from File...` menu item.
 ## Support & Sponsorship
 *Gamp* is lead by [Gothel Software](https://jausoft.com/).
 
-If you like to utilize *Gamp* in a commercial setting, 
+If you like to utilize *Gamp* in a commercial setting,
 please contact [Gothel Software](https://jausoft.com/) to setup a potential support contract
 or *just* help to fund the ongoing effort.
 

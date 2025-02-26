@@ -13,7 +13,7 @@ endif()
 #
 # set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
 # set(BUILD_TESTING OFF CACHE STRING "" FORCE)
-# set(CMAKE_C_COMPILER" "gcc" CACHE STRING "" FORCE)
+# set(CMAKE_C_COMPILER "gcc" CACHE STRING "" FORCE)
 # set(CMAKE_CXX_COMPILER "g++" CACHE STRING "" FORCE)
 
 include(jaulib/JaulibSetup.cmake)
@@ -86,6 +86,8 @@ set (gamp_VERSION_API        ${VERSION_API})
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/version.cpp.in
                 ${CMAKE_CURRENT_BINARY_DIR}/src/version.cpp)
 
+set (gamp_DOCS_DIR documentation)
+
 if (EMSCRIPTEN)
     message(STATUS "${PROJECT_NAME} EMSCRIPTEN build")
     set(USE_SFML OFF)
@@ -103,10 +105,24 @@ message(STATUS "${PROJECT_NAME} SYSTEM_USR_DIR ${SYSTEM_USR_DIR}")
 message(STATUS "${PROJECT_NAME} SYS_INCLUDE_DIRS ${SYS_INCLUDE_DIRS}")
 message(STATUS "${PROJECT_NAME} CMAKE_CXX_STANDARD_LIBRARIES = ${CMAKE_CXX_STANDARD_LIBRARIES}")
 
+# add a target to generate API documentation with Doxygen
+find_package (Doxygen)
+if (DOXYGEN_FOUND)
+  configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.cpp.out @ONLY)
+  add_custom_command (OUTPUT ${gamp_DOCS_DIR}/cpp
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${gamp_DOCS_DIR}
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.cpp.out
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/ ${CMAKE_CURRENT_SOURCE_DIR}/test/ ${CMAKE_CURRENT_SOURCE_DIR}/examples/
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Generating API documentation with Doxygen" VERBATIM
+  )
+  add_custom_target(doc DEPENDS ${gamp_DOCS_DIR}/cpp)
+endif (DOXYGEN_FOUND)
+
 if (BUILD_TESTING)
-  add_subdirectory (jaulib)
   enable_testing ()
-  # add_subdirectory (test)
+  # add_subdirectory (jaulib)
+  add_subdirectory (test)
 endif(BUILD_TESTING)
 
 add_subdirectory (src)

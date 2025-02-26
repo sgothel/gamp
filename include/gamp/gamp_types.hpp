@@ -40,6 +40,7 @@
 #include <jau/math/mat4f.hpp>
 #include <jau/math/recti.hpp>
 #include <jau/math/util/pmvmat4f.hpp>
+#include <jau/math/util/float_util.hpp>
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
@@ -48,9 +49,15 @@
 #endif
 
 namespace gamp {
+    /** \addtogroup Gamp
+     *
+     *  @{
+     */
+
     /** A native handle type, big enough to store a pointer. */
     typedef uintptr_t handle_t;
 
+    /**@}*/
 }  // namespace gamp
 
 #endif /*  JAU_GAMP_TYPES_HPP_ */

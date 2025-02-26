@@ -25,11 +25,15 @@
 #ifndef GAMP_GLVERSIONNUMBER_HPP_
 #define GAMP_GLVERSIONNUMBER_HPP_
 
-#include <jau/basic_types.hpp>
-#include <jau/string_util.hpp>
 #include <jau/util/VersionNumber.hpp>
 
 namespace gamp::render::gl {
+
+    /** \addtogroup Gamp_GL
+     *
+     *  @{
+     */
+
     /**
      * A class for storing and comparing OpenGL version numbers.
      * This only works for desktop OpenGL at the moment.
@@ -51,6 +55,8 @@ namespace gamp::render::gl {
         }
 
       public:
+        GLVersionNumber() noexcept : VersionNumberString() {}
+
         static GLVersionNumber create(const std::string& versionString) noexcept {
             int val[] = { 0, 0, 0 };
             ssize_t strEnd = 0;
@@ -116,6 +122,8 @@ namespace gamp::render::gl {
             return VersionNumber();
         }
     };
+
+    /**@}*/
 
 } // namespace gamp::render::gl
 
