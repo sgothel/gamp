@@ -556,7 +556,6 @@ class GearsES2 : public RenderListener {
             return false;
         }
         m_st.attachShaderProgram(gl, sp0, true);
-        sp0->dumpSource();
 
         m_gear1.initGL(gl);
         m_gear2.initGL(gl);

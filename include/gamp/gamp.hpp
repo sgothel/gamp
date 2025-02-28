@@ -120,6 +120,59 @@ namespace gamp {
      */
     size_t handle_events() noexcept;
 
+    /**
+     * Singleton runtime environment properties
+     *
+     * Also see {@link jau::environment::getExplodingProperties(const std::string & prefixDomain)}.
+     *
+     * Note that all environment variables listed below can be set using `_` instead of `.`.
+     */
+    class GampEnv : public jau::root_environment {
+        friend class BTManager;
+
+        private:
+            GampEnv() noexcept; // NOLINT(modernize-use-equals-delete)
+
+        public:
+            /** Global Debug flag, retrieved first to triggers GampEnv initialization. */
+            const bool DEBUG_GLOBAL;
+
+        private:
+            const bool exploding; // just to trigger exploding properties
+
+        public:
+            /**
+             * Debug all WT event communication
+             *
+             * Environment variable is 'gamp.debug.wt.event'.
+             *
+             */
+            const bool DEBUG_WT_EVENT;
+
+            /**
+             * Debug shader code, i.e. ShaderCode
+             *
+             * Environment variable is 'gamp.debug.renderer.gl.glsl.code'.
+             *
+             */
+            const bool DEBUG_RENDERER_GL_GLSL_CODE;
+
+            /**
+             * Debug shader state, i.e. ShaderState
+             *
+             * Environment variable is 'gamp.debug.renderer.gl.glsl.state'.
+             *
+             */
+            const bool DEBUG_RENDERER_GL_GLSL_STATE;
+
+        public:
+            static GampEnv& get() noexcept {
+                static GampEnv e;
+                return e;
+            }
+    };
+
+
     /**@}*/
 }  // namespace gamp
 

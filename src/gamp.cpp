@@ -24,8 +24,12 @@
 #include "gamp/gamp.hpp"
 
 #include <ctime>
+#include <jau/debug.hpp>
 #include <jau/environment.hpp>
 #include <jau/file_util.hpp>
+
+#include <gamp/renderer/gl/glsl/shadercode.hpp>
+#include <gamp/renderer/gl/glsl/shaderstate.hpp>
 
 static std::string m_asset_dir;
 
@@ -51,4 +55,19 @@ std::string gamp::resolve_asset(const std::string &asset_file, bool lookup_direc
     }
     return "";
 }
+
+gamp::GampEnv::GampEnv() noexcept
+: DEBUG_GLOBAL( jau::environment::get("gamp").debug ),
+  exploding( true ), // jau::environment::getExplodingProperties("gamp_debug") ),
+  DEBUG_WT_EVENT( jau::environment::getBooleanProperty("gamp.debug.wt.event", false) ),
+  DEBUG_RENDERER_GL_GLSL_CODE( jau::environment::getBooleanProperty("gamp.debug.renderer.gl.glsl.code", false) ),
+  DEBUG_RENDERER_GL_GLSL_STATE( jau::environment::getBooleanProperty("gamp.debug.renderer.gl.glsl.state", false) )
+{
+    jau::INFO_PRINT("GampEnv: Debug[global %d, wt.event %d, renderer.gl.glsl[code %d, state %d]]",
+        DEBUG_GLOBAL, DEBUG_WT_EVENT, DEBUG_RENDERER_GL_GLSL_CODE, DEBUG_RENDERER_GL_GLSL_STATE);
+}
+
+bool gamp::render::gl::glsl::ShaderCode::DEBUG_CODE = GampEnv::get().DEBUG_RENDERER_GL_GLSL_CODE;
+bool gamp::render::gl::glsl::ShaderState::DEBUG_STATE = GampEnv::get().DEBUG_RENDERER_GL_GLSL_STATE;
+
 

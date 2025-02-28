@@ -61,13 +61,12 @@ namespace gamp::render::gl::glsl {
      * </p>
      */
     class ShaderState {
-      private:
-        inline constexpr static bool DEBUG_CODE = false;
       public:
+        static bool DEBUG_STATE;
 
         ShaderState() noexcept = default;
 
-        constexpr bool verbose() const noexcept { return DEBUG_CODE || m_verbose; }
+        bool verbose() const noexcept { return DEBUG_STATE || m_verbose; }
 
         void setVerbose(bool v) noexcept { m_verbose = v; }
 
@@ -1006,7 +1005,7 @@ namespace gamp::render::gl::glsl {
         }
 
       public:
-        string_t toString(bool alsoUnlocated=DEBUG_CODE) const {
+        string_t toString(bool alsoUnlocated=DEBUG_STATE) const {
             string_t sb;
             sb.append("ShaderState[\n ");
             if(m_shaderProgram) {

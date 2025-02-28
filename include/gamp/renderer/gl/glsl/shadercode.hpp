@@ -62,7 +62,7 @@ namespace gamp::render::gl::glsl {
      */
     class ShaderCode {
       public:
-        static constexpr bool DEBUG_CODE = true; // Debug.isPropertyDefined("jogl.debug.GLSLCode", true);
+        static bool DEBUG_CODE;
 
         /** Unique resource suffix for {@link GL2ES2#GL_VERTEX_SHADER} in source code: <code>{@value}</code> */
         static constexpr std::string_view SUFFIX_VERTEX_SOURCE   =  "vp" ;
