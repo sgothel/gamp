@@ -7,4 +7,5 @@ scripts-jau/
 *~
 *.log
 .clangd
+documentation.tar.xz
 
