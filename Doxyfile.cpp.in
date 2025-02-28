@@ -764,6 +764,7 @@ INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/jaulib/include/jau \
                          @CMAKE_CURRENT_SOURCE_DIR@/src/ \
                          @CMAKE_CURRENT_SOURCE_DIR@/README.md \
                          @CMAKE_CURRENT_SOURCE_DIR@/examples/ \
+                         @CMAKE_CURRENT_SOURCE_DIR@/demos/ \
                          @CMAKE_CURRENT_SOURCE_DIR@/test/ \
                          @CMAKE_CURRENT_SOURCE_DIR@/jaulib/test/
 
@@ -803,7 +804,7 @@ RECURSIVE              = YES
 EXCLUDE                = @CMAKE_CURRENT_SOURCE_DIR@/jaulib/test/functional0.hpp \
                          @CMAKE_CURRENT_SOURCE_DIR@/jaulib/test/functional1.hpp \
                          @CMAKE_CURRENT_SOURCE_DIR@/jaulib/test/functional2.hpp \
-                         @CMAKE_CURRENT_SOURCE_DIR@/jaulib/test/functional3.hpp 
+                         @CMAKE_CURRENT_SOURCE_DIR@/jaulib/test/functional3.hpp
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
@@ -837,6 +838,7 @@ EXCLUDE_SYMBOLS        =
 # command).
 
 EXAMPLE_PATH           = @CMAKE_CURRENT_SOURCE_DIR@/examples/ \
+                         @CMAKE_CURRENT_SOURCE_DIR@/demos/ \
                          @CMAKE_CURRENT_SOURCE_DIR@/test/ \
                          @CMAKE_CURRENT_SOURCE_DIR@/jaulib/test/
 

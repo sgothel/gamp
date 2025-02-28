@@ -176,4 +176,18 @@ namespace gamp {
     /**@}*/
 }  // namespace gamp
 
+/** \example RedSquareES2.cpp
+ * This C++ example stub showcases the simple Launcher01.hpp mainloop framework integration.
+ */
+
+/** \example RedSquareES2.hpp
+ * This C++ demo showcases a simple gamp::wt::RenderListener, window and key events as well as
+ * gamp::render::gl::glsl::ShaderState setup with attributes, uniforms and gamp::render::gl::glsl::ShaderCode.
+ */
+
+/** \example GearsES2.hpp
+ * This C++ demo showcases a simple gamp::wt::RenderListener, window, pointer and key events as well as
+ * gamp::render::gl::glsl::ShaderState setup with attributes, uniforms and gamp::render::gl::glsl::ShaderCode.
+ */
+
 #endif /*  JAU_GAMP_HPP_ */
