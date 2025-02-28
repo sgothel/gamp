@@ -4,7 +4,7 @@ sdir=`dirname $(readlink -f $0)`
 rootdir=`dirname $sdir`
 bname=`basename $0 .sh`
 
-. $sdir/setup-machine-arch.sh
+. $rootdir/jaulib/scripts/setup-machine-arch.sh
 
 tripleid="$os_name-$archabi"
 
@@ -53,7 +53,7 @@ buildit() {
 
     cd $rootdir
 
-    ${time_cmd} cmake --build --preset ${preset_name} --target doc_jau --parallel
+    ${time_cmd} cmake --build --preset ${preset_name} --target doc --parallel
     if [ $? -eq 0 ] ; then
         echo "REBUILD SUCCESS $bname, preset $preset_name, $tripleid"
         cd ${build_dir}
