@@ -1,25 +1,12 @@
 /*
  * Author: Sven Gothel <sgothel@jausoft.com>
- * Copyright (c) 2022-2025 Gothel Software e.K.
+ * Copyright Gothel Software e.K.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * This Source Code Form is subject to the terms of the MIT License
+ * If a copy of the MIT was not distributed with this file,
+ * you can obtain one at https://opensource.org/license/mit/.
  */
 
 #ifndef GAMP_GLMISC_HPP_
@@ -46,7 +33,7 @@ namespace gamp::render::gl {
      *
      *  @{
      */
-     
+
     class GLException : public jau::RuntimeException {
       public:
         GLException(std::string const& m, const char* file, int line) noexcept
@@ -66,7 +53,7 @@ namespace gamp::render::gl {
         }
         return static_cast<U>(has);
     }
-        
+
     /** An attachable object */
     struct Attachable {};
     typedef std::shared_ptr<Attachable> AttachableRef;
@@ -78,11 +65,11 @@ namespace gamp::render::gl {
     class StringHashMapWrap {
       private:
         jau::StringHashMap<Value_type> m_map;
-        
+
       public:
         jau::StringHashMap<Value_type>& map() noexcept { return m_map; }
         const jau::StringHashMap<Value_type>& map() const noexcept { return m_map; }
-        
+
         /** Returns the mapped value for the given name or `no_value` */
         Value_type get(std::string_view key) const {
             auto it = m_map.find(key);
@@ -96,7 +83,7 @@ namespace gamp::render::gl {
         bool containsKey(std::string_view key) const {
             return m_map.contains(key);
         }
-        
+
         /** Returns the string_view key of the first value, otherwise std::nullopt. Note: O(n) operation, slow. */
         std::optional<std::string_view> containsValue(const Value_type& value) const {
             for (const std::pair<const std::string, Value_type>& n : m_map) {
@@ -106,10 +93,10 @@ namespace gamp::render::gl {
             }
             return std::nullopt;
         }
-        
+
         /** Clears the hash map. */
         void clear() { m_map.clear(); }
-        
+
         /**
          * Maps the value for the given name, overwrites old mapping if exists.
          * @return previously mapped value or `no_value`.
@@ -135,12 +122,12 @@ namespace gamp::render::gl {
                 return old;
             }
             return no_value;
-        }        
+        }
     };
     using StringAttachables = StringHashMapWrap<AttachableRef, std::nullptr_t, nullptr>;
-            
+
     /**@}*/
-    
+
 } // namespace gamp::render::gl
 
 

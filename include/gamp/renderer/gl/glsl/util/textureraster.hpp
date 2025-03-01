@@ -1,25 +1,12 @@
 /*
  * Author: Sven Gothel <sgothel@jausoft.com>
- * Copyright (c) 2010-2025 Gothel Software e.K.
+ * Copyright Gothel Software e.K.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * This Source Code Form is subject to the terms of the MIT License
+ * If a copy of the MIT was not distributed with this file,
+ * you can obtain one at https://opensource.org/license/mit/.
  */
 
 #ifndef GAMP_GLSLSHADERSTATE_HPP_
@@ -34,7 +21,7 @@
 namespace gamp::render::gl::glsl {
     using namespace gamp::render::gl;
     using namespace gamp::render::gl::data;
-    
+
     /** \addtogroup Gamp_GLSL
      *
      *  @{
@@ -44,24 +31,24 @@ namespace gamp::render::gl::glsl {
       private:
         bool textureVertFlipped;
         int textureUnit;
-    
+
         ShaderProgram sp;
         PMVMatrix4f m_pmvMatrix;
         GLUniformData m_pmvMatrixUniform;
         GLUniformData m_activeTexUniform;
         GLArrayDataServer m_interleavedVBO;
-    
+
         GLSLTextureRaster(int textureUnit, bool textureVertFlipped) {
             this.textureVertFlipped = textureVertFlipped;
             this.textureUnit = textureUnit;
         }
-    
+
         public int getTextureUnit() { return textureUnit; }
-    
+
         static final String shaderBasename = "texture01_xxx";
         static final String shaderSrcPath = "../../shader";
         static final String shaderBinPath = "../../shader/bin";
-    
+
         public void init(final GL2ES2 gl) {
             // Create & Compile the shader objects
             final ShaderCode rsVp = ShaderCode.create(gl, GL2ES2.GL_VERTEX_SHADER, this.getClass(),
@@ -70,7 +57,7 @@ namespace gamp::render::gl::glsl {
                                                       shaderSrcPath, shaderBinPath, shaderBasename, true);
             rsVp.defaultShaderCustomization(gl, true, true);
             rsFp.defaultShaderCustomization(gl, true, true);
-    
+
             // Create & Link the shader program
             sp = new ShaderProgram();
             sp.add(rsVp);
@@ -79,7 +66,7 @@ namespace gamp::render::gl::glsl {
                 throw new GLException("Couldn't link program: "+sp);
             }
             sp.useProgram(gl, true);
-    
+
             // setup mgl_PMVMatrix
             pmvMatrix = new PMVMatrix4f();
             pmvMatrix.loadPIdentity();
@@ -89,20 +76,20 @@ namespace gamp::render::gl::glsl {
                 throw new GLException("Couldn't locate "+pmvMatrixUniform+" in shader: "+sp);
             }
             gl.glUniform(pmvMatrixUniform);
-    
+
             activeTexUniform = new GLUniformData("mgl_Texture0", textureUnit);
             if( activeTexUniform.setLocation(gl, sp.program()) < 0 ) {
                 throw new GLException("Couldn't locate "+activeTexUniform+" in shader: "+sp);
             }
             gl.glUniform(activeTexUniform);
-    
+
             final float[] s_quadTexCoords;
             if( textureVertFlipped ) {
                 s_quadTexCoords = s_quadTexCoords01;
             } else {
                 s_quadTexCoords = s_quadTexCoords00;
             }
-    
+
             interleavedVBO = GLArrayDataServer.createGLSLInterleaved(3+2, GL.GL_FLOAT, false, 2*4, GL.GL_STATIC_DRAW);
             {
                 final GLArrayData vArrayData = interleavedVBO.addGLSLSubArray("mgl_Vertex",        3, GL.GL_ARRAY_BUFFER);
@@ -121,23 +108,23 @@ namespace gamp::render::gl::glsl {
             }
             interleavedVBO.seal(gl, true);
             interleavedVBO.enableBuffer(gl, false);
-    
+
             sp.useProgram(gl, false);
         }
-    
+
         public void reshape(final GL2ES2 gl, final int x, final int y, final int width, final int height) {
             if(null != sp) {
                 pmvMatrix.loadPIdentity();
                 pmvMatrix.orthoP(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 10.0f);
-    
+
                 pmvMatrix.loadMvIdentity();
-    
+
                 sp.useProgram(gl, true);
                 gl.glUniform(pmvMatrixUniform);
                 sp.useProgram(gl, false);
             }
         }
-    
+
         public void dispose(final GL2ES2 gl) {
             if(null != pmvMatrixUniform) {
                 pmvMatrixUniform = null;
@@ -152,19 +139,19 @@ namespace gamp::render::gl::glsl {
                 sp=null;
             }
         }
-    
+
         public void display(final GL2ES2 gl) {
             if(null != sp) {
                 sp.useProgram(gl, true);
                 interleavedVBO.enableBuffer(gl, true);
-    
+
                 gl.glDrawArrays(GL.GL_TRIANGLE_STRIP, 0, 4);
-    
+
                 interleavedVBO.enableBuffer(gl, false);
                 sp.useProgram(gl, false);
             }
         }
-    
+
         private static final float[] s_quadVertices = {
           -1f, -1f, 0f, // LB
            1f, -1f, 0f, // RB
@@ -185,9 +172,9 @@ namespace gamp::render::gl::glsl {
         };
     };
 
-    
+
     /**@}*/
 }
-    
+
 #endif // GAMP_GLSLSHADERSTATE_HPP_
 

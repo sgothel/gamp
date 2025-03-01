@@ -1,25 +1,12 @@
 /*
  * Author: Sven Gothel <sgothel@jausoft.com>
- * Copyright (c) 2022-2025 Gothel Software e.K.
+ * Copyright Gothel Software e.K.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * This Source Code Form is subject to the terms of the MIT License
+ * If a copy of the MIT was not distributed with this file,
+ * you can obtain one at https://opensource.org/license/mit/.
  */
 
 #ifndef GAMP_GLPROFILE_HPP_
@@ -40,12 +27,12 @@
 
 namespace gamp::render::gl {
 
-    /** @defgroup Gamp_GL Gamp GL Rendering 
+    /** @defgroup Gamp_GL Gamp GL Rendering
      *  OpenGL managed rendering support, data handling and GLSL functionality.
      *
      *  @{
      */
-     
+
     /**
      * Specifies the OpenGL profile.
      */
@@ -88,7 +75,7 @@ namespace gamp::render::gl {
 
         constexpr static std::string_view mapProfile2Tag(const jau::util::VersionNumber& version, GLProfileMask mask) noexcept {
             if( 1 != jau::ct_bit_count( number(mask) ) ) {
-                ERR_PRINT("GLProfileMask %s invalid, should have exactly 1 bit set", to_string(mask).c_str());                
+                ERR_PRINT("GLProfileMask %s invalid, should have exactly 1 bit set", to_string(mask).c_str());
             }
             if ( has_any(mask, GLProfileMask::es) ) {
                 if( version.major() < 2 ) {
@@ -107,7 +94,7 @@ namespace gamp::render::gl {
                 } else { // if ( has_any(mask, GLProfileMask::core) )
                     return GL3;
                 }
-            } 
+            }
             // else if( version.major() < 4 )
             if ( has_any(mask, GLProfileMask::compat) ) {
                 return GL4bc;
@@ -134,9 +121,9 @@ namespace gamp::render::gl {
 
         /** Create a new instance.*/
         constexpr GLProfile(const jau::util::VersionNumber& version, GLProfileMask profileMask, GLContextFlags contextFlags) noexcept
-        : m_profileMask(profileMask), m_contextFlags(contextFlags), 
-          m_profile(mapProfile2Tag(version, profileMask)), m_version(version), 
-          m_glslVersion(getGLSLVersionNumber(version, profileMask)) 
+        : m_profileMask(profileMask), m_contextFlags(contextFlags),
+          m_profile(mapProfile2Tag(version, profileMask)), m_version(version),
+          m_glslVersion(getGLSLVersionNumber(version, profileMask))
         {}
 
         constexpr const jau::util::VersionNumber& version() const noexcept { return m_version; }
@@ -194,19 +181,19 @@ namespace gamp::render::gl {
             return GLES3 == m_profile || GLES2 == m_profile || GLES1 == m_profile;
         }
 
-        /** 
-         * Indicates whether this profile is capable of GL2ES1. 
+        /**
+         * Indicates whether this profile is capable of GL2ES1.
          *
          * Includes [ GL4bc, GL3bc, GL2, GLES1, GL2ES1 ].
-         * 
+         *
          * GL2ES1 is the intersection of the desktop GL2 and embedded ES1 profile.
          */
         constexpr bool isGL2ES1() const noexcept {
             return isGLES1() || isGL2();
         }
 
-        /** 
-         * Indicates whether this profile is capable of GL2GL3. 
+        /**
+         * Indicates whether this profile is capable of GL2GL3.
          *
          * Includes [ GL4bc, GL4, GL3bc, GL3, GL2, GL2GL3 ].
          *
@@ -216,13 +203,13 @@ namespace gamp::render::gl {
             return isGL3() || isGL2();
         }
 
-        /** 
+        /**
          * Indicates whether this profile is capable of GL2ES2.
-         * 
+         *
          * Includes [ GL4bc, GL4, GL3bc, GL3, GLES3, GL2, GL2GL3, GL2ES2, GLES2 ].
          *
          * GL2ES2 is the intersection of the desktop GL2 and embedded ES2 profile.
-         */         
+         */
         constexpr bool isGL2ES2() const noexcept {
             return isGLES2() || isGL2GL3();
         }
@@ -240,13 +227,13 @@ namespace gamp::render::gl {
             return isGL3ES3() || isGL2GL3();
         }
 
-        /** 
-         * Indicates whether this profile is capable of GL3ES3. 
+        /**
+         * Indicates whether this profile is capable of GL3ES3.
          *
          * Includes [ GL4bc, GL4, GL3bc, GL3, GLES3 ].
          *
          * GL3ES3 is the intersection of the desktop GL3 and embedded ES3 profile.
-         */         
+         */
         constexpr bool isGL3ES3() const noexcept {
             return isGL4ES3() || isGL3();
         }
@@ -295,12 +282,12 @@ namespace gamp::render::gl {
         constexpr bool nativeGLCore() const noexcept {
             return has_any(profileMask(), GLProfileMask::core);
         }
-        
+
         /** Indicates whether either of the native OpenGL compatibility profiles are in use. */
         constexpr bool nativeGLCompat() const noexcept {
             return has_any(profileMask(), GLProfileMask::compat);
         }
-        
+
         /**
          * General validation if type is a valid GL data type for the current profile.
          * <p>
@@ -367,7 +354,7 @@ namespace gamp::render::gl {
          * @see #getGLSLVersionNumber()
          */
         std::string getGLSLVersionString() const {
-            
+
             if( m_glslVersion.isZero() ) {
                 return "";
             }
@@ -396,7 +383,7 @@ namespace gamp::render::gl {
     inline std::ostream& operator<<(std::ostream& out, const GLProfile& v) {
         return out << v.toString();
     }
-    
+
     /** OpenGL Rendering Context */
     class GL : public GLProfile {
       private:
@@ -406,40 +393,40 @@ namespace gamp::render::gl {
 
       public:
         GL() noexcept : GLProfile(), m_context(0), m_glversion() { }
-        
+
         /** Create a new instance. Given profile tag must be one of this class' constant `GL` profiles. */
-        GL(gamp::handle_t context, const jau::util::VersionNumber& version, 
-           GLProfileMask profileMask, GLContextFlags contextFlags, 
+        GL(gamp::handle_t context, const jau::util::VersionNumber& version,
+           GLProfileMask profileMask, GLContextFlags contextFlags,
            const char* gl_version_cstr) noexcept
         : GLProfile(version, profileMask, contextFlags), m_context(context), m_glversion(gamp::render::gl::GLVersionNumber::create(gl_version_cstr)) { }
-        
+
         constexpr bool isValid() const noexcept { return 0 != m_context; }
-        constexpr gamp::handle_t context() const noexcept { return m_context; }        
+        constexpr gamp::handle_t context() const noexcept { return m_context; }
         constexpr const gamp::render::gl::GLVersionNumber& glVersion() const { return m_glversion; }
         bool isExtensionAvailable(GLenum name) const noexcept {
-            (void)name; // FIXME 
-            return false; 
+            (void)name; // FIXME
+            return false;
         }
         bool isExtensionAvailable(const char* name) const noexcept {
-            (void)name; // FIXME 
-            return false; 
+            (void)name; // FIXME
+            return false;
         }
-        
+
         void dispose() noexcept;
-        
-        void releasedNotify() { 
+
+        void releasedNotify() {
             m_context = 0;
-            m_glversion=gamp::render::gl::GLVersionNumber(); 
+            m_glversion=gamp::render::gl::GLVersionNumber();
             clearAttachedObjects();
-            clear(); 
+            clear();
         }
-                
+
         /** Returns the attached user object for the given name. */
         AttachableRef getAttachedObject(std::string_view key) const { return m_attachables.get(key); }
 
         /** Clears the attachment map. */
         void clearAttachedObjects() { m_attachables.clear(); }
-        
+
         /**
          * Attaches user object for the given name, overwrites old mapping if exists.
          * @return previously set object or nullptr.
@@ -448,25 +435,25 @@ namespace gamp::render::gl {
 
         /** Removes attached object if exists and returns it, otherwise returns nullptr. */
         AttachableRef detachObject(std::string_view key) { return m_attachables.remove(key); }
-        
+
         std::string toLongString() const {
             return std::string("GL[").append(jau::to_hexstring(m_context)).append(", ")
                                      .append(version().toString()).append(" ").append(to_string(profileMask()))
                                      .append(", ").append(to_string(contextFlags()))
                                      .append(", glsl ").append(glslVersion().toString())
-                                     .append(", ").append(name()).append(", ").append(glVersion().toString()).append("]");                                     
+                                     .append(", ").append(name()).append(", ").append(glVersion().toString()).append("]");
         }
         std::string toString() const {
             return std::string("GL[").append(jau::to_hexstring(m_context)).append(", ")
                                      .append(version().toString()).append(" ").append(to_string(profileMask()))
                                      .append(", ").append(to_string(contextFlags()))
                                      .append(", glsl ").append(glslVersion().toString())
-                                     .append(", ").append(name()).append("]");                                     
+                                     .append(", ").append(name()).append("]");
         }
     };
 
     /**@}*/
-    
+
 } // namespace gamp::render::gl
 
 

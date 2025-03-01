@@ -1,25 +1,12 @@
 /*
  * Author: Sven Gothel <sgothel@jausoft.com>
- * Copyright (c) 2010-2025 Gothel Software e.K.
+ * Copyright Gothel Software e.K.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * This Source Code Form is subject to the terms of the MIT License
+ * If a copy of the MIT was not distributed with this file,
+ * you can obtain one at https://opensource.org/license/mit/.
  */
 
 #ifndef GAMP_GLSLUNIFORMDATA_HPP_
@@ -48,36 +35,36 @@
 namespace gamp::render::gl::data {
     using namespace gamp::render::gl;
     using namespace jau::math::util;
-    
+
     /** \addtogroup Gamp_GLData
      *
      *  @{
      */
-    
+
     /**
      * GLSL uniform data wrapper encapsulating data to be uploaded to the GPU as a uniform.
      */
     class GLUniformData {
-      public:    
+      public:
         virtual ~GLUniformData() noexcept = default;
-        
+
         /** Return the underlying data buffer pointer. */
         virtual const void* data() const noexcept = 0;
-    
+
         /** Returns type signature of implementing class's stored component value type. */
         const jau::type_info& compSignature() const noexcept { return m_signature; }
-        
+
         /** Return the uniform name as used in the shader */
         const string_t& name() const noexcept { return m_name; }
-    
+
         constexpr GLint location() const noexcept { return m_location; }
-        
+
         /**
          * Sets the given location of the shader uniform.
          * @return the given location
          */
         GLint setLocation(GLint location) noexcept { m_location=location; return location; }
-    
+
         /**
          * Retrieves the location of the shader uniform with {@link #getName()} from the linked shader program.
          * <p>
@@ -92,7 +79,7 @@ namespace gamp::render::gl::data {
             m_location = ::glGetUniformLocation(program, m_name.c_str());
             return m_location;
         }
-    
+
         /** Returns element count. One element consist compsPerElem() components. */
         constexpr GLsizei count() const noexcept { return m_count; }
         /** Returns component count per element, i.e. rows() * columns(). */
@@ -147,85 +134,85 @@ namespace gamp::render::gl::data {
         GLUniformData(const GLUniformData&) = delete;
         GLUniformData(GLUniformData&&) = delete;
         GLUniformData& operator=(const GLUniformData&) = delete;
-        
+
         /** Sends the uniform data to the GPU, i.e. issues, [glUniform](https://docs.gl/es3/glUniform) */
         void send(const GL& gl) const;
-                
+
       protected:
         GLUniformData(const jau::type_info& sig, std::string  name, GLint location,
                       GLsizei rows, GLsizei columns, size_t count)
-        : m_signature(sig), m_name(std::move(name)), m_location(location), 
-          m_rows(rows), m_columns(columns), m_count(castOrThrow<size_t, GLsizei>(count)) {}                     
-        
-      private:    
+        : m_signature(sig), m_name(std::move(name)), m_location(location),
+          m_rows(rows), m_columns(columns), m_count(castOrThrow<size_t, GLsizei>(count)) {}
+
+      private:
         const jau::type_info& m_signature;
         std::string m_name;
         GLint       m_location;
         GLsizei     m_rows, m_columns, m_count;
     };
-    typedef std::shared_ptr<GLUniformData> GLUniformDataRef; 
-    
+    typedef std::shared_ptr<GLUniformData> GLUniformDataRef;
+
     class GLUniformSyncMatrices4f : public GLUniformData {
       public:
         typedef SyncMatrices4<GLfloat> SyncMats4f;
       private:
         const SyncMats4f& m_data;
-      public: 
+      public:
         GLUniformSyncMatrices4f(const string_t& name, const SyncMats4f& data)
         : GLUniformData(data.compSignature(), name,
-                        /*location=*/-1, /*rows=*/4, /*columns=*/4, /*count=*/data.matrixCount()), 
+                        /*location=*/-1, /*rows=*/4, /*columns=*/4, /*count=*/data.matrixCount()),
           m_data(data) {}
-        
+
         static std::shared_ptr<GLUniformSyncMatrices4f> create(const string_t& name, const SyncMats4f& data) {
             return std::make_shared<GLUniformSyncMatrices4f>(name, data);
         }
         const void* data() const noexcept override { return m_data.data(); }
-        
+
         const GLfloat* floats() const { return m_data.floats(); }
     };
-    typedef std::shared_ptr<GLUniformSyncMatrices4f> GLUniformSyncMatrices4fRef; 
+    typedef std::shared_ptr<GLUniformSyncMatrices4f> GLUniformSyncMatrices4fRef;
 
     class GLUniformVec4f : public GLUniformData {
       private:
         jau::math::Vec4f m_data;
-        
-      public: 
+
+      public:
         GLUniformVec4f(const string_t& name, const jau::math::Vec4f& v)
-        : GLUniformData(jau::float_ctti::f32(), name, 
+        : GLUniformData(jau::float_ctti::f32(), name,
                         /*location=*/-1, /*rows=*/1, /*columns=*/4, /*count=*/1),
           m_data(v) {}
-        
+
         static std::shared_ptr<GLUniformVec4f> create(const string_t& name, const jau::math::Vec4f& v) {
             return std::make_shared<GLUniformVec4f>(name, v);
         }
         const void* data() const noexcept override { return m_data.cbegin(); }
-        
+
         const jau::math::Vec4f& vec4f() const { return m_data; }
         jau::math::Vec4f& vec4f() { return m_data; }
     };
     typedef std::shared_ptr<GLUniformVec4f> GLUniformVec4fRef;
-     
+
     class GLUniformVec3f : public GLUniformData {
       private:
         jau::math::Vec3f m_data;
-        
-      public: 
+
+      public:
         GLUniformVec3f(const string_t& name, const jau::math::Vec3f& v)
-        : GLUniformData(jau::float_ctti::f32(), name, 
+        : GLUniformData(jau::float_ctti::f32(), name,
                         /*location=*/-1, /*rows=*/1, /*columns=*/3, /*count=*/1),
           m_data(v) {}
-        
+
         static std::shared_ptr<GLUniformVec3f> create(const string_t& name, const jau::math::Vec3f& v) {
             return std::make_shared<GLUniformVec3f>(name, v);
         }
         const void* data() const noexcept override { return m_data.cbegin(); }
-        
+
         const jau::math::Vec3f& vec3f() const { return m_data; }
         jau::math::Vec3f& vec3f() { return m_data; }
     };
     typedef std::shared_ptr<GLUniformVec3f> GLUniformVec3fRef;
-     
+
     /**@}*/
 }
-    
+
 #endif // GAMP_GLSLUNIFORMDATA_HPP_
