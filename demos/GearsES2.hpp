@@ -18,12 +18,12 @@
 #include <numbers>
 
 #include <gamp/gamp_types.hpp>
-#include <gamp/renderer/gl/data/glarraydataserver.hpp>
-#include <gamp/renderer/gl/data/glbuffers.hpp>
-#include <gamp/renderer/gl/data/gluniformdata.hpp>
-#include <gamp/renderer/gl/glmisc.hpp>
-#include <gamp/renderer/gl/glsl/shaderstate.hpp>
-#include <gamp/renderer/gl/gltypes.hpp>
+#include <gamp/render/gl/data/glarraydataserver.hpp>
+#include <gamp/render/gl/data/glbuffers.hpp>
+#include <gamp/render/gl/data/gluniformdata.hpp>
+#include <gamp/render/gl/glmisc.hpp>
+#include <gamp/render/gl/glsl/shaderstate.hpp>
+#include <gamp/render/gl/gltypes.hpp>
 #include <gamp/wt/event/event.hpp>
 #include <gamp/wt/event/keyevent.hpp>
 #include <gamp/wt/event/pointerevent.hpp>

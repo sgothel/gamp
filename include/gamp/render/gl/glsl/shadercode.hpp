@@ -21,7 +21,7 @@
 #include <jau/string_util.hpp>
 
 #include <gamp/gamp.hpp>
-#include <gamp/renderer/gl/glsl/shaderutil.hpp>
+#include <gamp/render/gl/glsl/shaderutil.hpp>
 
 namespace gamp::render::gl::glsl {
     using namespace gamp::render::gl;

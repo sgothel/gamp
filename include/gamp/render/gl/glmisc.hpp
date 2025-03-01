@@ -23,9 +23,9 @@
 #include <jau/util/VersionNumber.hpp>
 
 #include <gamp/gamp_types.hpp>
-#include <gamp/renderer/gl/glheader.hpp>
-#include <gamp/renderer/gl/glliterals.hpp>
-#include <gamp/renderer/gl/glversionnum.hpp>
+#include <gamp/render/gl/glheader.hpp>
+#include <gamp/render/gl/glliterals.hpp>
+#include <gamp/render/gl/glversionnum.hpp>
 
 namespace gamp::render::gl {
 

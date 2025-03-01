@@ -13,7 +13,7 @@
 #define GAMP_GLBUFFERS_HPP_
 
 #include <GL/gl.h>
-#include <gamp/renderer/gl/gltypes.hpp>
+#include <gamp/render/gl/gltypes.hpp>
 
 namespace gamp::render::gl::data {
     using namespace gamp::render::gl;

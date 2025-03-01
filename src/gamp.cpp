@@ -16,8 +16,8 @@
 #include <jau/environment.hpp>
 #include <jau/file_util.hpp>
 
-#include <gamp/renderer/gl/glsl/shadercode.hpp>
-#include <gamp/renderer/gl/glsl/shaderstate.hpp>
+#include <gamp/render/gl/glsl/shadercode.hpp>
+#include <gamp/render/gl/glsl/shaderstate.hpp>
 
 static std::string m_asset_dir;
 

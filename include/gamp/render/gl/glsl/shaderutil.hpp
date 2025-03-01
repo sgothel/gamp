@@ -13,8 +13,8 @@
 #define GAMP_GLSLSHADERUTIL_HPP_
 
 #include <GL/gl.h>
-#include <gamp/renderer/gl/glliterals.hpp>
-#include <gamp/renderer/gl/gltypes.hpp>
+#include <gamp/render/gl/glliterals.hpp>
+#include <gamp/render/gl/gltypes.hpp>
 
 namespace gamp::render::gl::glsl {
     using namespace gamp::render::gl;

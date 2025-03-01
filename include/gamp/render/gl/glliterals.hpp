@@ -12,8 +12,8 @@
 #ifndef GAMP_GLLITERALS_HPP_
 #define GAMP_GLLITERALS_HPP_
 
-#include <gamp/renderer/gl/glheader.hpp>
-#include <gamp/renderer/gl/glversionnum.hpp>
+#include <gamp/render/gl/glheader.hpp>
+#include <gamp/render/gl/glversionnum.hpp>
 
 #include <jau/cpp_lang_util.hpp>
 #include <jau/enum_util.hpp>

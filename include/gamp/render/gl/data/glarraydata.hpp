@@ -14,8 +14,8 @@
 
 #include <memory>
 
-#include <gamp/renderer/gl/gltypes.hpp>
-#include <gamp/renderer/gl/data/glbuffers.hpp>
+#include <gamp/render/gl/gltypes.hpp>
+#include <gamp/render/gl/data/glbuffers.hpp>
 #include <string_view>
 #include <jau/backtrace.hpp>
 #include <jau/type_info.hpp>

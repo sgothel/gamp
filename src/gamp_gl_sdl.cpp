@@ -23,9 +23,9 @@
 
 #include <cstdint>
 #include <gamp/gamp_types.hpp>
-#include <gamp/renderer/gl/glliterals.hpp>
-#include <gamp/renderer/gl/gltypes.hpp>
-#include <gamp/renderer/gl/glversionnum.hpp>
+#include <gamp/render/gl/glliterals.hpp>
+#include <gamp/render/gl/gltypes.hpp>
+#include <gamp/render/gl/glversionnum.hpp>
 #include <gamp/wt/event/event.hpp>
 #include <gamp/wt/window.hpp>
 #include <utility>

@@ -16,9 +16,9 @@
 
 #include <jau/darray.hpp>
 
-#include <gamp/renderer/gl/glmisc.hpp>
-#include <gamp/renderer/gl/data/glarraydata.hpp>
-#include <gamp/renderer/gl/data/glbuffers.hpp>
+#include <gamp/render/gl/glmisc.hpp>
+#include <gamp/render/gl/data/glarraydata.hpp>
+#include <gamp/render/gl/data/glbuffers.hpp>
 
 namespace gamp::render::gl::data {
     using namespace gamp::render::gl;

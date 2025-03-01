@@ -20,16 +20,16 @@
 #include <jau/float_types.hpp>
 #include <jau/string_util.hpp>
 
-#include <gamp/renderer/gl/data/glarraydata.hpp>
-#include <gamp/renderer/gl/data/glarraydataclient.hpp>
-#include <gamp/renderer/gl/data/glbuffers.hpp>
-#include <gamp/renderer/gl/data/glmappedbuffer.hpp>
-#include <gamp/renderer/gl/data/impl/gldataarrayhandler.hpp>
-#include <gamp/renderer/gl/data/impl/glslarrayhandler.hpp>
-#include <gamp/renderer/gl/data/impl/glslarrayhandlerinterleaved.hpp>
-#include <gamp/renderer/gl/data/impl/glslsubarrayhandler.hpp>
-#include <gamp/renderer/gl/glliterals.hpp>
-#include <gamp/renderer/gl/glsl/shaderstate.hpp>
+#include <gamp/render/gl/data/glarraydata.hpp>
+#include <gamp/render/gl/data/glarraydataclient.hpp>
+#include <gamp/render/gl/data/glbuffers.hpp>
+#include <gamp/render/gl/data/glmappedbuffer.hpp>
+#include <gamp/render/gl/data/impl/gldataarrayhandler.hpp>
+#include <gamp/render/gl/data/impl/glslarrayhandler.hpp>
+#include <gamp/render/gl/data/impl/glslarrayhandlerinterleaved.hpp>
+#include <gamp/render/gl/data/impl/glslsubarrayhandler.hpp>
+#include <gamp/render/gl/glliterals.hpp>
+#include <gamp/render/gl/glsl/shaderstate.hpp>
 #include <memory>
 
 namespace gamp::render::gl::data {

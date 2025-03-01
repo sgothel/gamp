@@ -19,10 +19,10 @@
 #include <jau/float_types.hpp>
 #include <jau/type_info.hpp>
 
-#include <gamp/renderer/gl/data/glarraydataproxy.hpp>
-#include <gamp/renderer/gl/data/glbuffers.hpp>
-#include <gamp/renderer/gl/data/impl/glslarrayhandler.hpp>
-#include <gamp/renderer/gl/glsl/shaderstate.hpp>
+#include <gamp/render/gl/data/glarraydataproxy.hpp>
+#include <gamp/render/gl/data/glbuffers.hpp>
+#include <gamp/render/gl/data/impl/glslarrayhandler.hpp>
+#include <gamp/render/gl/glsl/shaderstate.hpp>
 
 namespace gamp::render::gl::data {
     using namespace gamp::render::gl;

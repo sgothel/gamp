@@ -13,7 +13,7 @@
 #define GAMP_GLMAPPEDBUFFER_HPP_
 
 #include <cmath>
-#include <gamp/renderer/gl/data/glbuffers.hpp>
+#include <gamp/render/gl/data/glbuffers.hpp>
 #include <memory>
 
 #include <jau/basic_types.hpp>

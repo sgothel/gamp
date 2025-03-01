@@ -22,7 +22,7 @@
 #include <jau/file_util.hpp>
 
 #include <gamp/gamp.hpp>
-#include <gamp/renderer/gl/glliterals.hpp>
+#include <gamp/render/gl/glliterals.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;

@@ -27,7 +27,7 @@
 #include <jau/fraction_type.hpp>
 #include <jau/int_types.hpp>
 #include <jau/locks.hpp>
-#include <gamp/renderer/gl/glprofile.hpp>
+#include <gamp/render/gl/glprofile.hpp>
 #include <memory>
 #include <thread>
 

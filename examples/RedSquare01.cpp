@@ -20,7 +20,7 @@
 #include <jau/fraction_type.hpp>
 
 #include <gamp/gamp.hpp>
-#include <gamp/renderer/gl/gltypes.hpp>
+#include <gamp/render/gl/gltypes.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;

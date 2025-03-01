@@ -24,11 +24,11 @@
 #include <jau/util/VersionNumber.hpp>
 
 #include <gamp/gamp_types.hpp>
-#include <gamp/renderer/gl/glheader.hpp>
-#include <gamp/renderer/gl/glliterals.hpp>
-#include <gamp/renderer/gl/glversionnum.hpp>
-#include <gamp/renderer/gl/glmisc.hpp>
-#include <gamp/renderer/gl/glprofile.hpp>
+#include <gamp/render/gl/glheader.hpp>
+#include <gamp/render/gl/glliterals.hpp>
+#include <gamp/render/gl/glversionnum.hpp>
+#include <gamp/render/gl/glmisc.hpp>
+#include <gamp/render/gl/glprofile.hpp>
 
 static_assert(sizeof(GLenum)         == sizeof(uint32_t) );
 static_assert(sizeof(GLint)          == sizeof(int32_t) );

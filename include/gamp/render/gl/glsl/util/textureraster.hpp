@@ -13,10 +13,10 @@
 #define GAMP_GLSLSHADERSTATE_HPP_
 
 #include <gamp/gamp.hpp>
-#include <gamp/renderer/gl/gltypes.hpp>
-#include <gamp/renderer/gl/data/glarraydata.hpp>
-#include <gamp/renderer/gl/data/gluniformdata.hpp>
-#include <gamp/renderer/gl/glsl/shaderprogram.hpp>
+#include <gamp/render/gl/gltypes.hpp>
+#include <gamp/render/gl/data/glarraydata.hpp>
+#include <gamp/render/gl/data/gluniformdata.hpp>
+#include <gamp/render/gl/glsl/shaderprogram.hpp>
 
 namespace gamp::render::gl::glsl {
     using namespace gamp::render::gl;

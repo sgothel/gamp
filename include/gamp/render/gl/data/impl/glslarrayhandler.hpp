@@ -14,10 +14,10 @@
 
 #include <jau/basic_types.hpp>
 
-#include <gamp/renderer/gl/data/impl/glarrayhandler.hpp>
-#include <gamp/renderer/gl/data/impl/glsubarrayhandler.hpp>
-#include <gamp/renderer/gl/glmisc.hpp>
-#include <gamp/renderer/gl/glsl/shaderstate.hpp>
+#include <gamp/render/gl/data/impl/glarrayhandler.hpp>
+#include <gamp/render/gl/data/impl/glsubarrayhandler.hpp>
+#include <gamp/render/gl/glmisc.hpp>
+#include <gamp/render/gl/glsl/shaderstate.hpp>
 
 namespace gamp::render::gl::data::impl {
     using namespace gamp::render::gl;

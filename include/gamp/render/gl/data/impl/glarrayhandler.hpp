@@ -14,8 +14,8 @@
 
 #include <memory>
 
-#include <gamp/renderer/gl/gltypes.hpp>
-#include <gamp/renderer/gl/data/impl/glslsubarrayhandler.hpp>
+#include <gamp/render/gl/gltypes.hpp>
+#include <gamp/render/gl/data/impl/glslsubarrayhandler.hpp>
 
 namespace gamp::render::gl::data {
     template<typename Value_type>

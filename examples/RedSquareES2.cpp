@@ -13,7 +13,7 @@
 
 #include <cstdio>
 #include <cmath>
-#include <gamp/renderer/gl/glliterals.hpp>
+#include <gamp/render/gl/glliterals.hpp>
 #include <memory>
 
 #include <jau/basic_types.hpp>

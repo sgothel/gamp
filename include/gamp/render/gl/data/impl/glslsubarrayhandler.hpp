@@ -12,9 +12,9 @@
 #ifndef GAMP_GLSLARRAYHANDLERFLAT_HPP_
 #define GAMP_GLSLARRAYHANDLERFLAT_HPP_
 
-#include <gamp/renderer/gl/glsl/shaderstate.hpp>
-#include <gamp/renderer/gl/data/glarraydata.hpp>
-#include <gamp/renderer/gl/data/impl/glsubarrayhandler.hpp>
+#include <gamp/render/gl/glsl/shaderstate.hpp>
+#include <gamp/render/gl/data/glarraydata.hpp>
+#include <gamp/render/gl/data/impl/glsubarrayhandler.hpp>
 
 namespace gamp::render::gl::data::impl {
     using namespace gamp::render::gl;

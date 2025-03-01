@@ -37,7 +37,7 @@
 #include <gamp/wt/event/wineventmngr.hpp>
 #include <gamp/wt/event/pointereventmngr.hpp>
 
-#include <gamp/renderer/gl/gltypes.hpp>
+#include <gamp/render/gl/gltypes.hpp>
 
 namespace gamp::wt {
 

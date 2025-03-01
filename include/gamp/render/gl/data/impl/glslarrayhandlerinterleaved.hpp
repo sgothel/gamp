@@ -13,8 +13,8 @@
 #define GAMP_GLSLARRAYHANDLERINTERLEAVED_HPP_
 
 #include <jau/basic_types.hpp>
-#include <gamp/renderer/gl/data/impl/glarrayhandler.hpp>
-#include <gamp/renderer/gl/data/impl/glslsubarrayhandler.hpp>
+#include <gamp/render/gl/data/impl/glarrayhandler.hpp>
+#include <gamp/render/gl/data/impl/glslsubarrayhandler.hpp>
 
 namespace gamp::render::gl::data::impl {
     using namespace gamp::render::gl;

@@ -12,7 +12,7 @@
 #ifndef GAMP_GLARRAYHANDLERFLAT_HPP_
 #define GAMP_GLARRAYHANDLERFLAT_HPP_
 
-#include <gamp/renderer/gl/data/glarraydata.hpp>
+#include <gamp/render/gl/data/glarraydata.hpp>
 
 namespace gamp::render::gl::data::impl {
     using namespace gamp::render::gl;

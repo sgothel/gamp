@@ -25,7 +25,7 @@
 #define GAMP_WTPOINTEREVENT_HPP_
 
 #include <cstdint>
-#include <gamp/renderer/gl/glmisc.hpp>
+#include <gamp/render/gl/glmisc.hpp>
 #include <gamp/wt/event/event.hpp>
 #include <vector>
 
