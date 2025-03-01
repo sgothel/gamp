@@ -10,11 +10,11 @@
  */
 
 #include <jau/float_types.hpp>
-#include <gamp/render/gl/gltypes.hpp>
-#include <gamp/render/gl/data/glarraydata.hpp>
-#include <gamp/render/gl/data/gluniformdata.hpp>
-#include <gamp/render/gl/glsl/shadercode.hpp>
-#include <gamp/render/gl/glsl/shaderprogram.hpp>
+#include <gamp/render/gl/GLTypes.hpp>
+#include <gamp/render/gl/data/GLArrayData.hpp>
+#include <gamp/render/gl/data/GLUniformData.hpp>
+#include <gamp/render/gl/glsl/ShaderCode.hpp>
+#include <gamp/render/gl/glsl/ShaderProgram.hpp>
 
 using namespace gamp::render::gl;
 using namespace gamp::render::gl::glsl;

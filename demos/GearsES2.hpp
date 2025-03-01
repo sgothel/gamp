@@ -17,16 +17,16 @@
 #include <memory>
 #include <numbers>
 
-#include <gamp/gamp_types.hpp>
-#include <gamp/render/gl/data/glarraydataserver.hpp>
-#include <gamp/render/gl/data/glbuffers.hpp>
-#include <gamp/render/gl/data/gluniformdata.hpp>
-#include <gamp/render/gl/glmisc.hpp>
-#include <gamp/render/gl/glsl/shaderstate.hpp>
-#include <gamp/render/gl/gltypes.hpp>
-#include <gamp/wt/event/event.hpp>
-#include <gamp/wt/event/keyevent.hpp>
-#include <gamp/wt/event/pointerevent.hpp>
+#include <gamp/GampTypes.hpp>
+#include <gamp/render/gl/data/GLArrayDataServer.hpp>
+#include <gamp/render/gl/data/GLBuffers.hpp>
+#include <gamp/render/gl/data/GLUniformData.hpp>
+#include <gamp/render/gl/GLmisc.hpp>
+#include <gamp/render/gl/glsl/ShaderState.hpp>
+#include <gamp/render/gl/GLTypes.hpp>
+#include <gamp/wt/event/Event.hpp>
+#include <gamp/wt/event/KeyEvent.hpp>
+#include <gamp/wt/event/PointerEvent.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;

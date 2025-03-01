@@ -9,7 +9,7 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
-#include <gamp/gamp.hpp>
+#include <gamp/Gamp.hpp>
 
 #include <cstdio>
 #include <cmath>
@@ -20,7 +20,7 @@
 #include <jau/float_types.hpp>
 #include <jau/fraction_type.hpp>
 
-#include <gamp/gamp.hpp>
+#include <gamp/Gamp.hpp>
 #include "../demos/GearsES2.hpp"
 #include "../demos/Launcher01.hpp"
 

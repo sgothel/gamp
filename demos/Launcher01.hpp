@@ -13,7 +13,7 @@
 #define GAMP_DEMOS_LAUNCHER01_HPP_
 
 #include <GLES3/gl32.h>
-#include <gamp/gamp.hpp>
+#include <gamp/Gamp.hpp>
 
 #include <cstdio>
 
@@ -21,8 +21,8 @@
 #include <jau/debug.hpp>
 #include <jau/file_util.hpp>
 
-#include <gamp/gamp.hpp>
-#include <gamp/render/gl/glliterals.hpp>
+#include <gamp/Gamp.hpp>
+#include <gamp/render/gl/GLLiterals.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;

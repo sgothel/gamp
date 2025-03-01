@@ -9,7 +9,7 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
-#include <gamp/gamp.hpp>
+#include <gamp/Gamp.hpp>
 
 #include <jau/basic_types.hpp>
 #include <jau/cow_darray.hpp>
@@ -22,15 +22,15 @@
 #include <jau/util/VersionNumber.hpp>
 
 #include <cstdint>
-#include <gamp/gamp_types.hpp>
-#include <gamp/render/gl/glliterals.hpp>
-#include <gamp/render/gl/gltypes.hpp>
-#include <gamp/render/gl/glversionnum.hpp>
-#include <gamp/wt/event/event.hpp>
-#include <gamp/wt/window.hpp>
+#include <gamp/GampTypes.hpp>
+#include <gamp/render/gl/GLLiterals.hpp>
+#include <gamp/render/gl/GLTypes.hpp>
+#include <gamp/render/gl/GLVersionNum.hpp>
+#include <gamp/wt/event/Event.hpp>
+#include <gamp/wt/Window.hpp>
 #include <utility>
 
-#include "gamp/version.hpp"
+#include "gamp/Version.hpp"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>

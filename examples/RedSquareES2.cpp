@@ -9,11 +9,11 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
-#include <gamp/gamp.hpp>
+#include <gamp/Gamp.hpp>
 
 #include <cstdio>
 #include <cmath>
-#include <gamp/render/gl/glliterals.hpp>
+#include <gamp/render/gl/GLLiterals.hpp>
 #include <memory>
 
 #include <jau/basic_types.hpp>
@@ -21,7 +21,7 @@
 #include <jau/float_types.hpp>
 #include <jau/fraction_type.hpp>
 
-#include <gamp/gamp.hpp>
+#include <gamp/Gamp.hpp>
 #include "../demos/RedSquareES2.hpp"
 #include "../demos/Launcher01.hpp"
 

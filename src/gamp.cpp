@@ -9,15 +9,15 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
-#include "gamp/gamp.hpp"
+#include "gamp/Gamp.hpp"
 
 #include <ctime>
 #include <jau/debug.hpp>
 #include <jau/environment.hpp>
 #include <jau/file_util.hpp>
 
-#include <gamp/render/gl/glsl/shadercode.hpp>
-#include <gamp/render/gl/glsl/shaderstate.hpp>
+#include <gamp/render/gl/glsl/ShaderCode.hpp>
+#include <gamp/render/gl/glsl/ShaderState.hpp>
 
 static std::string m_asset_dir;
 

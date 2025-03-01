@@ -15,10 +15,10 @@
 #include <cstdio>
 #include <memory>
 
-#include <gamp/render/gl/gltypes.hpp>
-#include <gamp/render/gl/data/glarraydataserver.hpp>
-#include <gamp/render/gl/data/gluniformdata.hpp>
-#include <gamp/render/gl/glsl/shaderstate.hpp>
+#include <gamp/render/gl/GLTypes.hpp>
+#include <gamp/render/gl/data/GLArrayDataServer.hpp>
+#include <gamp/render/gl/data/GLUniformData.hpp>
+#include <gamp/render/gl/glsl/ShaderState.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;

@@ -83,8 +83,8 @@ set (gamp_VERSION_LONG       ${VERSION_LONG})
 set (gamp_VERSION_SHORT      ${VERSION_SHORT})
 set (gamp_VERSION_API        ${VERSION_API})
 
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/version.cpp.in
-                ${CMAKE_CURRENT_BINARY_DIR}/src/version.cpp)
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/Version.cpp.in
+                ${CMAKE_CURRENT_BINARY_DIR}/src/Version.cpp)
 
 set (gamp_DOCS_DIR documentation)
 

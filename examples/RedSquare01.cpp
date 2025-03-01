@@ -9,18 +9,18 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
-#include <gamp/gamp.hpp>
+#include <gamp/Gamp.hpp>
 
 #include <cstdio>
 #include <cmath>
-#include <gamp/wt/event/event.hpp>
+#include <gamp/wt/event/Event.hpp>
 #include <memory>
 #include <jau/basic_types.hpp>
 #include <jau/file_util.hpp>
 #include <jau/fraction_type.hpp>
 
-#include <gamp/gamp.hpp>
-#include <gamp/render/gl/gltypes.hpp>
+#include <gamp/Gamp.hpp>
+#include <gamp/render/gl/GLTypes.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;

@@ -9,8 +9,8 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
-#include <gamp/wt/event/keyevent.hpp>
-#include <gamp/wt/window.hpp>
+#include <gamp/wt/event/KeyEvent.hpp>
+#include <gamp/wt/Window.hpp>
 
 using namespace jau;
 using namespace gamp::wt::event;
