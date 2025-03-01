@@ -134,7 +134,7 @@ If using optional clang toolchain,
 perhaps change the clang version-suffix of above clang install line to the appropriate version.
 
 After complete clang installation, you might want to setup the latest version as your default.
-For Debian you can use this [clang alternatives setup script](../../jaulib.git/tree/scripts/setup_clang_alternatives.sh).
+For Debian you can use this [clang alternatives setup script](https://jausoft.com/cgit/jaulib.git/tree/scripts/setup_clang_alternatives.sh).
 
 ### Build Procedure
 
@@ -148,7 +148,7 @@ cd gamp
 <a name="cmake_presets_optional"></a>
 
 #### CMake Build via Presets
-Analog to [jaulib CMake build presets](../../jaulib.git/about/README.md#cmake_presets_optional) ...
+Analog to [jaulib CMake build presets](https://jausoft.com/cgit/jaulib.git/about/README.md#cmake_presets_optional) ...
 
 Following debug presets are defined in `CMakePresets.json`
 - `debug`
@@ -193,7 +193,7 @@ You may utilize `scripts/build-preset.sh` for an initial build, install and test
 <a name="cmake_presets_hardcoded"></a>
 
 #### CMake Build via Hardcoded Presets
-Analog to [jaulib CMake hardcoded presets](../../jaulib.git/about/README.md#cmake_presets_hardcoded) ...
+Analog to [jaulib CMake hardcoded presets](https://jausoft.com/cgit/jaulib.git/about/README.md#cmake_presets_hardcoded) ...
 
 Besides above `CMakePresets.json` presets,
 `JaulibSetup.cmake` contains hardcoded presets for *undefined variables* if
@@ -218,7 +218,7 @@ the headers and library objects respectively in your dist location.
 Our cmake configure has a number of options, *cmake-gui* or *ccmake* can show
 you all the options. The interesting ones are detailed below:
 
-See [jaulib CMake variables](../../jaulib.git/about/README.md#cmake_variables) for details.
+See [jaulib CMake variables](https://jausoft.com/cgit/jaulib.git/about/README.md#cmake_variables) for details.
 
 <a name="unit_testing"></a>
 
@@ -271,7 +271,7 @@ IDE integration configuration files are provided for
   - [cschlosser.doxdocgen](https://github.com/cschlosser/doxdocgen)
   - [jerrygoyal.shortcut-menu-bar](https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension)
 
-For VSCodium one might copy the [example root-workspace file](../tree/.vscode/gamp.code-workspace_example)
+For VSCodium one might copy the [example root-workspace file](.vscode/gamp.code-workspace_example)
 to the parent folder of this project (*note the filename change*) and adjust the `path` to your filesystem.
 ~~~~~~~~~~~~~
 cp .vscode/gamp.code-workspace_example ../gamp.code-workspace
