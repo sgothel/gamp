@@ -108,7 +108,8 @@ message(STATUS "${PROJECT_NAME} CMAKE_CXX_STANDARD_LIBRARIES = ${CMAKE_CXX_STAND
 # add a target to generate API documentation with Doxygen
 find_package (Doxygen)
 if (DOXYGEN_FOUND)
-  configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.cpp.out @ONLY)
+  configure_file (${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.cpp.out @ONLY)
+  file (COPY ${CMAKE_CURRENT_SOURCE_DIR}/jaulib/doc/doxygen-awesome.css DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
   add_custom_command (OUTPUT ${gamp_DOCS_DIR}/cpp
     COMMAND ${CMAKE_COMMAND} -E make_directory ${gamp_DOCS_DIR}
     COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.cpp.out
