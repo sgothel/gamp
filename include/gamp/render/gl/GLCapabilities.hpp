@@ -169,6 +169,15 @@ namespace gamp::render::gl {
             return 0;  // they are equal: hw/sw, stereo, multisample, stencil, RGBA and depth
         }
 
+        /**
+         * Returns whether FBO offscreen mode is requested, available or chosen.
+         * <p>
+         * Default is false.
+         * </p>
+         * <p>
+         * For chosen capabilities, only the selected offscreen surface is set to <code>true</code>.
+         * </p>
+         */
         constexpr bool isFBO() const noexcept { return m_isFBO; }
 
         /**
@@ -190,31 +199,64 @@ namespace gamp::render::gl {
             m_isFBO = enable;
         }
 
+        /**
+         * Returns whether double-buffering is requested, available or chosen.
+         * <p>
+         * Default is true.
+         * </p>
+         */
         constexpr bool doubleBuffered() const noexcept { return m_doubleBuffered; }
 
         /** Enables or disables double buffering. */
         constexpr void setDoubleBuffered(bool enable) noexcept { m_doubleBuffered = enable; }
 
+        /**
+         * Returns whether stereo is requested, available or chosen.
+         * <p>
+         * Default is false.
+         * </p>
+         */
         constexpr bool stereo() const noexcept { return m_stereo; }
 
         /** Enables or disables stereo viewing. */
         constexpr void setStereo(bool enable) noexcept { m_stereo = enable; }
 
+        /**
+         * Returns whether hardware acceleration is requested, available or chosen.
+         * <p>
+         * Default is true.
+         * </p>
+         */
         constexpr bool hardwareAccelerated() const noexcept { return m_hardwareAccelerated; }
 
         /** Enables or disables hardware acceleration. */
         constexpr void setHardwareAccelerated(bool enable) noexcept { m_hardwareAccelerated = enable; }
 
+        /**
+         * Returns the number of depth buffer bits.
+         */
         constexpr int depthBits() const noexcept { return m_depthBits; }
 
         /** Sets the number of bits requested for the depth buffer. */
         constexpr int& depthBits() noexcept { return m_depthBits; }
 
+        /**
+         * Returns the number of stencil buffer bits.
+         * <p>
+         * Default is 0.
+         * </p>
+         */
         constexpr int stencilBits() const noexcept { return m_stencilBits; }
 
         /** Sets the number of bits requested for the stencil buffer. */
         constexpr int& stencilBits() noexcept { return m_stencilBits; }
 
+        /**
+         * Returns the number of bits for the accumulation
+         * buffer's red component. On some systems only the accumulation
+         * buffer depth, which is the sum of the red, green, and blue bits,
+         * is considered.
+         */
         constexpr int accumRedBits() const noexcept { return m_accumRedBits; }
 
         /** Sets the number of bits requested for the accumulation buffer's
@@ -223,6 +265,12 @@ namespace gamp::render::gl {
             considered. */
         constexpr int& accumRedBits() noexcept { return m_accumRedBits; }
 
+        /**
+         * Returns the number of bits for the accumulation
+         * buffer's green component. On some systems only the accumulation
+         * buffer depth, which is the sum of the red, green, and blue bits,
+         * is considered.
+         */
         constexpr int accumGreenBits() const noexcept { return m_accumGreenBits; }
 
         /** Sets the number of bits requested for the accumulation buffer's
@@ -231,6 +279,12 @@ namespace gamp::render::gl {
             considered. */
         constexpr int& accumGreenBits() noexcept { return m_accumGreenBits; }
 
+        /**
+         * Returns the number of bits for the accumulation
+         * buffer's blue component. On some systems only the accumulation
+         * buffer depth, which is the sum of the red, green, and blue bits,
+         * is considered.
+         */
         constexpr int accumBlueBits() const noexcept { return m_accumBlueBits; }
 
         /** Sets the number of bits requested for the accumulation buffer's
@@ -239,6 +293,12 @@ namespace gamp::render::gl {
             considered. */
         constexpr int& accumBlueBits() noexcept { return m_accumBlueBits; }
 
+        /**
+         * Returns the number of bits for the accumulation
+         * buffer's alpha component. On some systems only the accumulation
+         * buffer depth, which is the sum of the red, green, and blue bits,
+         * is considered.
+         */
         constexpr int accumAlphaBits() const noexcept { return m_accumAlphaBits; }
 
         /** Sets number of bits requested for accumulation buffer's alpha
@@ -252,8 +312,22 @@ namespace gamp::render::gl {
          * (FSAA), default is {@link #DEFAULT_SAMPLE_EXTENSION}.
          */
         // constexpr void setSampleExtension(final String se) { sampleExtension = se; }
+        /**
+         * Returns the extension for full-scene antialiasing
+         * (FSAA).
+         * <p>
+         * Default is {@link #DEFAULT_SAMPLE_EXTENSION}.
+         * </p>
+         */
         // const std::string& getSampleExtension() { return sampleExtension; }
 
+        /**
+         * Returns whether sample buffers for full-scene antialiasing
+         * (FSAA) should be allocated for this drawable.
+         * <p>
+         * Default is false.
+         * </p>
+         */
         constexpr bool hasSamples() const noexcept { return m_hasSamples; }
 
         /**
@@ -271,6 +345,13 @@ namespace gamp::render::gl {
             }
         }
 
+        /**
+         * Returns the number of sample buffers to be allocated if sample
+         * buffers are enabled, otherwise returns 0.
+         * <p>
+         * Default is 0 due to disable sample buffers per default.
+         * </p>
+         */
         constexpr int samplesCount() const noexcept { return m_hasSamples ? m_samplesCount : 0; }
 
         /**
