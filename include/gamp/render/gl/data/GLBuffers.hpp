@@ -344,24 +344,24 @@ namespace gamp::render::gl::data {
 
             if (pack) {
               alignment = glGetInteger(GL_PACK_ALIGNMENT);                   // es2, es3, gl3
-              if( gl.isGL2ES3() ) {
+              if( gl.glProfile().isGL2ES3() ) {
                   rowLength = glGetInteger(GL_PACK_ROW_LENGTH);          // es3, gl3
                   skipRows = glGetInteger(GL_PACK_SKIP_ROWS);            // es3, gl3
                   skipPixels = glGetInteger(GL_PACK_SKIP_PIXELS);        // es3, gl3
-                  if (depth > 1 && gl.isGL2GL3() && gl.version() >= Version1_2) {
+                  if (depth > 1 && gl.glProfile().isGL2GL3() && gl.version() >= Version1_2) {
                       imageHeight = glGetInteger(GL_PACK_IMAGE_HEIGHT);  // gl3, GL_VERSION_1_2
                       skipImages = glGetInteger(GL_PACK_SKIP_IMAGES);    // gl3, GL_VERSION_1_2
                   }
               }
             } else {
               alignment = glGetInteger(GL_UNPACK_ALIGNMENT);                 // es2, es3, gl3
-              if( gl.isGL2ES3() ) {
+              if( gl.glProfile().isGL2ES3() ) {
                   rowLength = glGetInteger(GL_UNPACK_ROW_LENGTH);        // es3, gl3
                   skipRows = glGetInteger(GL_UNPACK_SKIP_ROWS);          // es3, gl3
                   skipPixels = glGetInteger(GL_UNPACK_SKIP_PIXELS);      // es3, gl3
                   if( depth > 1 &&
-                      ( gl.isGL3ES3() ||
-                        ( gl.isGL2GL3() && gl.version() >= Version1_2 )
+                      ( gl.glProfile().isGL3ES3() ||
+                        ( gl.glProfile().isGL2GL3() && gl.version() >= Version1_2 )
                       )
                     ) {
                       imageHeight = glGetInteger(GL_UNPACK_IMAGE_HEIGHT);// es3, gl3, GL_VERSION_1_2
@@ -403,7 +403,7 @@ namespace gamp::render::gl::data {
                     }
                     break;
                 default:
-                    throw GLException("Invalid alignment "+std::to_string(alignment)+", must be 2**n (1,2,4,8). Pls notify the maintainer in case this is our bug.", E_FILE_LINE);
+                    throw RenderException("Invalid alignment "+std::to_string(alignment)+", must be 2**n (1,2,4,8). Pls notify the maintainer in case this is our bug.", E_FILE_LINE);
             }
 
             /**
@@ -566,7 +566,7 @@ namespace gamp::render::gl::data {
                   if (GL_COLOR_INDEX == format || GL_STENCIL_INDEX == format) {
                       compSize = 1;
                   } else {
-                      throw GLException("BITMAP type only supported for format COLOR_INDEX and STENCIL_INDEX, not "+jau::to_hexstring(format), E_FILE_LINE);
+                      throw RenderException("BITMAP type only supported for format COLOR_INDEX and STENCIL_INDEX, not "+jau::to_hexstring(format), E_FILE_LINE);
                   }
                   break;
                 case GL_BYTE:
@@ -626,7 +626,7 @@ namespace gamp::render::gl::data {
                   break;
 
                 default:
-                  throw GLException("type "+jau::to_hexstring(type)+"/"+"format "+jau::to_hexstring(format)+" not supported [yet], pls notify the maintainer in case this is our bug.", E_FILE_LINE);
+                  throw RenderException("type "+jau::to_hexstring(type)+"/"+"format "+jau::to_hexstring(format)+" not supported [yet], pls notify the maintainer in case this is our bug.", E_FILE_LINE);
             }
             return compCount * compSize;
         }
@@ -708,7 +708,7 @@ namespace gamp::render::gl::data {
                   elements = 2;
                   break; */
                 default:
-                  throw GLException("format "+jau::to_hexstring(format)+" not supported [yet], pls notify the maintainer in case this is our bug.", E_FILE_LINE);
+                  throw RenderException("format "+jau::to_hexstring(format)+" not supported [yet], pls notify the maintainer in case this is our bug.", E_FILE_LINE);
             }
             return compCount;
         }

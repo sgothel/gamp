@@ -21,8 +21,10 @@
 #include <jau/fraction_type.hpp>
 
 #include <gamp/Gamp.hpp>
+#include <gamp/render/RenderContext.hpp>
+
 #include "../demos/GearsES2.hpp"
-#include "../demos/Launcher01.hpp"
+#include "../demos/GLLauncher01.hpp"
 
 using namespace jau::math;
 using namespace jau::math::util;
@@ -32,6 +34,7 @@ using namespace gamp::wt::event;
 
 int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
-    return launch("GearsES2.hpp", LaunchProps{GLProfileMask::none, GLContextFlags::verbose},
+    return launch("GearsES2.hpp",
+                  GLLaunchProps{GLProfile(GLProfile::GLES2), gamp::render::RenderContextFlags::verbose},
                   std::make_shared<GearsES2>(), argc, argv);
 }

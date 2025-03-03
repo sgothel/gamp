@@ -15,7 +15,9 @@
 #include <jau/debug.hpp>
 #include <jau/environment.hpp>
 #include <jau/file_util.hpp>
+#include <jau/string_util.hpp>
 
+#include <gamp/render/RenderContext.hpp>
 #include <gamp/render/gl/glsl/ShaderCode.hpp>
 #include <gamp/render/gl/glsl/ShaderState.hpp>
 
@@ -53,6 +55,15 @@ gamp::GampEnv::GampEnv() noexcept
 {
     jau::INFO_PRINT("GampEnv: Debug[global %d, wt.event %d, renderer.gl.glsl[code %d, state %d]]",
         DEBUG_GLOBAL, DEBUG_WT_EVENT, DEBUG_RENDERER_GL_GLSL_CODE, DEBUG_RENDERER_GL_GLSL_STATE);
+}
+
+std::string gamp::render::RenderContext::toString() const {
+    return std::string("RC[")
+       .append(signature().name()).append(", ")
+       .append(jau::to_hexstring(m_context)).append(", ")
+       .append(to_string(contextFlags())).append(", ")
+       .append(version().toString()).append(" -> surface ")
+       .append(m_surface?jau::to_hexstring(m_surface->surfaceHandle()):"nil").append("]");
 }
 
 bool gamp::render::gl::glsl::ShaderCode::DEBUG_CODE = GampEnv::get().DEBUG_RENDERER_GL_GLSL_CODE;

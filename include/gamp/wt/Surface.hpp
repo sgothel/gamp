@@ -1,25 +1,12 @@
 /*
- * Author: Sven Gothel <sgothel@jausoft.com> and Svenson Han Gothel
- * Copyright (c) 2022-2024 Gothel Software e.K.
+ * Author: Sven Gothel <sgothel@jausoft.com>
+ * Copyright Gothel Software e.K.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * This Source Code Form is subject to the terms of the MIT License
+ * If a copy of the MIT was not distributed with this file,
+ * you can obtain one at https://opensource.org/license/mit/.
  */
 #ifndef GAMP_WTSURFACE_HPP_
 #define GAMP_WTSURFACE_HPP_
@@ -27,11 +14,10 @@
 #include <jau/fraction_type.hpp>
 #include <jau/int_types.hpp>
 #include <jau/locks.hpp>
-#include <gamp/render/gl/GLProfile.hpp>
-#include <memory>
-#include <thread>
 
 #include <gamp/GampTypes.hpp>
+#include <gamp/render/RenderContext.hpp>
+#include <gamp/wt/Capabilities.hpp>
 
 namespace gamp::wt {
     /** \addtogroup Gamp_WT
@@ -46,7 +32,7 @@ namespace gamp::wt {
     using namespace jau::math;
 
     //
-    // TODO: GraphicsConfiguration: Screen + Device + Capabilities
+    // TODO: GraphicsConfiguration: Screen + Device?
     //
 
     class Surface : public std::enable_shared_from_this<Surface> {
@@ -66,12 +52,14 @@ namespace gamp::wt {
             handle_t m_surface_handle;
             /// Surface client-area size in pixel units
             Vec2i m_surface_size;
-            gamp::render::gl::GL m_renderContext;
+            CapabilitiesPtr m_capsptr;
+            gamp::render::RenderContextPtr m_renderContext;
 
             jau::RecursiveLock m_surface_lock;
 
             void disposeImpl(handle_t) noexcept {}
             bool setSwapIntervalImpl(int v) noexcept;
+            static CapabilitiesPtr retrieveCaps(const wt::SurfaceRef& surface) noexcept;
 
         protected:
             struct Private{ explicit Private() = default; };
@@ -82,6 +70,9 @@ namespace gamp::wt {
             }
 
             void setSurfaceSize(const Vec2i& sz) noexcept { m_surface_size = sz; }
+
+            virtual lock_status_t nativeSurfaceLock() noexcept { return lock_status_t::locked_same; }
+            virtual void nativeSurfaceUnlock() noexcept { }
 
         public:
             /** Private ctor for single Surface::create() method w/o public ctor. */
@@ -104,12 +95,15 @@ namespace gamp::wt {
                 }
             }
 
-            virtual void disposedNotified(const jau::fraction_timespec&) noexcept {
+            virtual void disposedNotify(const jau::fraction_timespec&) noexcept {
                 m_surface_handle = 0;
-                m_renderContext.releasedNotify();
+                m_renderContext = nullptr;
             }
             virtual void dispose(const jau::fraction_timespec&) noexcept {
-                m_renderContext.dispose();
+                if( m_renderContext ) {
+                    m_renderContext->dispose();
+                    m_renderContext = nullptr;
+                }
                 if( m_surface_handle ) {
                     disposeImpl(m_surface_handle);
                     m_surface_handle = 0;
@@ -118,24 +112,28 @@ namespace gamp::wt {
 
             const SurfaceRef shared() { return shared_from_this(); }
 
-            bool createContext(gamp::render::gl::GLProfileMask profileMask, gamp::render::gl::GLContextFlags contextFlags) {
-                gamp::render::gl::GL gl = createContext(shared(), profileMask, contextFlags, nullptr);
-                if( gl.isValid() ) {
-                    ownRenderingContext(std::move(gl));
+            bool createContext(const gamp::render::RenderProfile& profile, const gamp::render::RenderContextFlags& contextFlags) {
+                gamp::render::RenderContextPtr rc = createContext(shared(), profile, contextFlags, nullptr);
+                if( rc && rc->isValid() ) {
+                    m_renderContext = std::move(rc);
+                    m_capsptr = retrieveCaps(shared());
                     return true;
                 }
                 return false;
             }
-            static gamp::render::gl::GL createContext(const wt::SurfaceRef& surface,
-                                                      gamp::render::gl::GLProfileMask profileMask,
-                                                      gamp::render::gl::GLContextFlags contextFlags,
-                                                      gamp::render::gl::GL* shareWith) noexcept;
+            static gamp::render::RenderContextPtr createContext(const wt::SurfaceRef& surface,
+                                                      const gamp::render::RenderProfile& profile,
+                                                      const gamp::render::RenderContextFlags& contextFlags,
+                                                      gamp::render::RenderContext* shareWith) noexcept;
 
-            void ownRenderingContext(gamp::render::gl::GL&& gl) noexcept {
-                m_renderContext = std::move(gl);
+            const gamp::render::RenderContext* renderContext() const noexcept {
+                return m_renderContext ? m_renderContext.get() : nullptr;
             }
-            constexpr const gamp::render::gl::GL& renderContext() const noexcept { return m_renderContext; }
-            constexpr gamp::render::gl::GL& renderContext() noexcept { return m_renderContext; }
+            gamp::render::RenderContext* renderContext() noexcept {
+                return m_renderContext ? m_renderContext.get() : nullptr;
+            }
+
+            const Capabilities* capabilities() const noexcept { return m_capsptr ? m_capsptr.get() : nullptr; }
 
             /**
              * Returns desired or determined swap interval. Defaults to -1, i.e. adaptive swap interval.
@@ -150,7 +148,7 @@ namespace gamp::wt {
 
             /** Returns true if swap interval could be set with the native toolkit post createContext(). See swapInterval(). */
             bool setSwapInterval(int v) noexcept {
-                if( m_renderContext.isValid() ) {
+                if( m_renderContext && m_renderContext->isValid() ) {
                     return setSwapIntervalImpl(v);
                 }
                 m_swapInterval=v;
@@ -188,6 +186,8 @@ namespace gamp::wt {
              * On Microsoft Windows this returns an entity of type HDC.
              */
             constexpr handle_t surfaceHandle() const noexcept { return m_surface_handle; }
+
+            virtual bool isValid() const noexcept { return 0 != m_surface_handle; }
 
             /**
              * Provide a mechanism to utilize custom (pre-) swap surface
@@ -265,16 +265,12 @@ namespace gamp::wt {
                 m_surface_lock.unlock();
             }
 
-        protected:
-            virtual lock_status_t nativeSurfaceLock() noexcept { return lock_status_t::locked_same; }
-            virtual void nativeSurfaceUnlock() noexcept { }
-
-        public:
             std::string toString() const noexcept {
                 std::string res = "Surface[";
                 res.append("handle ").append(jau::to_hexstring(m_surface_handle))
-                   .append(", ").append(m_renderContext.toString())
+                   .append(", ").append(m_renderContext ? m_renderContext->toString() : "nil-ctx")
                    .append(", size ").append(m_surface_size.toString())
+                   .append(", ").append(m_capsptr?m_capsptr->toString():"nocaps")
                    .append("]");
                 return res;
             }

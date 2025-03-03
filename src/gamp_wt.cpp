@@ -9,8 +9,10 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
+#include <gamp/wt/Surface.hpp>
 #include <gamp/wt/event/KeyEvent.hpp>
 #include <gamp/wt/Window.hpp>
+#include <gamp/render/gl/GLHeader.hpp>
 
 using namespace jau;
 using namespace gamp::wt::event;
@@ -78,7 +80,8 @@ void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
     const WindowRef& self = shared();
     for(const RenderListenerRef& l : *m_render_listener.snapshot()) {
         try {
-            bool initOK = renderContext().isValid();
+            const gamp::render::RenderContext* ctx = renderContext();
+            bool initOK = ctx && ctx->isValid();
             if( initOK ) {
                 if( is_set(l->pendingActions(), RenderActions::init) ) {
                     if( l->init(self, when) ) {

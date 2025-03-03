@@ -13,6 +13,7 @@
 
 #include <cstdio>
 #include <cmath>
+#include <gamp/render/RenderContext.hpp>
 #include <gamp/wt/event/Event.hpp>
 #include <memory>
 #include <jau/basic_types.hpp>
@@ -280,12 +281,13 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
         printf("Exit (1): Failed to create window.\n");
         return 1;
     }
-    if( !main_win->createContext(gamp::render::gl::GLProfileMask::none, gamp::render::gl::GLContextFlags::verbose) ) {
+    if( !main_win->createContext(gamp::render::gl::GLProfile(gamp::render::gl::GLProfile::GLES2), gamp::render::RenderContextFlags::verbose) ) {
         printf("Exit (2): Failed to create context\n");
         main_win->dispose(jau::getMonotonicTime());
         return 1;
     }
-    printf("GL Context: %s\n", main_win->renderContext().toLongString().c_str());
+    gamp::render::gl::GL& gl = gamp::render::gl::GL::cast(main_win->renderContext());
+    printf("GL Context: %s\n", gl.toString().c_str());
     {
         const int w = main_win->surfaceSize().x;
         const int h = main_win->surfaceSize().y;
@@ -296,8 +298,10 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
     main_win->addRenderListener(std::make_shared<RedSquareES2>());
 
     #if defined(__EMSCRIPTEN__)
-        emscripten_set_main_loop(gamp::mainloop_default, 0, 1);
+        emscripten_set_main_loop(gamp::mainloop_void, 0, 1);
     #else
-        while( true ) { gamp::mainloop_default(); }
+        while( gamp::mainloop_default() ) { }
     #endif
+    printf("Exit: %s\n", main_win->toString().c_str());
+    return 0;
 }

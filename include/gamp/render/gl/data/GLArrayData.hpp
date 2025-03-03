@@ -69,12 +69,12 @@ namespace gamp::render::gl::data {
          * @param glp the GLProfile to use
          * @throws GLException if this instance has invalid parameter
          */
-        virtual void validate(const GL& glp) const {
+        virtual void validate(const GL& gl) const {
             if( !m_alive ) {
-                throw GLException("Instance !alive " + toString(), E_FILE_LINE);
+                throw RenderException("Instance !alive " + toString(), E_FILE_LINE);
             }
-            if( isVertexAttribute() && !glp.hasGLSL() ) {
-                throw GLException("GLSL not supported on " + glp.toString() + ", " + toString(), E_FILE_LINE);
+            if( isVertexAttribute() && !gl.glProfile().hasGLSL() ) {
+                throw RenderException("GLSL not supported on " + gl.toString() + ", " + toString(), E_FILE_LINE);
             }
             // Skip GLProfile based index, comps, type validation, might not be future proof.
             // glp.isValidArrayDataType(getIndex(), getCompsPerElem(), getCompType(), isVertexAttribute(), throwException);
@@ -401,10 +401,10 @@ namespace gamp::render::gl::data {
                 // Set/Check name .. - Required for GLSL case. Validation and debug-name for FFP.
                 m_name = name;
                 if( m_name.empty() ) {
-                    throw GLException("Missing attribute name", E_FILE_LINE);
+                    throw RenderException("Missing attribute name", E_FILE_LINE);
                 }
             } else if( 0 < vboTarget ) {
-                throw GLException("Invalid GPUBuffer target: " + jau::to_hexstring(vboTarget), E_FILE_LINE);
+                throw RenderException("Invalid GPUBuffer target: " + jau::to_hexstring(vboTarget), E_FILE_LINE);
             }
 
             // immutable types
@@ -412,18 +412,18 @@ namespace gamp::render::gl::data {
             m_compTypeSignature = compTypeSignature;
             m_bytesPerComp  = GLBuffers::sizeOfGLType(componentType);
             if( 0 == m_bytesPerComp ) {
-                throw GLException("Given componentType not supported: " + jau::to_hexstring(componentType) + ":\n\t" + toString(), E_FILE_LINE);
+                throw RenderException("Given componentType not supported: " + jau::to_hexstring(componentType) + ":\n\t" + toString(), E_FILE_LINE);
             }
             if( 0 >= componentsPerElement ) {
-                throw GLException("Invalid number of components: " + std::to_string(componentsPerElement), E_FILE_LINE);
+                throw RenderException("Invalid number of components: " + std::to_string(componentsPerElement), E_FILE_LINE);
             }
             m_compsPerElement = componentsPerElement;
 
             if( 0 < stride && stride < componentsPerElement * m_bytesPerComp ) {
-                throw GLException("stride (" + std::to_string(stride) + ") lower than component bytes, " + std::to_string(componentsPerElement) + " * " + std::to_string(m_bytesPerComp), E_FILE_LINE);
+                throw RenderException("stride (" + std::to_string(stride) + ") lower than component bytes, " + std::to_string(componentsPerElement) + " * " + std::to_string(m_bytesPerComp), E_FILE_LINE);
             }
             if( 0 < stride && stride % m_bytesPerComp != 0 ) {
-                throw GLException("stride (" + std::to_string(stride) + ") not a multiple of bpc " + std::to_string(m_bytesPerComp), E_FILE_LINE);
+                throw RenderException("stride (" + std::to_string(stride) + ") not a multiple of bpc " + std::to_string(m_bytesPerComp), E_FILE_LINE);
             }
             m_strideB = (0 == stride) ? componentsPerElement * m_bytesPerComp : stride;
             m_strideL = m_strideB / m_bytesPerComp;
@@ -450,7 +450,7 @@ namespace gamp::render::gl::data {
                 case GL_STREAM_DRAW: // GL2ES2
                     break;
                 default:
-                    throw GLException("invalid gpuBufferUsage: " + jau::to_hexstring(vboUsage) + ":\n\t" + toString(), E_FILE_LINE);
+                    throw RenderException("invalid gpuBufferUsage: " + jau::to_hexstring(vboUsage) + ":\n\t" + toString(), E_FILE_LINE);
             }
             switch( vboTarget ) {
                 case 0:  // nop
@@ -458,7 +458,7 @@ namespace gamp::render::gl::data {
                 case GL_ELEMENT_ARRAY_BUFFER: // GL
                     break;
                 default:
-                    throw GLException("invalid gpuBufferTarget: " + jau::to_hexstring(vboTarget) + ":\n\t" + toString(), E_FILE_LINE);
+                    throw RenderException("invalid gpuBufferTarget: " + jau::to_hexstring(vboTarget) + ":\n\t" + toString(), E_FILE_LINE);
             }
             m_vboUsage  = vboUsage;
             m_vboTarget = vboTarget;

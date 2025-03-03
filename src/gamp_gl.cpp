@@ -28,7 +28,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
     if( isGLES1() ) {
         if(isVertexAttribPointer) {
             if(throwException) {
-                throw GLException("Illegal array type for "+std::string(getGLArrayName(index))+" on profile GLES1: VertexAttribPointer", E_FILE_LINE);
+                throw RenderException("Illegal array type for "+std::string(getGLArrayName(index))+" on profile GLES1: VertexAttribPointer", E_FILE_LINE);
             }
             return false;
         }
@@ -43,7 +43,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                         break;
                     default:
                         if(throwException) {
-                            throw GLException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::to_hexstring(type), E_FILE_LINE);
+                            throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::to_hexstring(type), E_FILE_LINE);
                         }
                         return false;
                 }
@@ -55,7 +55,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                         break;
                     default:
                         if(throwException) {
-                            throw GLException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GLES1: "+std::to_string(comps), E_FILE_LINE);
+                            throw RenderException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GLES1: "+std::to_string(comps), E_FILE_LINE);
                         }
                         return false;
                 }
@@ -69,7 +69,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                         break;
                     default:
                         if(throwException) {
-                            throw GLException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::to_hexstring(type), E_FILE_LINE);
+                            throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::to_hexstring(type), E_FILE_LINE);
                         }
                         return false;
                 }
@@ -79,7 +79,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                         break;
                     default:
                         if(throwException) {
-                            throw GLException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GLES1: "+std::to_string(comps), E_FILE_LINE);
+                            throw RenderException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GLES1: "+std::to_string(comps), E_FILE_LINE);
                         }
                         return false;
                 }
@@ -92,7 +92,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                         break;
                     default:
                         if(throwException) {
-                            throw new GLException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::to_hexstring(type), E_FILE_LINE);
+                            throw new RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::to_hexstring(type), E_FILE_LINE);
                         }
                         return false;
                 }
@@ -102,7 +102,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                         break;
                     default:
                         if(throwException) {
-                            throw GLException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GLES1: "+std::to_string(comps), E_FILE_LINE);
+                            throw RenderException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GLES1: "+std::to_string(comps), E_FILE_LINE);
                         }
                         return false;
                 }
@@ -127,7 +127,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                 break;
             default:
                 if(throwException) {
-                    throw GLException("Illegal data type on profile GLES3: "+jau::to_hexstring(type), E_FILE_LINE);
+                    throw RenderException("Illegal data type on profile GLES3: "+jau::to_hexstring(type), E_FILE_LINE);
                 }
                 return false;
         }
@@ -157,7 +157,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                 break;
             default:
                 if(throwException) {
-                    throw GLException("Illegal data type on profile GLES2: "+jau::to_hexstring(type), E_FILE_LINE);
+                    throw RenderException("Illegal data type on profile GLES2: "+jau::to_hexstring(type), E_FILE_LINE);
                 }
                 return false;
         }
@@ -194,7 +194,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                     break;
                 default:
                     if(throwException) {
-                        throw GLException("Illegal data type on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
+                        throw RenderException("Illegal data type on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
                     }
                     return false;
             }
@@ -207,7 +207,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                     break;
                 default:
                     if(throwException) {
-                        throw GLException("Illegal component number on profile GL2: "+std::to_string(comps), E_FILE_LINE);
+                        throw RenderException("Illegal component number on profile GL2: "+std::to_string(comps), E_FILE_LINE);
                     }
                     return false;
             }
@@ -222,7 +222,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw GLException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
+                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -234,7 +234,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw GLException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GL2: "+std::to_string(comps), E_FILE_LINE);
+                                throw RenderException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GL2: "+std::to_string(comps), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -249,7 +249,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw GLException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
+                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -259,7 +259,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw GLException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GLES1: "+std::to_string(comps), E_FILE_LINE);
+                                throw RenderException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GLES1: "+std::to_string(comps), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -277,7 +277,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw GLException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
+                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -288,7 +288,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw GLException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GL2: "+std::to_string(comps), E_FILE_LINE);
+                                throw RenderException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GL2: "+std::to_string(comps), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -302,7 +302,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw GLException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
+                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -315,7 +315,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw GLException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GL2: "+std::to_string(comps), E_FILE_LINE);
+                                throw RenderException("Illegal component number for "+std::string(getGLArrayName(index))+" on profile GL2: "+std::to_string(comps), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -332,13 +332,13 @@ void gamp::render::gl::data::GLUniformData::send(const GL&) const {
     if( columns() > 1 ) {
         if( rows() > 1 ) {
             if( compSignature() != jau::float_ctti::f32() ) {
-                throw GLException("glUniformMatrix matrix only supported for float: " + toString(), E_FILE_LINE);
+                throw RenderException("glUniformMatrix matrix only supported for float: " + toString(), E_FILE_LINE);
             }
             switch( columns() ) {
                 case 2:  ::glUniformMatrix2fv(location(), count(), false, reinterpret_cast<const GLfloat*>(data())); break;
                 case 3:  ::glUniformMatrix3fv(location(), count(), false, reinterpret_cast<const GLfloat*>(data())); break;
                 case 4:  ::glUniformMatrix4fv(location(), count(), false, reinterpret_cast<const GLfloat*>(data())); break;
-                default: throw GLException("glUniformMatrix only available for [2..4] columns: " + toString(), E_FILE_LINE);
+                default: throw RenderException("glUniformMatrix only available for [2..4] columns: " + toString(), E_FILE_LINE);
             }
         } else {
             if( compSignature() == jau::float_ctti::f32() ) {
@@ -347,7 +347,7 @@ void gamp::render::gl::data::GLUniformData::send(const GL&) const {
                     case 2:  ::glUniform2fv(location(), count(), reinterpret_cast<const GLfloat*>(data())); break;
                     case 3:  ::glUniform3fv(location(), count(), reinterpret_cast<const GLfloat*>(data())); break;
                     case 4:  ::glUniform4fv(location(), count(), reinterpret_cast<const GLfloat*>(data())); break;
-                    default: throw GLException("glUniform float32 vector only available for [1..4] columns: " + toString(), E_FILE_LINE);
+                    default: throw RenderException("glUniform float32 vector only available for [1..4] columns: " + toString(), E_FILE_LINE);
                 }
             } else if( compSignature() == jau::int_ctti::i32() ) {
                 switch( components() ) {
@@ -355,10 +355,10 @@ void gamp::render::gl::data::GLUniformData::send(const GL&) const {
                     case 2:  ::glUniform2iv(location(), count(), reinterpret_cast<const GLint*>(data())); break;
                     case 3:  ::glUniform3iv(location(), count(), reinterpret_cast<const GLint*>(data())); break;
                     case 4:  ::glUniform4iv(location(), count(), reinterpret_cast<const GLint*>(data())); break;
-                    default: throw GLException("glUniform int32 vector only available for [1..4] columns: " + toString(), E_FILE_LINE);
+                    default: throw RenderException("glUniform int32 vector only available for [1..4] columns: " + toString(), E_FILE_LINE);
                 }
             } else {
-                throw GLException("glUniformMatrix vector only supports integer and float: " + toString(), E_FILE_LINE);
+                throw RenderException("glUniformMatrix vector only supports integer and float: " + toString(), E_FILE_LINE);
             }
         }
     } else {
@@ -367,7 +367,7 @@ void gamp::render::gl::data::GLUniformData::send(const GL&) const {
         } else if( compSignature() == jau::float_ctti::f32() ) {
             ::glUniform1f(location(), *reinterpret_cast<const GLfloat*>(data()));
         } else {
-            throw GLException("glUniform scalar only available for int32 and float32", E_FILE_LINE);
+            throw RenderException("glUniform scalar only available for int32 and float32", E_FILE_LINE);
         }
     }
 }

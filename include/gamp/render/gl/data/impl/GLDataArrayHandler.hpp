@@ -50,7 +50,7 @@ namespace gamp::render::gl::data::impl {
         if(enable) {
             if(!m_ad->isVBO()) {
                 // makes no sense otherwise
-                throw GLException("GLDataArrayHandler can only handle VBOs.", E_FILE_LINE);
+                throw RenderException("GLDataArrayHandler can only handle VBOs.", E_FILE_LINE);
             }
             glarray_t::bindBuffer(gl, true);
             glarray_t::bindBuffer(gl, false);

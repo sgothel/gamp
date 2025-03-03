@@ -1,25 +1,12 @@
 /*
- * Author: Sven Gothel <sgothel@jausoft.com> and Svenson Han Gothel
- * Copyright (c) 2022-2024 Gothel Software e.K.
+ * Author: Sven Gothel <sgothel@jausoft.com>
+ * Copyright Gothel Software e.K.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * This Source Code Form is subject to the terms of the MIT License
+ * If a copy of the MIT was not distributed with this file,
+ * you can obtain one at https://opensource.org/license/mit/.
  */
 #ifndef GAMP_WTWINDOW_HPP_
 #define GAMP_WTWINDOW_HPP_
@@ -36,8 +23,6 @@
 #include <gamp/wt/event/KeyEventMngr.hpp>
 #include <gamp/wt/event/WinEventMngr.hpp>
 #include <gamp/wt/event/PointerEventMngr.hpp>
-
-#include <gamp/render/gl/GLTypes.hpp>
 
 namespace gamp::wt {
 
@@ -266,11 +251,15 @@ namespace gamp::wt {
              * On Microsoft Windows this returns an entity of type HDC.
              */
             constexpr handle_t windowHandle() const noexcept { return m_window_handle; }
-            constexpr bool isValid() const noexcept { return 0 != m_window_handle; }
+            bool isValid() const noexcept override { return 0 != surfaceHandle() && 0 != m_window_handle; }
 
             constexpr WindowState state() const noexcept { return m_state; }
             constexpr bool hasFocus() const noexcept { return is_set(m_state, WindowState::focused); }
             constexpr bool isVisible() const noexcept { return is_set(m_state, WindowState::visible); }
+
+            void display(const jau::fraction_timespec& when) noexcept;
+
+            bool surfaceSwap() noexcept override;
 
             //
             //
@@ -345,12 +334,11 @@ namespace gamp::wt {
 
             size_t renderListenerCount() const noexcept { return m_render_listener.size(); }
 
-            void display(const jau::fraction_timespec& when) noexcept;
             void disposeRenderListener(bool clearRenderListener, const jau::fraction_timespec& when) noexcept;
 
-            void disposedNotified(const jau::fraction_timespec& when) noexcept override {
+            void disposedNotify(const jau::fraction_timespec& when) noexcept override {
                 notifyWindowEvent(EVENT_WINDOW_DESTROYED, when);
-                Surface::disposedNotified(when);
+                Surface::disposedNotify(when);
                 m_window_handle = 0;
             }
             void dispose(const jau::fraction_timespec& when) noexcept override {

@@ -303,7 +303,7 @@ namespace gamp::render::gl::glsl {
         void useProgram(const GL&, bool on) {
             if(on && !m_programLinked) {
                 ERR_PRINT("Not linked (on = %d): %s", on, toString().c_str());
-                throw GLException("Program is not linked", E_FILE_LINE);
+                throw RenderException("Program is not linked", E_FILE_LINE);
             }
             if(m_programInUse==on) { return; }
             if( 0 == m_shaderProgram ) {

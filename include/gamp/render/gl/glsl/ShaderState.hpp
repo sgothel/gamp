@@ -80,7 +80,7 @@ namespace gamp::render::gl::glsl {
          * @see com.jogamp.opengl.util.glsl.ShaderState#useProgram(GL2ES2, boolean)
          */
         void useProgram(GL& gl, bool on) {
-            if(!m_shaderProgram) { throw GLException("No program is attached", E_FILE_LINE); }
+            if(!m_shaderProgram) { throw RenderException("No program is attached", E_FILE_LINE); }
             if(on) {
                 if(m_shaderProgram->linked()) {
                     m_shaderProgram->useProgram(gl, true);
@@ -93,7 +93,7 @@ namespace gamp::render::gl::glsl {
                         setAllAttributes(gl);
                     }
                     if(!m_shaderProgram->link(gl, verbose())) {
-                        throw GLException("could not link program: "+m_shaderProgram->toString(), E_FILE_LINE);
+                        throw RenderException("could not link program: "+m_shaderProgram->toString(), E_FILE_LINE);
                     }
                     m_shaderProgram->useProgram(gl, true);
                     if(m_resetAllShaderData) {
@@ -325,8 +325,8 @@ namespace gamp::render::gl::glsl {
          * @see #getCachedAttribLocation(String)
          */
         void bindAttribLocation(const GL&, GLint location, const string_t& name) {
-            if(!m_shaderProgram) throw GLException("No program is attached", E_FILE_LINE);
-            if(m_shaderProgram->linked()) throw GLException("Program is already linked", E_FILE_LINE);
+            if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
+            if(m_shaderProgram->linked()) throw RenderException("Program is already linked", E_FILE_LINE);
             m_activeAttribLocationMap.put(name, location);
             glBindAttribLocation(m_shaderProgram->program(), location, name.c_str());
         }
@@ -346,8 +346,8 @@ namespace gamp::render::gl::glsl {
          * @see #getAttribute(String)
          */
         void bindAttribLocation(const GL& gl, GLint location, const GLArrayDataRef& attr) {
-            if(!m_shaderProgram) throw GLException("No program is attached", E_FILE_LINE);
-            if(m_shaderProgram->linked()) throw GLException("Program is already linked", E_FILE_LINE);
+            if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
+            if(m_shaderProgram->linked()) throw RenderException("Program is already linked", E_FILE_LINE);
             const string_t& name = attr->name();
             m_activeAttribLocationMap.put(name, location);
             attr->setLocation(gl, m_shaderProgram->program(), location);
@@ -371,10 +371,10 @@ namespace gamp::render::gl::glsl {
          * @see GL2ES2#glGetAttribLocation(int, String)
          */
         GLint getAttribLocation(const GL&, const string_t& name) {
-            if(!m_shaderProgram) throw GLException("No program is attached", E_FILE_LINE);
+            if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
             GLint location = getCachedAttribLocation(name);
             if(0>location) {
-                if(!m_shaderProgram->linked()) throw GLException("Program is not linked", E_FILE_LINE);
+                if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
                 location = glGetAttribLocation(m_shaderProgram->program(), name.c_str());
                 if(0<=location) {
                     m_activeAttribLocationMap.put(name, location);
@@ -408,13 +408,13 @@ namespace gamp::render::gl::glsl {
          * @see #getAttribute(String)
          */
         GLint getAttribLocation(const GL& gl, const GLArrayDataRef& data) {
-            if(!m_shaderProgram) throw GLException("No program is attached", E_FILE_LINE);
+            if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
             const string_t& name = data->name();
             GLint location = getCachedAttribLocation(name);
             if(0<=location) {
                 data->setLocation(location);
             } else {
-                if(!m_shaderProgram->linked()) throw GLException("Program is not linked", E_FILE_LINE);
+                if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
                 location = data->setLocation(gl, m_shaderProgram->program());
                 if(0<=location) {
                     m_activeAttribLocationMap.put(name, location);
@@ -728,7 +728,7 @@ namespace gamp::render::gl::glsl {
          * @see #attachShaderProgram(GL2ES2, ShaderProgram)
          */
         void resetAllAttributes(const GL& gl) {
-            if(!m_shaderProgram->linked()) throw GLException("Program is not linked", E_FILE_LINE);
+            if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
             m_activeAttribLocationMap.clear();
 
             for(GLArrayDataRef& ad : m_managedAttributes) {
@@ -837,10 +837,10 @@ namespace gamp::render::gl::glsl {
          * @see ShaderProgram#glReplaceShader
          */
         GLint getUniformLocation(const GL&, const string_t& name) {
-            if(!m_shaderProgram->inUse()) throw GLException("Program is not in use", E_FILE_LINE);
+            if(!m_shaderProgram->inUse()) throw RenderException("Program is not in use", E_FILE_LINE);
             GLint location = getCachedUniformLocation(name);
             if(0>location) {
-                if(!m_shaderProgram->linked()) throw GLException("Program is not linked", E_FILE_LINE);
+                if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
                 location = glGetUniformLocation(m_shaderProgram->program(), name.c_str());
                 if(0<=location) {
                     m_activeUniformLocationMap.put(name, location);
@@ -872,13 +872,13 @@ namespace gamp::render::gl::glsl {
          * @see ShaderProgram#glReplaceShader
          */
         GLint getUniformLocation(const GL& gl, const GLUniformDataRef& data) {
-            if(!m_shaderProgram->inUse()) throw GLException("Program is not in use", E_FILE_LINE);
+            if(!m_shaderProgram->inUse()) throw RenderException("Program is not in use", E_FILE_LINE);
             const string_t& name = data->name();
             GLint location = getCachedUniformLocation(name);
             if(0<=location) {
                 data->setLocation(location);
             } else {
-                if(!m_shaderProgram->linked()) throw GLException("Program is not linked", E_FILE_LINE);
+                if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
                 location = data->setLocation(gl, m_shaderProgram->program());
                 if(0<=location) {
                     m_activeUniformLocationMap.put(name, location);
@@ -907,7 +907,7 @@ namespace gamp::render::gl::glsl {
          * @see ShaderProgram#glReplaceShader
          */
         bool pushUniform(const GL& gl, const GLUniformDataRef& data) {
-            if(!m_shaderProgram->inUse()) throw GLException("Program is not in use", E_FILE_LINE);
+            if(!m_shaderProgram->inUse()) throw RenderException("Program is not in use", E_FILE_LINE);
             GLint location = data->location();
             if(0>location) {
                 location = getUniformLocation(gl, data);
@@ -929,7 +929,7 @@ namespace gamp::render::gl::glsl {
         }
         /** Same as pushUniform(), but for all active uniforms. */
         void pushAllUniforms(const GL& gl) {
-            if(!m_shaderProgram->inUse()) throw new GLException("Program is not in use", E_FILE_LINE);
+            if(!m_shaderProgram->inUse()) throw new RenderException("Program is not in use", E_FILE_LINE);
             for (const std::pair<const std::string, GLUniformDataRef>& n : m_activeUniformDataMap.map()) {
                 const GLUniformDataRef& data = n.second;
                 pushUniform(gl, data);
@@ -972,7 +972,7 @@ namespace gamp::render::gl::glsl {
          * @see #attachShaderProgram(GL2ES2, ShaderProgram)
          */
         void resetAllUniforms(const GL& gl) {
-            if(!m_shaderProgram->inUse()) throw new GLException("Program is not in use", E_FILE_LINE);
+            if(!m_shaderProgram->inUse()) throw new RenderException("Program is not in use", E_FILE_LINE);
             m_activeUniformLocationMap.clear();
             for(const GLUniformDataRef& u : m_managedUniforms) {
                 u->setLocation(-1);

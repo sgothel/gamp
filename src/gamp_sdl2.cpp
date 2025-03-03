@@ -9,7 +9,7 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
-#include <gamp/Gamp.hpp>
+#include <cstdint>
 
 #include <jau/basic_types.hpp>
 #include <jau/cow_darray.hpp>
@@ -21,16 +21,14 @@
 #include <jau/secmem.hpp>
 #include <jau/util/VersionNumber.hpp>
 
-#include <cstdint>
+#include <gamp/Gamp.hpp>
 #include <gamp/GampTypes.hpp>
+#include "gamp/Version.hpp"
 #include <gamp/render/gl/GLLiterals.hpp>
 #include <gamp/render/gl/GLTypes.hpp>
 #include <gamp/render/gl/GLVersionNum.hpp>
 #include <gamp/wt/event/Event.hpp>
 #include <gamp/wt/Window.hpp>
-#include <utility>
-
-#include "gamp/Version.hpp"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
@@ -194,10 +192,6 @@ bool gamp::init_gfx_subsystem(const char* exe_path) {
     return true;
 }
 
-static bool GetGLAttribute(SDL_GLattr attr, int& value) noexcept {
-    return 0 == SDL_GL_GetAttribute(attr, &value);
-}
-
 WindowRef Window::create(const char* title, int wwidth, int wheight, bool verbose) {
     if( !is_gfx_subsystem_initialized() ) {
         return nullptr;
@@ -258,119 +252,6 @@ void Window::disposeImpl(handle_t handle) noexcept {
     printf("Window Closed: Remaining windows: %zu\n", (size_t)window_list.size());
 }
 
-bool Surface::setSwapIntervalImpl(int v) noexcept {
-    if( 0 == SDL_GL_SetSwapInterval( v ) ) {
-        m_swapInterval = v;
-        return true;
-    }
-    if( -1 == v && 0 == SDL_GL_SetSwapInterval( 1 ) ) {
-        m_swapInterval = 1;
-        return true;
-    }
-    m_swapInterval = 0;
-    return false;
-}
-
-void render::gl::GL::dispose() noexcept {
-    SDL_GLContext sdl_glc = reinterpret_cast<SDL_GLContext>(m_context); // NOLINT
-    if( sdl_glc ) {
-        SDL_GL_DeleteContext(sdl_glc);
-    }
-    releasedNotify();
-}
-
-render::gl::GL Surface::createContext(const wt::SurfaceRef& surface, render::gl::GLProfileMask profile, render::gl::GLContextFlags contextFlags, render::gl::GL* shareWith) noexcept
-{
-    const bool verbose = is_set(contextFlags, render::gl::GLContextFlags::verbose);
-    if( verbose ) {
-        printf("Surface::createContext: shareWith %p, profile %s, ctx %s, surface %s\n",
-            (void*)shareWith, to_string(profile).c_str(), to_string(contextFlags).c_str(), surface->toString().c_str());
-    }
-    SDL_Window* sdl_win = reinterpret_cast<SDL_Window*>(surface->surfaceHandle()); // NOLINT
-    // Create OpenGL ES 3 or ES 2 context on SDL window
-    surface->setSwapIntervalImpl( surface->swapInterval() );
-    {
-        int ctxFlags = 0;
-        if( is_set(contextFlags, render::gl::GLContextFlags::debug) ) {
-            ctxFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
-        }
-        if( is_set(contextFlags, render::gl::GLContextFlags::robust) ) {
-            ctxFlags |= SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
-        }
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, ctxFlags);
-    }
-    if( shareWith ) {
-        // FIXME: shareWith should be current!
-        SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
-    }
-    if( verbose ) {
-        printf("Surface::createContext.1: surface %s\n", surface->toString().c_str());
-    }
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    SDL_GLContext sdl_glc = SDL_GL_CreateContext(sdl_win);
-    if (nullptr == sdl_glc) {
-        printf("SDL: Error creating GL ES 3 context: %s\n", SDL_GetError());
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-        sdl_glc = SDL_GL_CreateContext(sdl_win);
-        if (nullptr == sdl_glc) {
-            printf("SDL: Error creating GL ES 2 context: %s\n", SDL_GetError());
-            return render::gl::GL();
-        }
-    }
-    if (0 != SDL_GL_MakeCurrent(sdl_win, sdl_glc)) {
-        printf("SDL: Error making GL context current: %s\n", SDL_GetError());
-        SDL_GL_DeleteContext(sdl_glc);
-        return render::gl::GL();
-    }
-    const char* gl_version_cstr = reinterpret_cast<const char*>( glGetString(GL_VERSION) );
-    if (nullptr == gl_version_cstr) {
-        printf("SDL: Error retrieving GL version: %s\n", SDL_GetError());
-        SDL_GL_DeleteContext(sdl_glc);
-        return render::gl::GL();
-    }
-    render::gl::GL gl;
-    {
-        bool ok;
-        int major, minor, nContextFlags, nProfileMask;
-
-        ok = GetGLAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, major);
-        ok = ok && GetGLAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minor);
-        ok = ok && GetGLAttribute(SDL_GL_CONTEXT_FLAGS, nContextFlags);
-        ok = ok && GetGLAttribute(SDL_GL_CONTEXT_PROFILE_MASK, nProfileMask);
-        if( !ok ) {
-            printf("SDL: Error retrieving GL context version information: %s\n", SDL_GetError());
-            SDL_GL_DeleteContext(sdl_glc);
-            return render::gl::GL();
-        }
-        render::gl::GLProfileMask profileMask = render::gl::GLProfileMask::none;
-        if( 0 != ( nProfileMask & SDL_GL_CONTEXT_PROFILE_CORE ) ) {
-            profileMask |= render::gl::GLProfileMask::core;
-        } else if( 0 != ( nProfileMask & SDL_GL_CONTEXT_PROFILE_COMPATIBILITY ) ) {
-            profileMask |= render::gl::GLProfileMask::compat;
-        } else if( 0 != ( nProfileMask & SDL_GL_CONTEXT_PROFILE_ES ) ) {
-            profileMask |= render::gl::GLProfileMask::es;
-        }
-        render::gl::GLContextFlags ctxFlags = render::gl::GLContextFlags::none;
-        if( 0 != ( nContextFlags & SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG ) ) {
-            ctxFlags |= render::gl::GLContextFlags::forward;
-        }
-        if( 0 != ( nContextFlags & SDL_GL_CONTEXT_DEBUG_FLAG ) ) {
-            ctxFlags |= render::gl::GLContextFlags::debug;
-        }
-        if( 0 != ( nContextFlags & SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG ) ) {
-            ctxFlags |= render::gl::GLContextFlags::robust;
-        }
-        gl = render::gl::GL((handle_t)sdl_glc, jau::util::VersionNumber(major, minor, 0), profileMask, ctxFlags, gl_version_cstr);
-    }
-    return gl;
-}
-
 extern "C" {
     EMSCRIPTEN_KEEPALIVE void set_forced_fps(int v) noexcept { set_gpu_forced_fps(v); }
 
@@ -420,8 +301,8 @@ static bool gamp_show_fps = true;
 static void gamp_swap_gpu_buffer(bool swapAllWindows, int fps) noexcept {
     if( swapAllWindows ) {
         for(const WindowRef& win : *window_list.snapshot() ) {
-            if( win && win->isValid() ) {
-                SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(win->windowHandle())); // NOLINT
+            if( win ) {
+                win->surfaceSwap();
             }
         }
     } // else just finish
@@ -785,18 +666,13 @@ size_t gamp::handle_events() noexcept {
     return event_count;
 }
 
-void gamp::mainloop_default() noexcept { // NOLINT
+bool gamp::mainloop_default() noexcept { // NOLINT
     gamp::handle_events();
 
     jau::cow_darray<WindowRef>::storage_ref_t window_refs = window_list.snapshot();
     jau::cow_darray<WindowRef>::storage_t windows = *window_refs;
     if( windows.size() == 0 ) {
-        printf("Exit Application\n");
-        #if defined(__EMSCRIPTEN__)
-            emscripten_cancel_main_loop();
-        #else
-            exit(0);
-        #endif
+        return false;
     }
     for(const WindowRef& win : windows ) {
         if( win && win->isValid() ) {
@@ -804,11 +680,22 @@ void gamp::mainloop_default() noexcept { // NOLINT
         }
     }
     for(const WindowRef& win : windows ) {
-        if( win && win->isValid() ) {
-            SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(win->windowHandle())); // NOLINT
+        if( win ) {
+            win->surfaceSwap();
         }
     }
     gamp_swap_gpu_buffer(false, gpu_forced_fps());
+    return true;
+}
+void gamp::mainloop_void() noexcept {
+    if( !mainloop_default() ) {
+        printf("Exit Application\n");
+        #if defined(__EMSCRIPTEN__)
+            emscripten_cancel_main_loop();
+        #else
+            exit(0);
+        #endif
+    }
 }
 
 void gamp::shutdown() noexcept {

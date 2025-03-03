@@ -89,9 +89,14 @@ namespace gamp {
      * - swaps front/back buffer of all gamp::wt::Window instances
      * - adjust timers for whole set
      *
+     * @return true signaling continuation, false to end the mainloop
      * @see swap_gpu_buffer()
      */
-    void mainloop_default() noexcept;
+    bool mainloop_default() noexcept;
+
+    /// Calls mainloop_default(), but exits application if returning false
+    void mainloop_void() noexcept;
+
     void shutdown() noexcept;
 
     //

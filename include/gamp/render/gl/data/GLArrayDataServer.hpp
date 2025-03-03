@@ -300,7 +300,7 @@ namespace gamp::render::gl::data {
         proxy_ref addGLSLSubArray(const std::string& name, GLsizei compsPerElement, GLenum vboTarget) {
             if( m_interleavedOffset >= uintptr_t(client_t::compsPerElem()) * uintptr_t(client_t::bytesPerComp()) ) {
                 const GLsizei iOffC = m_interleavedOffset / client_t::bytesPerComp();
-                throw GLException("Interleaved offset > total components (" + std::to_string(iOffC) + " > " + std::to_string(client_t::compsPerElem()) + ")", E_FILE_LINE);
+                throw RenderException("Interleaved offset > total components (" + std::to_string(iOffC) + " > " + std::to_string(client_t::compsPerElem()) + ")", E_FILE_LINE);
             }
             const long  subStrideB = (0 == client_t::stride()) ? client_t::compsPerElem() * client_t::bytesPerComp() : client_t::stride();
             proxy_ref ad;

@@ -9,8 +9,8 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
-#ifndef GAMP_GLHEADER_HPP_
-#define GAMP_GLHEADER_HPP_
+#ifndef GAMP_RENDER_GL_GLHEADER_HPP_
+#define GAMP_RENDER_GL_GLHEADER_HPP_
 
 #include <GLES2/gl2.h>
 #include <GLES3/gl31.h>
@@ -19,4 +19,4 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 
-#endif /* GAMP_GLHEADER_HPP_ */
+#endif /* GAMP_RENDER_GL_GLHEADER_HPP_ */

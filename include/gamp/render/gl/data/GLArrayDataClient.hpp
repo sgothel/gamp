@@ -419,7 +419,7 @@ namespace gamp::render::gl::data {
          */
         bool reserve(GLsizei elementCount) {
             if( !proxy_t::usesClientMem() || !proxy_t::m_alive || proxy_t::sealed() ) {
-                throw GLException("Invalid state: " + toString(), E_FILE_LINE);
+                throw RenderException("Invalid state: " + toString(), E_FILE_LINE);
             }
             // add the stride delta
             elementCount += (elementCount / proxy_t::compsPerElem()) * (proxy_t::m_strideL - proxy_t::compsPerElem());
@@ -466,13 +466,13 @@ namespace gamp::render::gl::data {
       protected:
         void checkSeal(bool test) {
             if( !proxy_t::m_alive ) {
-                throw GLException("Invalid state: " + toString(), E_FILE_LINE);
+                throw RenderException("Invalid state: " + toString(), E_FILE_LINE);
             }
             if( proxy_t::sealed() != test ) {
                 if( test ) {
-                    throw GLException("Not Sealed yet, seal first:\n\t" + toString(), E_FILE_LINE);
+                    throw RenderException("Not Sealed yet, seal first:\n\t" + toString(), E_FILE_LINE);
                 } else {
-                    throw GLException("Already Sealed, can't modify VBO:\n\t" + toString(), E_FILE_LINE);
+                    throw RenderException("Already Sealed, can't modify VBO:\n\t" + toString(), E_FILE_LINE);
                 }
             }
         }

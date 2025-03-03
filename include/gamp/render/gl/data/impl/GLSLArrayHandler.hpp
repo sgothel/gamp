@@ -16,7 +16,6 @@
 
 #include <gamp/render/gl/data/impl/GLArrayHandler.hpp>
 #include <gamp/render/gl/data/impl/GLSubArrayHandler.hpp>
-#include <gamp/render/gl/GLmisc.hpp>
 #include <gamp/render/gl/glsl/ShaderState.hpp>
 
 namespace gamp::render::gl::data::impl {

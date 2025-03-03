@@ -165,7 +165,7 @@ namespace gamp::render::gl::glsl {
                 return ci;
             }
             CompilerInfoRef ci = std::make_shared<CompilerInfo>();
-            if (gl.hasGLSL()) {
+            if (gl.glProfile().hasGLSL()) {
                 GLint param = 0;
                 glGetIntegerv(GL_NUM_SHADER_BINARY_FORMATS, &param);
                 const GLenum err = glGetError();
@@ -180,13 +180,13 @@ namespace gamp::render::gl::glsl {
                     }
                 }
             }
-            if(gl.isGLES2()) {
+            if(gl.glProfile().isGLES2()) {
                 GLboolean param = 0;
                 glGetBooleanv(GL_SHADER_COMPILER, &param); // GL2ES2
                 const GLenum err = glGetError();
                 const bool v = GL_NO_ERROR == err && param!=0;
                 ci->shaderCompilerAvail = v || ci->binFormats.empty(); // alt assume compiler w/o binary fmts
-            } else if( gl.isGL2ES2() ) {
+            } else if( gl.glProfile().isGL2ES2() ) {
                 ci->shaderCompilerAvail = true;
             } else {
                 ci->shaderCompilerAvail = false;
@@ -220,12 +220,12 @@ namespace gamp::render::gl::glsl {
 
         static void shaderSource(GL& gl, GLuint shader, const string_list_t& source) {
             if(!isShaderCompilerAvailable(gl)) {
-                throw GLException("No compiler is available", E_FILE_LINE);
+                throw RenderException("No compiler is available", E_FILE_LINE);
             }
             const size_t count = source.size();
             throwOnOverflow<size_t, GLsizei>(count);
             if(count==0) {
-                throw GLException("No sources specified", E_FILE_LINE);
+                throw RenderException("No sources specified", E_FILE_LINE);
             }
             std::vector<GLint> lengths(count, 0);
             for(size_t i=0; i<count; ++i) {
@@ -244,7 +244,7 @@ namespace gamp::render::gl::glsl {
             const size_t sourceNum = sources.size();
             const size_t shaderNum = shaders.size();
             if(shaderNum==0 || sourceNum==0 || shaderNum!=sourceNum) {
-                throw GLException("Invalid number of shaders and/or sources: shaders="+
+                throw RenderException("Invalid number of shaders and/or sources: shaders="+
                                       std::to_string(shaderNum)+", sources="+std::to_string(sourceNum), E_FILE_LINE);
             }
             for(size_t i=0; i<sourceNum; ++i) {
@@ -254,21 +254,21 @@ namespace gamp::render::gl::glsl {
 
         static void shaderBinary(GL& gl, const shader_list_t& shaders, GLenum binFormat, const bytes_t& bin) {
             if(getShaderBinaryFormats(gl).size()==0) {
-                throw GLException("No binary formats supported", E_FILE_LINE);
+                throw RenderException("No binary formats supported", E_FILE_LINE);
             }
 
             const size_t shaderNum = shaders.size();
             throwOnOverflow<size_t, GLsizei>(shaderNum);
             if(shaderNum==0) {
-                throw GLException("No shaders specified", E_FILE_LINE);
+                throw RenderException("No shaders specified", E_FILE_LINE);
             }
             if(bin.empty()) {
-                throw GLException("Null shader binary", E_FILE_LINE);
+                throw RenderException("Null shader binary", E_FILE_LINE);
             }
             const size_t binLength = bin.size();
             throwOnOverflow<size_t, GLsizei>(binLength);
             if(0==binLength) {
-                throw GLException("Empty shader binary (remaining == 0)", E_FILE_LINE);
+                throw RenderException("Empty shader binary (remaining == 0)", E_FILE_LINE);
             }
             glShaderBinary((GLsizei)shaderNum, shaders.data(), binFormat, bin.data(), (GLsizei)binLength);
         }
@@ -309,7 +309,7 @@ namespace gamp::render::gl::glsl {
             createShader(gl, shaderType, shader);
             err = glGetError();
             if(err!=GL_NO_ERROR) {
-                throw GLException("createAndLoadShader: CreateShader failed, GL Error: "+jau::to_hexstring(err), E_FILE_LINE);
+                throw RenderException("createAndLoadShader: CreateShader failed, GL Error: "+jau::to_hexstring(err), E_FILE_LINE);
             }
 
             shaderBinary(gl, shader, binFormat, bin);
@@ -333,12 +333,12 @@ namespace gamp::render::gl::glsl {
             createShader(gl, shaderType, shader);
             err = glGetError();
             if(err!=GL_NO_ERROR) {
-                throw GLException("createAndCompileShader: CreateShader failed, GL Error: "+jau::to_hexstring(err), E_FILE_LINE);
+                throw RenderException("createAndCompileShader: CreateShader failed, GL Error: "+jau::to_hexstring(err), E_FILE_LINE);
             }
             shaderSource(gl, shader, sources);
             err = glGetError();
             if(err!=GL_NO_ERROR) {
-                throw GLException("createAndCompileShader: ShaderSource failed, GL Error: "+jau::to_hexstring(err), E_FILE_LINE);
+                throw RenderException("createAndCompileShader: ShaderSource failed, GL Error: "+jau::to_hexstring(err), E_FILE_LINE);
             }
 
             compileShader(gl, shader);

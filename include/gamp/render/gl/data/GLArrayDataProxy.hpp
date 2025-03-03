@@ -16,7 +16,6 @@
 
 #include <jau/darray.hpp>
 
-#include <gamp/render/gl/GLmisc.hpp>
 #include <gamp/render/gl/data/GLArrayData.hpp>
 #include <gamp/render/gl/data/GLBuffers.hpp>
 

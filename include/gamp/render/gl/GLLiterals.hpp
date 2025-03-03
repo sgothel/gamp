@@ -9,8 +9,8 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
-#ifndef GAMP_GLLITERALS_HPP_
-#define GAMP_GLLITERALS_HPP_
+#ifndef GAMP_RENDER_GL_GLLITERALS_HPP_
+#define GAMP_RENDER_GL_GLLITERALS_HPP_
 
 #include <gamp/render/gl/GLHeader.hpp>
 #include <gamp/render/gl/GLVersionNum.hpp>
@@ -28,6 +28,8 @@ namespace gamp::render::gl {
 
     inline static constexpr GLenum GL_NVIDIA_PLATFORM_BINARY_NV = 0x890B;
 
+    /** Version 0.00, i.e. invalid or undefined version. */
+    inline constexpr static jau::util::VersionNumber Version0_0  = jau::util::VersionNumber(0, 0, 0);
     /** Version 1.00, i.e. GLSL 1.00 for ES 2.0. */
     inline constexpr static jau::util::VersionNumber Version1_0  = jau::util::VersionNumber(1, 0, 0);
     /** Version 1.10, i.e. GLSL 1.10 for GL 2.0. */
@@ -53,6 +55,9 @@ namespace gamp::render::gl {
     /** Version 1.5, i.e. GL 1.5 */
     inline constexpr static jau::util::VersionNumber Version1_5 = jau::util::VersionNumber(1, 5, 0);
 
+    /** Version 2.0. As an OpenGL version, it qualifies for desktop {@link #isGL2()} only, or ES 2.0.*/
+    inline constexpr static jau::util::VersionNumber Version2_0 = jau::util::VersionNumber(2, 0, 0);
+
     /** Version 3.0. As an OpenGL version, it qualifies for desktop {@link #isGL2()} only, or ES 3.0. Or GLSL 3.00 for ES 3.0. */
     inline constexpr static jau::util::VersionNumber Version3_0 = jau::util::VersionNumber(3, 0, 0);
 
@@ -61,6 +66,9 @@ namespace gamp::render::gl {
 
     /** Version 3.2. As an OpenGL version, it qualifies for geometry shader */
     inline constexpr static jau::util::VersionNumber Version3_2 = jau::util::VersionNumber(3, 2, 0);
+
+    /** Version 4.0. As an OpenGL version. */
+    inline constexpr static jau::util::VersionNumber Version4_0 = jau::util::VersionNumber(4, 0, 0);
 
     /** Version 4.3. As an OpenGL version, it qualifies for <code>GL_ARB_ES3_compatibility</code> */
     inline constexpr static jau::util::VersionNumber Version4_3 = jau::util::VersionNumber(4, 3, 0);
@@ -76,22 +84,6 @@ namespace gamp::render::gl {
       es      = 1U <<  2
     };
     JAU_MAKE_BITFIELD_ENUM_STRING(GLProfileMask, compat, core, es);
-
-    /** OpenGL context flags. */
-    enum class GLContextFlags : uint32_t {
-      none      = 0,
-      /** Forward compatible context. */
-      forward  = 1U << 0,
-      /** Debug context. */
-      debug    = 1U <<  1,
-      /** Robust context. */
-      robust   = 1U <<  2,
-      /** Software rasterizer context. */
-      software = 1U <<  3,
-      /** Verbose operations (debugging). */
-      verbose  = 1U <<  31
-    };
-    JAU_MAKE_BITFIELD_ENUM_STRING(GLContextFlags, forward, debug, robust, software, verbose);
 
     constexpr std::string_view getGLTypeName(GLenum type) noexcept {
         switch( type ) {
@@ -234,4 +226,4 @@ namespace gamp::render::gl {
 
 }  // namespace gamp::render::gl
 
-#endif /* GAMP_GLLITERALS_HPP_ */
+#endif /* GAMP_RENDER_GL_GLLITERALS_HPP_ */

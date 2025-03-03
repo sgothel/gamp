@@ -25,8 +25,6 @@
 #define GAMP_WTPOINTEREVENT_HPP_
 
 #include <cstdint>
-#include <gamp/render/gl/GLmisc.hpp>
-#include <gamp/wt/event/Event.hpp>
 #include <vector>
 
 #include <jau/basic_types.hpp>
@@ -39,6 +37,9 @@
 #include <jau/math/vec2i.hpp>
 #include <jau/math/vec3f.hpp>
 #include <jau/string_util.hpp>
+
+#include <gamp/GampTypes.hpp>
+#include <gamp/wt/event/Event.hpp>
 
 namespace gamp::wt::event {
     /** \addtogroup Gamp_WT
@@ -254,7 +255,7 @@ namespace gamp::wt::event {
          * @return the pointer index for the given pointer id or -1 if id not available.
          */
         int pointerIdx(uint16_t id) const {
-            for( int i = render::gl::castOrThrow<size_t, int>(m_pointerID.size() - 1); i >= 0; i-- ) {
+            for( int i = gamp::castOrThrow<size_t, int>(m_pointerID.size() - 1); i >= 0; i-- ) {
                 if( m_pointerID[i] == id ) {
                     return i;
                 }

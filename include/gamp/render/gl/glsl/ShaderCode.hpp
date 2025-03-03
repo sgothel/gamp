@@ -1141,7 +1141,7 @@ namespace gamp::render::gl::glsl {
          * @return the index after the inserted data, maybe 0 if nothing has be inserted.
          */
         size_t addGLSLVersion(const GL& gl) noexcept {
-            return insertShaderSource(0, 0, gl.getGLSLVersionString());
+            return insertShaderSource(0, 0, gl.glProfile().getGLSLVersionString());
         }
 
         /**
@@ -1155,7 +1155,7 @@ namespace gamp::render::gl::glsl {
          */
         size_t addDefaultShaderPrecision(const GL& gl, size_t pos) {
             std::string_view defaultPrecision;
-            if( gl.nativeGLES3() ) {
+            if( gl.glProfile().nativeGLES3() ) {
                 switch ( m_shaderType ) {
                     case GL_VERTEX_SHADER:
                         defaultPrecision = es3_default_precision_vp; break;
@@ -1167,7 +1167,7 @@ namespace gamp::render::gl::glsl {
                         defaultPrecision = "";
                         break;
                 }
-            } else if( gl.nativeGLES2() ) {
+            } else if( gl.glProfile().nativeGLES2() ) {
                 switch ( m_shaderType ) {
                     case GL_VERTEX_SHADER:
                         defaultPrecision = es2_default_precision_vp; break;
@@ -1204,7 +1204,7 @@ namespace gamp::render::gl::glsl {
 
         /** Returns true, if GLSL version requires default precision, i.e. ES2 or GLSL [1.30 .. 1.50[. */
         constexpr static bool requiresDefaultPrecision(const GL& gl) noexcept {
-            if( gl.nativeGLES() ) {
+            if( gl.glProfile().nativeGLES() ) {
                 return true;
             }
             return requiresGL3DefaultPrecision(gl);
@@ -1212,8 +1212,8 @@ namespace gamp::render::gl::glsl {
 
         /** Returns true, if GL3 GLSL version requires default precision, i.e. GLSL [1.30 .. 1.50[. */
         constexpr static bool requiresGL3DefaultPrecision(const GL& gl) noexcept {
-            if( !gl.nativeGLES() ) {
-                const jau::util::VersionNumber& glslVersion = gl.glslVersion();
+            if( !gl.glProfile().nativeGLES() ) {
+                const jau::util::VersionNumber& glslVersion = gl.glProfile().glslVersion();
                 return glslVersion >= Version1_30 && glslVersion < Version1_50;
             } else {
                 return false;
@@ -1262,7 +1262,7 @@ namespace gamp::render::gl::glsl {
             } else {
                 pos = 0;
             }
-            if( gl.nativeGLES() && esDefaultPrecision.length()>0 ) {
+            if( gl.glProfile().nativeGLES() && esDefaultPrecision.length()>0 ) {
                 pos = insertShaderSource(0, pos, esDefaultPrecision);
             } else {
                 pos = addDefaultShaderPrecision(gl, pos);

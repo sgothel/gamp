@@ -22,7 +22,9 @@
 #include <jau/file_util.hpp>
 
 #include <gamp/Gamp.hpp>
+#include <gamp/render/RenderContext.hpp>
 #include <gamp/render/gl/GLLiterals.hpp>
+#include <gamp/render/gl/GLContext.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;
@@ -38,12 +40,12 @@ using namespace gamp::wt::event;
     }
 #endif
 
-struct LaunchProps {
-    gamp::render::gl::GLProfileMask provileMask;
-    gamp::render::gl::GLContextFlags contextFlags;
+struct GLLaunchProps {
+    gamp::render::gl::GLProfile profile;
+    gamp::render::RenderContextFlags contextFlags;
 };
 
-int launch(std::string_view sfile, const LaunchProps& props, const RenderListenerRef& demo, int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
+int launch(std::string_view sfile, const GLLaunchProps& props, const RenderListenerRef& demo, int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
     std::string demo_name = std::string("Gamp ").append(jau::fs::basename(sfile, {{".cpp"}, {".hpp"}}));
     printf("Launching: %s, source %s, exe %s\n", demo_name.c_str(), sfile.data(), argv[0]);
@@ -72,7 +74,7 @@ int launch(std::string_view sfile, const LaunchProps& props, const RenderListene
         printf("Exit (0)...");
         return 1;
     }
-    const bool verbose = is_set(props.contextFlags, gamp::render::gl::GLContextFlags::verbose);
+    const bool verbose = is_set(props.contextFlags, gamp::render::RenderContextFlags::verbose);
     WindowRef main_win = Window::create(demo_name.c_str(), win_width, win_height, verbose);
     if( !main_win ) {
         printf("Exit (1): Failed to create window.\n");
@@ -84,29 +86,36 @@ int launch(std::string_view sfile, const LaunchProps& props, const RenderListene
         const float a = (float)w / (float)h;
         printf("FB %d x %d [w x h], aspect %f [w/h]; Win %s\n", w, h, a, main_win->windowBounds().toString().c_str());
     }
-    if( !main_win->createContext(props.provileMask, props.contextFlags) ) {
+    // main_win->createContext(const gamp::render::RenderProfile &profile, const gamp::render::RenderContextFlags &contextFlags);
+
+    if( !main_win->createContext(props.profile, props.contextFlags) ) {
         printf("Exit (2): Failed to create context\n");
         main_win->dispose(jau::getMonotonicTime());
         return 1;
     }
-    printf("GL Context: %s\n", main_win->renderContext().toLongString().c_str());
+    printf("Window: %s\n", main_win->toString().c_str());
+    {
+        gamp::render::gl::GL& gl = gamp::render::gl::GL::cast(main_win->renderContext());
 
-    #if !defined(__EMSCRIPTEN__)
-        // TODO: Should be hooked with a GLDebugListener manager
-        if( is_set(main_win->renderContext().contextFlags(), gamp::render::gl::GLContextFlags::debug) ) {
-            ::glDebugMessageCallback(GLDebugCallback, nullptr);
-            GLuint ids[] = { 0 };
-            ::glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, ids, GL_TRUE);
-        }
-    #endif
+        printf("GL Context: %s\n", gl.toString().c_str());
 
+        #if !defined(__EMSCRIPTEN__)
+            // TODO: Should be hooked with a GLDebugListener manager
+            if( is_set(gl.contextFlags(), gamp::render::RenderContextFlags::debug) ) {
+                ::glDebugMessageCallback(GLDebugCallback, nullptr);
+                GLuint ids[] = { 0 };
+                ::glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, ids, GL_TRUE);
+            }
+        #endif
+    }
     main_win->addRenderListener(demo);
 
     #if defined(__EMSCRIPTEN__)
-        emscripten_set_main_loop(gamp::mainloop_default, 0, 1);
+        emscripten_set_main_loop(gamp::mainloop_void, 0, 1);
     #else
-        while( true ) { gamp::mainloop_default(); }
+        while( gamp::mainloop_default() ) { }
     #endif
+    printf("Exit: %s\n", main_win->toString().c_str());
     return 0;
 }
 

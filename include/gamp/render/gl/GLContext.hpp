@@ -20,12 +20,14 @@
 #include <jau/util/VersionNumber.hpp>
 
 #include <gamp/GampTypes.hpp>
+#include <gamp/render/RenderContext.hpp>
 #include <gamp/render/gl/GLHeader.hpp>
 #include <gamp/render/gl/GLLiterals.hpp>
 #include <gamp/render/gl/GLVersionNum.hpp>
-#include <gamp/render/gl/GLmisc.hpp>
+#include <gamp/wt/Surface.hpp>
 
 namespace gamp::render::gl {
+    using namespace gamp::render;
 
     /** @defgroup Gamp_GL Gamp GL Rendering
      *  OpenGL managed rendering support, data handling and GLSL functionality.
@@ -36,7 +38,7 @@ namespace gamp::render::gl {
     /**
      * Specifies the OpenGL profile.
      */
-    class GLProfile {
+    class GLProfile : public RenderProfile {
       public:
         /** The desktop OpenGL compatibility profile 4.x, with x >= 0, ie GL2 plus GL4.<br>
             <code>bc</code> stands for backward compatibility. */
@@ -68,11 +70,6 @@ namespace gamp::render::gl {
         constexpr static std::string_view GL_UNDEF = "undef";
 
       private:
-        /** The default profile, used for the device default profile map  */
-        constexpr static std::string_view GL_DEFAULT = "GL_DEFAULT";
-        /** The default profile, used for the device default profile map  */
-        constexpr static std::string_view GL_GL      = "GL";
-
         constexpr static std::string_view mapProfile2Tag(const jau::util::VersionNumber& version, GLProfileMask mask) noexcept {
             if( 1 != jau::ct_bit_count( number(mask) ) ) {
                 ERR_PRINT("GLProfileMask %s invalid, should have exactly 1 bit set", to_string(mask).c_str());
@@ -102,83 +99,117 @@ namespace gamp::render::gl {
             // else if ( has_any(mask, GLProfileMask::core) )
             return GL4;
         }
+        constexpr jau::util::VersionNumber mapTag2Version(std::string_view tag) noexcept {
+            if( GL4 == tag || GL4bc == tag ) {
+                return Version4_0;
+            } else if( GL3 == tag || GL3bc == tag ) {
+                return Version3_1;
+            } else if( GL2 == tag ) {
+                return Version2_0;
+            } else if( GLES3 == tag ) {
+                return Version3_0;
+            } else if( GLES2 == tag ) {
+                return Version2_0;
+            } else if( GLES1 == tag ) {
+                return Version1_0;
+            }
+            return Version0_0;
+        }
+        constexpr GLProfileMask mapTag2Mask(std::string_view tag) noexcept {
+            if( GL4 == tag ) {
+                return GLProfileMask::core;
+            } else if( GL4bc == tag ) {
+                return GLProfileMask::compat;
+            } else if( GL3 == tag ) {
+                return GLProfileMask::core;
+            } else if( GL3bc == tag ) {
+                return GLProfileMask::compat;
+            } else if( GL2 == tag ) {
+                return GLProfileMask::compat;
+            } else if( GLES3 == tag ) {
+                return GLProfileMask::es;
+            } else if( GLES2 == tag ) {
+                return GLProfileMask::es;
+            } else if( GLES1 == tag ) {
+                return GLProfileMask::es;
+            }
+            return GLProfileMask::none;
+        }
         GLProfileMask m_profileMask;
-        GLContextFlags m_contextFlags;
-        std::string_view m_profile;
-        jau::util::VersionNumber m_version, m_glslVersion;
+        jau::util::VersionNumber m_glslVersion;
 
       protected:
-        void clear() noexcept {
+        void clear() noexcept override {
+            RenderProfile::clear();
             m_profileMask = GLProfileMask::none;
-            m_contextFlags = GLContextFlags::none;
-            m_profile = "";
-            m_version = jau::util::VersionNumber();
             m_glslVersion = jau::util::VersionNumber();
         }
 
       public:
-        constexpr GLProfile() noexcept : m_profileMask(GLProfileMask::none), m_profile(GL_UNDEF), m_version() {}
+        constexpr GLProfile() noexcept : RenderProfile(), m_profileMask(GLProfileMask::none), m_glslVersion() {}
 
         /** Create a new instance.*/
-        constexpr GLProfile(const jau::util::VersionNumber& version, GLProfileMask profileMask, GLContextFlags contextFlags) noexcept
-        : m_profileMask(profileMask), m_contextFlags(contextFlags),
-          m_profile(mapProfile2Tag(version, profileMask)), m_version(version),
+        constexpr GLProfile(const jau::util::VersionNumber& version, GLProfileMask profileMask) noexcept
+        : RenderProfile(mapProfile2Tag(version, profileMask), version),
+          m_profileMask(profileMask),
           m_glslVersion(getGLSLVersionNumber(version, profileMask))
         {}
 
-        constexpr const jau::util::VersionNumber& version() const noexcept { return m_version; }
+        /** Create a new instance, merely deriving from given tag.*/
+        constexpr GLProfile(std::string_view tag) noexcept
+        : RenderProfile(tag, mapTag2Version(tag)),
+          m_profileMask(mapTag2Mask(tag)),
+          m_glslVersion(getGLSLVersionNumber(RenderProfile::version(), m_profileMask))
+        {}
+
+        const jau::type_info& signature() const noexcept override { return jau::static_ctti<GLProfile>(); }
+
         constexpr const jau::util::VersionNumber& glslVersion() const noexcept { return m_glslVersion; }
         constexpr GLProfileMask profileMask() const noexcept { return m_profileMask; }
-        constexpr GLContextFlags contextFlags() const noexcept { return m_contextFlags; }
-        constexpr const std::string_view& name() const noexcept { return m_profile; }
-
-        constexpr bool operator==(const GLProfile& rhs) const noexcept {
-            return m_profile == rhs.m_profile;
-        }
 
         /** Indicates whether this profile is capable of GL4bc.  <p>Includes [ GL4bc ].</p> */
         constexpr bool isGL4bc() const noexcept {
-            return GL4bc == m_profile;
+            return GL4bc == name();
         }
 
         /** Indicates whether this profile is capable of GL4.    <p>Includes [ GL4bc, GL4 ].</p> */
         constexpr bool isGL4() const noexcept {
-            return isGL4bc() || GL4 == m_profile;
+            return isGL4bc() || GL4 == name();
         }
 
         /** Indicates whether this profile is capable of GL3bc.  <p>Includes [ GL4bc, GL3bc ].</p> */
         constexpr bool isGL3bc() const noexcept {
-            return isGL4bc() || GL3bc == m_profile;
+            return isGL4bc() || GL3bc == name();
         }
 
         /** Indicates whether this profile is capable of GL3.    <p>Includes [ GL4bc, GL4, GL3bc, GL3 ].</p> */
         constexpr bool isGL3() const noexcept {
-            return isGL4() || isGL3bc() || GL3 == m_profile;
+            return isGL4() || isGL3bc() || GL3 == name();
         }
 
         /** Indicates whether this profile is capable of GL2 .   <p>Includes [ GL4bc, GL3bc, GL2 ].</p> */
         constexpr bool isGL2() const noexcept {
-            return isGL3bc() || GL2 == m_profile;
+            return isGL3bc() || GL2 == name();
         }
 
         /** Indicates whether this profile is capable of GLES1.  <p>Includes [ GLES1 ].</p> */
         constexpr bool isGLES1() const noexcept {
-            return GLES1 == m_profile;
+            return GLES1 == name();
         }
 
         /** Indicates whether this profile is capable of GLES2.  <p>Includes [ GLES2, GLES3 ].</p> */
         constexpr bool isGLES2() const noexcept {
-            return isGLES3() || GLES2 == m_profile;
+            return isGLES3() || GLES2 == name();
         }
 
         /** Indicates whether this profile is capable of GLES3.  <p>Includes [ GLES3 ].</p> */
         constexpr bool isGLES3() const noexcept {
-            return GLES3 == m_profile;
+            return GLES3 == name();
         }
 
         /** Indicates whether this profile is capable of GLES.  <p>Includes [ GLES1, GLES2, GLES3 ].</p> */
         constexpr bool isGLES() const noexcept {
-            return GLES3 == m_profile || GLES2 == m_profile || GLES1 == m_profile;
+            return GLES3 == name() || GLES2 == name() || GLES1 == name();
         }
 
         /**
@@ -246,7 +277,7 @@ namespace gamp::render::gl {
         /** Indicates whether this profile supports GLSL, i.e. `nativeGLES2() || ( !nativeGLES() && m_version.major()>1 )`. */
         constexpr bool hasGLSL() const noexcept {
           return nativeGLES2() ||
-                 ( !nativeGLES() && m_version.major()>1 );
+                 ( !nativeGLES() && version().major()>1 );
         }
 
         /**
@@ -254,7 +285,7 @@ namespace gamp::render::gl {
          * This requires an EGL interface.
          */
         constexpr bool nativeGLES1() const noexcept {
-            return nativeGLES() && m_version.major() < 2;
+            return nativeGLES() && version().major() < 2;
         }
 
         /**
@@ -262,7 +293,7 @@ namespace gamp::render::gl {
          * This requires an EGL, ES3 or ES2 compatible interface.
          */
         constexpr bool nativeGLES2() const noexcept {
-            return nativeGLES() && m_version.major() > 1;
+            return nativeGLES() && version().major() > 1;
         }
 
         /**
@@ -270,7 +301,7 @@ namespace gamp::render::gl {
          * This requires an EGL, ES3 compatible interface.
          */
         constexpr bool nativeGLES3() const noexcept {
-            return nativeGLES() && m_version.major() > 2;
+            return nativeGLES() && version().major() > 2;
         }
 
         /** Indicates whether either of the native OpenGL ES profiles are in use. */
@@ -372,37 +403,110 @@ namespace gamp::render::gl {
             return "#version " + std::to_string(m_glslVersion.major()) + (minor < 10 ? "0" + std::to_string(minor) : std::to_string(minor)) + profileOpt + "\n";
         }
 
-        std::string toString() const {
-            return std::string("GLProfile[").append(m_version.toString()).append(" ")
-                               .append(to_string(profileMask()))
-                               .append(to_string(contextFlags()))
-                               .append(", glsl ").append(m_glslVersion.toString())
-                               .append(", ").append(name()).append("]");
+        std::string toString() const override {
+            return std::string("GLProfile[")
+                   .append(name()).append(" ").append(version().toString()).append(", ")
+                   .append(to_string(profileMask())).append(", glsl ").append(m_glslVersion.toString()).append("]");
         }
     };
-    inline std::ostream& operator<<(std::ostream& out, const GLProfile& v) {
-        return out << v.toString();
-    }
 
     /** OpenGL Rendering Context */
-    class GL : public GLProfile {
+    class GLContext : public RenderContext {
+      protected:
+        struct Private { explicit Private() = default; };
+
       private:
-        gamp::handle_t m_context;
-        gamp::render::gl::GLVersionNumber m_glversion;
-        StringAttachables m_attachables;
+        static thread_local GLContext* m_current;
+        GLProfile m_glprofile;
+        GLVersionNumber m_glversion;
+
+        static bool makeCurrentImpl(const gamp::wt::SurfaceRef& s, gamp::handle_t context) noexcept;
+        static void releaseContextImpl(const gamp::wt::SurfaceRef& s) noexcept;
 
       public:
-        GL() noexcept : GLProfile(), m_context(0), m_glversion() { }
+        /** Private: Create an invalid instance.*/
+        GLContext(Private) noexcept : RenderContext(RenderContext::Private()) { }
 
-        /** Create a new instance. Given profile tag must be one of this class' constant `GL` profiles. */
-        GL(gamp::handle_t context, const jau::util::VersionNumber& version,
-           GLProfileMask profileMask, GLContextFlags contextFlags,
-           const char* gl_version_cstr) noexcept
-        : GLProfile(version, profileMask, contextFlags), m_context(context), m_glversion(gamp::render::gl::GLVersionNumber::create(gl_version_cstr)) { }
+        /** Private: Create a new instance of a non-current context. Given profile tag must be one of this class' constant `GL` profiles. */
+        GLContext(Private, gamp::handle_t context, GLProfile profile,
+                  RenderContextFlags contextFlags, GLVersionNumber glVersion) noexcept
+        : RenderContext(RenderContext::Private(), context, contextFlags, glVersion),
+          m_glprofile(std::move(profile)), m_glversion(std::move(glVersion)) {}
 
-        constexpr bool isValid() const noexcept { return 0 != m_context; }
-        constexpr gamp::handle_t context() const noexcept { return m_context; }
-        constexpr const gamp::render::gl::GLVersionNumber& glVersion() const { return m_glversion; }
+        /** Private: Create a new instance of a current context. Given profile tag must be one of this class' constant `GL` profiles. */
+        GLContext(Private, const wt::SurfaceRef& surface, gamp::handle_t context, GLProfile profile,
+                  RenderContextFlags contextFlags, GLVersionNumber glVersion) noexcept
+        : RenderContext(RenderContext::Private(), context, contextFlags, glVersion),
+          m_glprofile(std::move(profile)), m_glversion(std::move(glVersion))
+        {
+            RenderContext::makeCurrent(surface); // -> m_surface
+            m_current = this;
+        }
+
+        ~GLContext() noexcept override {
+            if( isCurrent() ) {
+                m_current = nullptr;
+            }
+        }
+
+        /** Create a new instance of a non-current context. Given profile tag must be one of this class' constant `GL` profiles. */
+        static RenderContextPtr create(gamp::handle_t context, GLProfile profile,
+                                       RenderContextFlags contextFlags, const char* gl_version_cstr) noexcept
+        {
+            return std::make_unique<GLContext>(Private(), context, std::move(profile), contextFlags, GLVersionNumber::create(gl_version_cstr));
+        }
+        /** Create a new instance of a current. Given profile tag must be one of this class' constant `GL` profiles. */
+        static RenderContextPtr create(const wt::SurfaceRef& surface, gamp::handle_t context, GLProfile profile,
+                                       RenderContextFlags contextFlags, const char* gl_version_cstr) noexcept
+        {
+            return std::make_unique<GLContext>(Private(), surface, context, std::move(profile), contextFlags, GLVersionNumber::create(gl_version_cstr));
+        }
+
+        const jau::type_info& signature() const noexcept override { return GLSignature(); }
+        static const jau::type_info& GLSignature() noexcept { return jau::static_ctti<GLContext>(); }
+
+        constexpr const RenderProfile& renderProfile() const noexcept override { return m_glprofile; }
+        constexpr const GLProfile& glProfile() const noexcept { return m_glprofile; }
+
+        constexpr const GLVersionNumber& glVersion() const { return m_glversion; }
+
+        /// Returns an invalid GLContext reference
+        static GLContext& getInvalid() noexcept {
+            static GLContext a( (Private()) );
+            return a;
+        }
+        static GLContext& cast(RenderContext* rc) {
+            if( rc ) {
+                if( rc->signature() == GLSignature() ) {
+                    return static_cast<GLContext&>(*rc);
+                }
+                throw jau::IllegalArgumentError("Not a GLContext: "+rc->toString(), E_FILE_LINE);
+            }
+            throw jau::IllegalArgumentError("Null context", E_FILE_LINE);
+        }
+
+        /// Return thread local GLContext or an invalid GLContext, see isValid()
+        static GLContext& getCurrent() noexcept {
+            if( nullptr != m_current ) {
+                return *m_current;
+            }
+            return getInvalid();
+        }
+        bool makeCurrent(const gamp::wt::SurfaceRef& s) noexcept override {
+            if( makeCurrentImpl(s, context()) ) {
+                RenderContext::makeCurrent(s); // -> m_surface
+                m_current = this;
+                return true;
+            }
+            return false;
+        }
+        void releaseContext() noexcept override {
+            releaseContextImpl(m_surface);
+            RenderContext::releaseContext(); // -> m_surface
+            m_current = nullptr;
+        }
+        bool isCurrent() const noexcept { return this == m_current; }
+
         bool isExtensionAvailable(GLenum name) const noexcept {
             (void)name; // FIXME
             return false;
@@ -412,45 +516,26 @@ namespace gamp::render::gl {
             return false;
         }
 
-        void dispose() noexcept;
+        void dispose() noexcept override;
 
-        void releasedNotify() {
-            m_context = 0;
-            m_glversion=gamp::render::gl::GLVersionNumber();
-            clearAttachedObjects();
-            clear();
+        void disposedNotify() override {
+            RenderContext::disposedNotify();
+            if( isCurrent() ) {
+                m_current = nullptr;
+            }
         }
 
-        /** Returns the attached user object for the given name. */
-        AttachableRef getAttachedObject(std::string_view key) const { return m_attachables.get(key); }
-
-        /** Clears the attachment map. */
-        void clearAttachedObjects() { m_attachables.clear(); }
-
-        /**
-         * Attaches user object for the given name, overwrites old mapping if exists.
-         * @return previously set object or nullptr.
-         */
-        AttachableRef attachObject(std::string_view key, const AttachableRef& obj) { return m_attachables.put(key, obj); }
-
-        /** Removes attached object if exists and returns it, otherwise returns nullptr. */
-        AttachableRef detachObject(std::string_view key) { return m_attachables.remove(key); }
-
-        std::string toLongString() const {
-            return std::string("GL[").append(jau::to_hexstring(m_context)).append(", ")
-                                     .append(version().toString()).append(" ").append(to_string(profileMask()))
-                                     .append(", ").append(to_string(contextFlags()))
-                                     .append(", glsl ").append(glslVersion().toString())
-                                     .append(", ").append(name()).append(", ").append(glVersion().toString()).append("]");
+        std::string toString() const override {
+            return std::string("GL[")
+               .append(jau::to_hexstring(context())).append(", ")
+               .append(to_string(contextFlags())).append(", ")
+               .append(glProfile().toString()).append(", ")
+               .append(glVersion().toString()).append(" -> surface ")
+               .append(m_surface?jau::to_hexstring(m_surface->surfaceHandle()):"nil").append("]");
         }
-        std::string toString() const {
-            return std::string("GL[").append(jau::to_hexstring(m_context)).append(", ")
-                                     .append(version().toString()).append(" ").append(to_string(profileMask()))
-                                     .append(", ").append(to_string(contextFlags()))
-                                     .append(", glsl ").append(glslVersion().toString())
-                                     .append(", ").append(name()).append("]");
-        }
+
     };
+    typedef GLContext GL;
 
     /**@}*/
 

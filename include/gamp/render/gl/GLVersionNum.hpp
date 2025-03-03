@@ -33,12 +33,16 @@ namespace gamp::render::gl {
         GLVersionNumber(int val[], ssize_t strEnd, uint16_t state, const std::string& versionString, bool valid)
         : VersionNumberString(val[0], val[1], val[2],
                               0, 0, false, // git
-                              strEnd, state, versionString), m_valid(valid)
+                              state, strEnd, versionString), m_valid(valid)
         { }
 
         static const std::regex& getUnderscorePattern() noexcept { // NOLINT(bugprone-exception-escape)
-            static std::regex pattern = getPattern("_");
+            static std::regex pattern = getNonGitPattern("_");
             return pattern;
+        }
+        static const std::regex& getDefaultPattern() noexcept { // NOLINT(bugprone-exception-escape)
+            static std::regex defPattern = getNonGitPattern(".");
+            return defPattern;
         }
 
       public:
@@ -54,7 +58,7 @@ namespace gamp::render::gl {
                 if (versionString.starts_with("GL_VERSION_")) {
                     versionPattern = getUnderscorePattern();
                 } else {
-                    versionPattern = VersionNumberString::getDefaultPattern();
+                    versionPattern = getDefaultPattern();
                 }
                 VersionNumberString version(versionString, versionPattern);
                 strEnd = version.endOfStringMatch();
