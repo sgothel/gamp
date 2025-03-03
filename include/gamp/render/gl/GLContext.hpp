@@ -475,7 +475,8 @@ namespace gamp::render::gl {
             static GLContext a( (Private()) );
             return a;
         }
-        static GLContext& cast(RenderContext* rc) {
+        /// Downcast dereferenced given `RenderContext*` to `GLContext&`, throws exception if signature doesn't match GLSignature()
+        static GLContext& downcast(RenderContext* rc) {
             if( rc ) {
                 if( rc->signature() == GLSignature() ) {
                     return static_cast<GLContext&>(*rc);

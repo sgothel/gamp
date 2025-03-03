@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
         main_win->dispose(jau::getMonotonicTime());
         return 1;
     }
-    gamp::render::gl::GL& gl = gamp::render::gl::GL::cast(main_win->renderContext());
+    gamp::render::gl::GL& gl = gamp::render::gl::GL::downcast(main_win->renderContext());
     printf("GL Context: %s\n", gl.toString().c_str());
     {
         const int w = main_win->surfaceSize().x;

@@ -95,7 +95,7 @@ int launch(std::string_view sfile, const GLLaunchProps& props, const RenderListe
     }
     printf("Window: %s\n", main_win->toString().c_str());
     {
-        gamp::render::gl::GL& gl = gamp::render::gl::GL::cast(main_win->renderContext());
+        gamp::render::gl::GL& gl = gamp::render::gl::GL::downcast(main_win->renderContext());
 
         printf("GL Context: %s\n", gl.toString().c_str());
 

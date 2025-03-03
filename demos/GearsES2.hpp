@@ -520,7 +520,7 @@ class GearsES2 : public RenderListener {
 
     bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
-        GL& gl = GL::cast(win->renderContext());
+        GL& gl = GL::downcast(win->renderContext());
 
         // m_st.setVerbose(true);
         ShaderCodeRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
@@ -581,7 +581,7 @@ class GearsES2 : public RenderListener {
         jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", win->toString().c_str());
         win->removeKeyListener(m_kl);
         win->removePointerListener(m_pl);
-        GL& gl = GL::cast(win->renderContext());
+        GL& gl = GL::downcast(win->renderContext());
         m_st.useProgram(gl, false);
         m_gear1.dispose(gl);
         m_gear2.dispose(gl);
@@ -601,7 +601,7 @@ class GearsES2 : public RenderListener {
         const bool msaa = false;  // gl.getContext().getGLDrawable().getChosenGLCapabilities().getSampleBuffers();
         jau::fprintf_td(when.to_ms(), stdout, "GearsES2.reshape %s of %fx%f, swapInterval %d, msaa %d, tileRendererInUse %d\n",
                         viewport.toString().c_str(), imageWidth, imageHeight, m_swapInterval, msaa, false);
-        GL& gl = GL::cast(win->renderContext());
+        GL& gl = GL::downcast(win->renderContext());
         // compute projection parameters 'normal'
         float left, right, bottom, top;
         if( imageHeight > imageWidth ) {
@@ -652,7 +652,7 @@ class GearsES2 : public RenderListener {
         if( m_doRotate ) {
             m_angle += 0.5f;
         }
-        GL& gl = GL::cast(win->renderContext());
+        GL& gl = GL::downcast(win->renderContext());
         // bool m_hasFocus = win->hasFocus();
 
         if( m_clearBuffers ) {

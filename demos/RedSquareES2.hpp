@@ -79,7 +79,7 @@ class RedSquareES2 : public RenderListener {
         jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
         t_last = when;
 
-        GL& gl = GL::cast(win->renderContext());
+        GL& gl = GL::downcast(win->renderContext());
         ShaderCodeRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
                 "demos/glsl/bin", "RedSquareShader");
         ShaderCodeRef fp0 = ShaderCode::create(gl, GL_FRAGMENT_SHADER, "demos/glsl",
@@ -142,7 +142,7 @@ class RedSquareES2 : public RenderListener {
     void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", toString().c_str());
         win->removeKeyListener(m_kl);
-        st.destroy(GL::cast(win->renderContext()));
+        st.destroy(GL::downcast(win->renderContext()));
         m_initialized = false;
     }
 
@@ -158,7 +158,7 @@ class RedSquareES2 : public RenderListener {
         const float zNear=1.0f;
         const float zFar=100.0f;
         m_pmv.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
-        st.pushAllUniforms(GL::cast(win->renderContext()));
+        st.pushAllUniforms(GL::downcast(win->renderContext()));
     }
 
     void display(const WindowRef& win, const jau::fraction_timespec& when) override {
@@ -166,7 +166,7 @@ class RedSquareES2 : public RenderListener {
         if( !m_initialized ) {
             return;
         }
-        GL& gl = GL::cast(win->renderContext());
+        GL& gl = GL::downcast(win->renderContext());
         ::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         st.useProgram(gl, true);
