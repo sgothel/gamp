@@ -12,7 +12,6 @@
 #ifndef GAMP_GLSLSHADERUTIL_HPP_
 #define GAMP_GLSLSHADERUTIL_HPP_
 
-#include <GL/gl.h>
 #include <gamp/render/gl/GLLiterals.hpp>
 #include <gamp/render/gl/GLTypes.hpp>
 

@@ -12,8 +12,6 @@
 #ifndef GAMP_GLARRAYDATASERVER_HPP_
 #define GAMP_GLARRAYDATASERVER_HPP_
 
-#include <GL/gl.h>
-
 #include <cmath>
 
 #include <jau/basic_types.hpp>

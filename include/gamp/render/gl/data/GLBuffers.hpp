@@ -12,7 +12,6 @@
 #ifndef GAMP_GLBUFFERS_HPP_
 #define GAMP_GLBUFFERS_HPP_
 
-#include <GL/gl.h>
 #include <gamp/render/gl/GLTypes.hpp>
 
 namespace gamp::render::gl::data {

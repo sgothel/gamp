@@ -12,8 +12,6 @@
 #ifndef GAMP_RENDER_GL_GLTYPES_HPP_
 #define GAMP_RENDER_GL_GLTYPES_HPP_
 
-#include <GL/gl.h>
-#include <GLES2/gl2.h>
 #include <jau/basic_types.hpp>
 #include <jau/darray.hpp>
 #include <jau/int_math_ct.hpp>
