@@ -156,17 +156,17 @@ namespace gamp::render::gl::data {
       public:
         typedef SyncMatrices4<GLfloat> SyncMats4f;
       private:
-        const SyncMats4f& m_data;
+        SyncMats4f& m_data;
       public:
-        GLUniformSyncMatrices4f(const string_t& name, const SyncMats4f& data)
+        GLUniformSyncMatrices4f(const string_t& name, SyncMats4f& data)
         : GLUniformData(data.compSignature(), name,
                         /*location=*/-1, /*rows=*/4, /*columns=*/4, /*count=*/data.matrixCount()),
           m_data(data) {}
 
-        static std::shared_ptr<GLUniformSyncMatrices4f> create(const string_t& name, const SyncMats4f& data) {
+        static std::shared_ptr<GLUniformSyncMatrices4f> create(const string_t& name, SyncMats4f& data) {
             return std::make_shared<GLUniformSyncMatrices4f>(name, data);
         }
-        const void* data() const noexcept override { return m_data.data(); }
+        const void* data() const noexcept override { return m_data.syncedData(); }
 
         const GLfloat* floats() const { return m_data.floats(); }
     };
