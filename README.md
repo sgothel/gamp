@@ -44,6 +44,7 @@ All APIs, if any, will change - but I thought it is nice to share the
 development with whoever might be interested.
 
 ### TODO List
+- [x] Providing linear algebra and geometry in jaulib
 - [x] Windowing Toolkit (WT) abstraction w/ `Surface `and `Window`
 - [x] Basic `OpenGL` abstraction w/ `GLProfile` and `GL `context (bound to `Surface`)
 - [x] Event and listener (Window, Key, Pointer and Render)
