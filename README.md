@@ -31,7 +31,7 @@ functionality including linear algebra and geometry.
 
 ## Online WebAssembly Examples
 * [Gears](https://jausoft.com/projects/gamp/GearsES2.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/GearsES2_8hpp-example.html), [plain](demos/GearsES2.hpp))
-* [RedSquare](https://jausoft.com/projects/gamp/RedSquareES2.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/RedSquareES2_8hpp-example.html)), [plain](demos/RedSquareES2.hpp.hpp))
+* [RedSquare](https://jausoft.com/projects/gamp/RedSquareES2.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/RedSquareES2_8hpp-example.html), [plain](demos/RedSquareES2.hpp.hpp))
 
 ## Earlier Work
 [gfxbox2](https://jausoft.com/cgit/cs_class/gfxbox2.git/about/) of our CS class

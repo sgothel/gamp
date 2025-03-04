@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <memory>
 #include <numbers>
 
@@ -26,6 +27,11 @@
 #include <gamp/wt/event/Event.hpp>
 #include <gamp/wt/event/KeyEvent.hpp>
 #include <gamp/wt/event/PointerEvent.hpp>
+#include <jau/basic_types.hpp>
+#include <jau/debug.hpp>
+#include <jau/functional.hpp>
+#include <jau/math/geom/aabbox3f.hpp>
+#include <jau/math/vec3f.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;
@@ -34,6 +40,9 @@ using namespace gamp::wt;
 using namespace gamp::wt::event;
 using namespace gamp::render::gl::glsl;
 using namespace gamp::render::gl::data;
+
+class GearsObjectES2;
+typedef jau::function<bool(const PointerEvent& e, GearsObjectES2&)> PointerEventAction;
 
 /**
  * GearsObjectES2
@@ -51,7 +60,9 @@ class GearsObjectES2 {
     GLUniformDataRef  m_pmvMatrixUniform;
     GLUniformVec4fRef m_colorUniform;
     jau::math::Vec4f  m_gearColor;
-    bool              m_useMappedBuffers = false;
+    bool              m_useMappedBuffers;
+    bool              m_picked;
+    jau::math::geom::AABBox3f m_sbox;
 
     GLFloatArrayDataServerRef m_frontFace;
     GLFloatArrayDataServerRef m_frontSide;
@@ -74,9 +85,10 @@ class GearsObjectES2 {
         array->addGLSLSubArray("normals", compsPerElem, GL_ARRAY_BUFFER);
     }
 
-    static void vert(GLFloatArrayDataServerRef& array, float x, float y, float z, float n[]) {
+    void vert(GLFloatArrayDataServerRef& array, float x, float y, float z, float n[]) {
         array->put3f(x, y, z);
         array->put3f(n[0], n[1], n[2]);
+        m_sbox.resize(x, y, z);
     }
 
     static void sincos(float x, float sin[], int sinIdx, float cos[], int cosIdx) {
@@ -113,7 +125,9 @@ class GearsObjectES2 {
                    GLsizei   teeth,
                    float     tooth_depth,
                    PMVMat4f& pmvMatrix, GLUniformDataRef pmvMatrixUniform, GLUniformVec4fRef colorUniform)
-    : m_st(st), m_pmvMatrix(pmvMatrix), m_pmvMatrixUniform(std::move(pmvMatrixUniform)), m_colorUniform(std::move(colorUniform)), m_gearColor(gearColor), m_useMappedBuffers(false) {
+    : m_st(st), m_pmvMatrix(pmvMatrix), m_pmvMatrixUniform(std::move(pmvMatrixUniform)),
+      m_colorUniform(std::move(colorUniform)), m_gearColor(gearColor),
+      m_useMappedBuffers(false), m_picked(false), m_sbox() {
         const float dz = width * 0.5f;
         float       u, v, len;
         float       s[5];
@@ -318,7 +332,12 @@ class GearsObjectES2 {
         m_pmvMatrix.rotateMv(ang_rad, 0.0f, 0.0f, 1.0f);
         m_st.pushUniform(gl, m_pmvMatrixUniform);  // automatic sync + update of Mvi + Mvit
 
-        m_colorUniform->vec4f() = m_gearColor;
+        if( m_picked ) {
+            const float gray = ( m_gearColor.x + m_gearColor.y + m_gearColor.z ) / 3.0f;
+            m_colorUniform->vec4f() = jau::math::Vec4f(gray, gray, gray, m_gearColor.w);
+        } else {
+            m_colorUniform->vec4f() = m_gearColor;
+        }
         m_st.pushUniform(gl, m_colorUniform);
 
         draw(gl, m_frontFace, GL_TRIANGLE_STRIP);
@@ -330,7 +349,19 @@ class GearsObjectES2 {
 
         m_pmvMatrix.popMv();
     }
+    // Unrotated object space PointerEventAction!
+    bool runInObjSpace(float x, float y, const PointerEventAction& action, const PointerEvent& e) {
+        m_pmvMatrix.pushMv();
+        m_pmvMatrix.translateMv(x, y, 0.0f);
 
+        const bool done = action(e, *this);
+
+        m_pmvMatrix.popMv();
+        return done;
+    }
+
+    bool& picked() noexcept { return m_picked; }
+    const jau::math::geom::AABBox3f& bounds() const noexcept { return m_sbox; }
     std::string toString() const noexcept { return "GearsObjectES2"; }
 };
 
@@ -362,13 +393,13 @@ class GearsES2 : public RenderListener {
                 WindowRef win = e.source().lock();
                 jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
             } else if( VKeyCode::VK_LEFT == kc ) {
-                m_parent.setRotY(m_parent.rotY() - 1);
+                m_parent.m_view_roty -= 1;
             } else if( VKeyCode::VK_RIGHT == kc ) {
-                m_parent.setRotY(m_parent.rotY() + 1);
+                m_parent.m_view_roty += 1;
             } else if( VKeyCode::VK_UP == kc ) {
-                m_parent.setRotX(m_parent.rotX() - 1);
+                m_parent.m_view_rotx -= 1;
             } else if( VKeyCode::VK_DOWN == kc ) {
-                m_parent.setRotX(m_parent.rotX() + 1);
+                m_parent.m_view_rotx += 1;
             }
         }
     };
@@ -378,57 +409,129 @@ class GearsES2 : public RenderListener {
       private:
         GearsES2&        m_parent;
         jau::math::Vec2i preWinPos;
-        jau::math::Vec3f preObjPos;
+        jau::math::Vec3f startObjPos;
+        GearsObjectES2* m_picked = nullptr;
+        bool m_dragInit = true;
 
-        bool mapWinToObj(const jau::math::Vec2i& pos, jau::math::Vec3f& objPos) noexcept {
-            const float orthoDist = m_parent.m_zViewDist; // assume orthogonal plane at m_zViewDist
-            const float winZ = jau::math::util::getOrthoWinZ(orthoDist, m_parent.m_zNear, m_parent.m_zFar);
-            return m_parent.m_pmvMatrix.mapWinToObj((float)pos.x, (float)pos.y, winZ, m_parent.m_viewport, objPos);
-        }
-
-        void navigate(const PointerEvent& e) noexcept {
-            const jau::math::Vec2i& pos = e.position();
-            WindowRef               win = e.source().lock();
-            if( win ) {
-                jau::math::Vec3f objPos;
-                bool mapOK = mapWinToObj(pos, objPos);
-                if( e.isControlDown() ) {
-                    if( mapOK ) {
-                        m_parent.m_panX += (objPos.x - preObjPos.x); // positive -> left
-                        m_parent.m_panY -= (objPos.y - preObjPos.y); // positive -> up
-                    }
-                } else {
-                    const jau::math::Vec2i& sdim    = win->surfaceSize();
-                    const float thetaY  = 360.0f * ((float)(pos.x - preWinPos.x) / (float)sdim.x);
-                    const float thetaX  = 360.0f * ((float)(preWinPos.y - pos.y) / (float)sdim.y);
-                    m_parent.m_view_rotx += thetaX;
-                    m_parent.m_view_roty += thetaY;
-                }
-                preWinPos = pos;
-                preObjPos = objPos;
+        bool mapWinToObj(const GearsObjectES2& shape, const jau::math::Vec2i& winPos, jau::math::Vec3f& objPos) noexcept {
+            // OK global: m_parent.m_pmvMatrix, m_parent.m_viewport
+            const jau::math::Vec3f& ctr = shape.bounds().center();
+            if( m_parent.m_pmvMatrix.mapObjToWin(ctr, m_parent.m_viewport, objPos) ) {
+                const float winZ = objPos.z;
+                return m_parent.m_pmvMatrix.mapWinToObj((float)winPos.x, (float)winPos.y, winZ, m_parent.m_viewport, objPos);
             }
+            return false;
         }
+        bool mapWinToRay(const jau::math::Vec2i& pos, jau::math::Ray3f& ray) noexcept {
+            // OK global: m_parent.m_pmvMatrix, m_parent.m_viewport
+            constexpr float winZ0 = 0.0f;
+            constexpr float winZ1 = 0.3f;
+            return m_parent.m_pmvMatrix.mapWinToRay((float)pos.x, (float)pos.y, winZ0, winZ1, m_parent.m_viewport, ray);
+        }
+
+        bool pick(const PointerEvent& e, GearsObjectES2& shape) noexcept {
+            WindowRef               win = e.source().lock();
+            if( !win ) {
+                return false;
+            }
+            jau::math::Vec2i winPos = e.position();
+            winPos.y = win->surfaceSize().y - winPos.y - 1; // flip to GL coordinates
+            jau::math::Vec3f objPos;
+            jau::math::Ray3f ray;
+            if( !mapWinToRay(winPos, ray) ) {
+                if( m_picked ) {
+                    m_picked->picked() = false;
+                    m_picked = nullptr;
+                }
+                return false;
+            }
+            const jau::math::geom::AABBox3f& box = shape.bounds();
+            if( !box.intersectsRay(ray) ) {
+                if( m_picked ) {
+                    m_picked->picked() = false;
+                }
+                return false;
+            }
+            if( !box.getRayIntersection(objPos, ray, std::numeric_limits<float>::epsilon(), /*assumeIntersection=*/true) ) {
+                ERR_PRINT("getRayIntersection failed", E_FILE_LINE);
+                if( m_picked ) {
+                    m_picked->picked() = false;
+                }
+                return false;
+            }
+            preWinPos = winPos;
+            printf("XXX pick: mouse %s -> %s\n", winPos.toString().c_str(), objPos.toString().c_str());
+            if( m_picked ) {
+                m_picked->picked() = false;
+            }
+            m_picked = &shape;
+            m_picked->picked() = true;
+            return true;
+        }
+
+        bool navigate(const PointerEvent& e, GearsObjectES2& shape) noexcept {
+            WindowRef               win = e.source().lock();
+            if( !win ) {
+                return false;
+            }
+            jau::math::Vec2i winPos = e.position();
+            winPos.y = win->surfaceSize().y - winPos.y - 1; // flip to GL coordinates
+            jau::math::Vec3f objPos;
+            if( !mapWinToObj(shape, winPos, objPos) ) {
+                return false;
+            }
+            if( e.isControlDown() ) {
+                if( m_dragInit ) {
+                    m_dragInit = false;
+                    startObjPos = objPos;
+                } else {
+                    jau::math::Vec3f diffPos = objPos - startObjPos;
+                    m_parent.m_panX += diffPos.x; // positive -> left
+                    m_parent.m_panY += diffPos.y; // positive -> up
+                }
+            } else {
+                const jau::math::Vec2i& sdim    = win->surfaceSize();
+                const float thetaY  = 360.0f * ((float)(winPos.x - preWinPos.x) / (float)sdim.x);
+                const float thetaX  = 360.0f * ((float)(preWinPos.y - winPos.y) / (float)sdim.y);
+                m_parent.m_view_rotx += thetaX;
+                m_parent.m_view_roty += thetaY;
+                m_dragInit = true;
+            }
+            preWinPos = winPos;
+            // printf("XXX navi: mouse %s -> %s\n", winPos.toString().c_str(), objPos.toString().c_str());
+            return true;
+        }
+
+        PointerEventAction pickAction, navigateAction;
 
       public:
-        MyPointerListener(GearsES2& p): m_parent(p) { (void)m_parent; }
+        MyPointerListener(GearsES2& p): m_parent(p) {
+            pickAction = jau::bind_member(this, &MyPointerListener::pick);
+            navigateAction = jau::bind_member(this, &MyPointerListener::navigate);
+        }
         void pointerPressed(const PointerEvent& e) override {
             if( e.pointerCount() == 1 ) {
-                preWinPos = e.position();
-                mapWinToObj(e.position(), preObjPos);
-            }
-        }
-        void pointerMoved(const PointerEvent& e) override {
-            if( e.isConfined() ) {
-                navigate(e);
-            } else {
-                // track prev. position so we don't have 'jumps'
-                // in case we move to confined navigation.
-                preWinPos = e.position();
-                mapWinToObj(e.position(), preObjPos);
+                GearsObjectES2* new_pick = m_parent.runInObjSpace(pickAction, e);
+                if( m_picked ) {
+                    m_picked->picked() = false;
+                }
+                m_picked = new_pick;
+                if( m_picked ) {
+                    m_picked->picked() = true;
+                }
             }
         }
         void pointerDragged(const PointerEvent& e) override {
-            navigate(e);
+            if( m_picked ) {
+                GearsObjectES2* new_pick = m_parent.runInObjSpace(navigateAction, e);
+                if( !new_pick ) {
+                    if( m_picked ) {
+                        m_picked->picked() = false;
+                    }
+                    m_picked = new_pick;
+                    printf("XXX shape: lost\n");
+                }
+            }
         }
         void pointerWheelMoved(const PointerEvent& e) override {
             const jau::math::Vec3f& rot = e.rotation();
@@ -441,6 +544,16 @@ class GearsES2 : public RenderListener {
                 m_parent.m_panX -= rot.x;  // positive -> left
                 m_parent.m_panY += rot.y;  // positive -> up
             }
+        }
+        void pointerReleased(const PointerEvent&) override {
+            if( m_picked ) {
+                printf("XXX shape: released\n");
+            }
+            if( m_picked ) {
+                m_picked->picked() = false;
+            }
+            m_picked = nullptr;
+            m_dragInit = true;
         }
     };
 
@@ -455,6 +568,7 @@ class GearsES2 : public RenderListener {
     GearsObjectES2             m_gear1, m_gear2, m_gear3;
     MyKeyListenerRef           m_kl;
     MyPointerListenerRef       m_pl;
+    jau::math::geom::AABBox3f  m_sbox;
 
     jau::math::Recti m_viewport;
     /// in angle degrees
@@ -489,7 +603,15 @@ class GearsES2 : public RenderListener {
       m_gear2(m_st, m_gear2Color, 0.5f, 2.0f, 2.0f, 10, 0.7f, m_pmvMatrix, m_pmvMatrixUniform, m_colorUniform),
       m_gear3(m_st, m_gear3Color, 1.3f, 2.0f, 0.5f, 10, 0.7f, m_pmvMatrix, m_pmvMatrixUniform, m_colorUniform),
       m_kl(std::make_shared<MyKeyListener>(*this)),
-      m_pl(std::make_shared<MyPointerListener>(*this)) { }
+      m_pl(std::make_shared<MyPointerListener>(*this)),
+      m_sbox()
+    {
+        m_sbox.resize(m_gear1.bounds());
+        m_sbox.resize(m_gear2.bounds());
+        m_sbox.resize(m_gear3.bounds());
+    }
+
+    const jau::math::geom::AABBox3f& bounds() const noexcept { return m_sbox; }
 
     constexpr bool doRotate() const noexcept { return m_doRotate; }
     void           setDoRotate(bool rotate) noexcept { m_doRotate = rotate; }
@@ -668,13 +790,35 @@ class GearsES2 : public RenderListener {
         m_pmvMatrix.rotateMv(jau::adeg_to_rad(m_view_roty), 0.0f, 1.0f, 0.0f);
         m_pmvMatrix.rotateMv(jau::adeg_to_rad(m_view_rotz), 0.0f, 0.0f, 1.0f);
 
-        m_gear1.draw(gl, -3.0f, -2.0f, jau::adeg_to_rad(1.0f * m_angle - 0.0f));
-        m_gear2.draw(gl,  3.1f, -2.0f, jau::adeg_to_rad(-2.0f * m_angle - 9.0f));
+        m_gear1.draw(gl, -3.0f, -2.0f, jau::adeg_to_rad( 1.0f * m_angle -  0.0f));
+        m_gear2.draw(gl,  3.1f, -2.0f, jau::adeg_to_rad(-2.0f * m_angle -  9.0f));
         m_gear3.draw(gl, -3.1f,  4.2f, jau::adeg_to_rad(-2.0f * m_angle - 25.0f));
         m_pmvMatrix.popMv();
         m_st.useProgram(gl, false);
 
         setGLStates(win, false);
+    }
+
+    GearsObjectES2* runInObjSpace(const PointerEventAction& action, const PointerEvent& e) {
+        m_pmvMatrix.pushMv();
+        m_pmvMatrix.translateMv(m_panX, m_panY, m_panZ);
+        m_pmvMatrix.rotateMv(jau::adeg_to_rad(m_view_rotx), 1.0f, 0.0f, 0.0f);
+        m_pmvMatrix.rotateMv(jau::adeg_to_rad(m_view_roty), 0.0f, 1.0f, 0.0f);
+        m_pmvMatrix.rotateMv(jau::adeg_to_rad(m_view_rotz), 0.0f, 0.0f, 1.0f);
+
+        // We do not perform object rotatation in object space for PointerEventAction!
+        GearsObjectES2* res = nullptr;
+        if( m_gear1.runInObjSpace(-3.0f, -2.0f, action, e) ) {
+            res = &m_gear1;
+        }
+        if( !res && m_gear2.runInObjSpace( 3.1f, -2.0f, action, e) ) {
+             res = &m_gear2;
+        }
+        if( !res && m_gear3.runInObjSpace(-3.1f,  4.2f, action, e) ) {
+            res = &m_gear3;
+        }
+        m_pmvMatrix.popMv();
+        return res;
     }
 
   private:
