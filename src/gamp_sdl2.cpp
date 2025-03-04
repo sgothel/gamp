@@ -603,7 +603,8 @@ size_t gamp::handle_events() noexcept {
                 Window* win = getWin(sdl_event.motion.windowID);
                 if( win ) {
                     win->notifyPointer(EVENT_POINTER_MOVED, when, PointerType::mouse, (uint16_t)sdl_event.motion.which,
-                                       jau::math::Vec2i((int)sdl_event.motion.x, (int)sdl_event.motion.y), /*clickCount=*/0, InputButton::none,
+                                       jau::math::Vec2i(int((float)sdl_event.motion.x*devicePixelRatio.x), int((float)sdl_event.motion.y*devicePixelRatio.y)),
+                                       /*clickCount=*/0, InputButton::none,
                                        jau::math::Vec3f(), /*rotationScale=*/0.0f);
                 } }
                 break;
@@ -611,7 +612,8 @@ size_t gamp::handle_events() noexcept {
                 Window* win = getWin(sdl_event.button.windowID);
                 if( win ) {
                     win->notifyPointer(EVENT_POINTER_PRESSED, when, PointerType::mouse, (uint16_t)0,
-                                       jau::math::Vec2i((int)sdl_event.button.x, (int)sdl_event.button.y), /*clickCount=*/sdl_event.button.clicks,
+                                       jau::math::Vec2i(int((float)sdl_event.button.x*devicePixelRatio.x), int((float)sdl_event.button.y*devicePixelRatio.y)),
+                                       /*clickCount=*/sdl_event.button.clicks,
                                        static_cast<InputButton>(sdl_event.button.button),
                                        jau::math::Vec3f(), /*rotationScale=*/0.0f);
                 } }
@@ -620,7 +622,8 @@ size_t gamp::handle_events() noexcept {
                 Window* win = getWin(sdl_event.button.windowID);
                 if( win ) {
                     win->notifyPointer(EVENT_POINTER_RELEASED, when, PointerType::mouse, (uint16_t)0,
-                                       jau::math::Vec2i((int)sdl_event.button.x, (int)sdl_event.button.y), /*clickCount=*/sdl_event.button.clicks,
+                                       jau::math::Vec2i(int((float)sdl_event.button.x*devicePixelRatio.x), int((float)sdl_event.button.y*devicePixelRatio.y)),
+                                       /*clickCount=*/sdl_event.button.clicks,
                                        static_cast<InputButton>(sdl_event.button.button),
                                        jau::math::Vec3f(), /*rotationScale=*/0.0f);
                 } }
@@ -634,7 +637,8 @@ size_t gamp::handle_events() noexcept {
                         std::swap(rotX, rotY);
                     }
                     win->notifyPointer(EVENT_POINTER_WHEEL, when, PointerType::mouse, (uint16_t)sdl_event.wheel.which,
-                                       jau::math::Vec2i((int)sdl_event.wheel.mouseX, (int)sdl_event.wheel.mouseY), /*clickCount=*/0,
+                                       jau::math::Vec2i((int)sdl_event.wheel.mouseX, (int)sdl_event.wheel.mouseY),
+                                       /*clickCount=*/0,
                                        InputButton::none,
                                        jau::math::Vec3f(rotX, rotY, 0), /*rotationScale=*/0.0f);
                 } }

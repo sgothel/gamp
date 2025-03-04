@@ -85,8 +85,8 @@ namespace gamp::wt::event {
      *
      * <a name="coordUnit"><h5>Unit of Coordinates</h5></a>
      *
-     * All pointer coordinates of this interface are represented in pixel units,
-     * see {@link NativeSurface} and {@link NativeWindow}.
+     * All pointer coordinates of this interface are represented in top-left pixel units,
+     * see Surface and Window.
      *
      * <a name="multiPtrEvent"><h5>Multiple-Pointer Events</h5></a>
      *
