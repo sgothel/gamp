@@ -90,6 +90,7 @@ namespace gamp::wt::event {
                 } catch (std::exception &err) {
                     ERR_PRINT("KeyboardManager::dispatch (p): %s: Caught exception %s", ke.toString().c_str(), err.what());
                 }
+                if( ke.consumed() ) { break; }
             }
         }
         void dispatchReleased(const jau::fraction_timespec& when, const WindowRef& source,
@@ -107,6 +108,7 @@ namespace gamp::wt::event {
                 } catch (std::exception &err) {
                     ERR_PRINT("KeyboardManager::dispatch (r): %s: Caught exception %s", ke.toString().c_str(), err.what());
                 }
+                if( ke.consumed() ) { break; }
             }
         }
 

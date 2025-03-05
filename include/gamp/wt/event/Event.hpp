@@ -34,7 +34,7 @@
 namespace gamp::wt {
     class Window;
     typedef std::shared_ptr<Window> WindowRef;
-    typedef std::weak_ptr<Window> WindowPtr;
+    typedef std::weak_ptr<Window> WindowWeakPtr;
 }
 
 namespace gamp::wt::event {
@@ -73,7 +73,7 @@ namespace gamp::wt::event {
       private:
         uint16_t m_type;
         jau::fraction_timespec m_when;
-        WindowPtr m_source;
+        WindowWeakPtr m_source;
         bool m_consumed;
 
       public:
@@ -82,9 +82,12 @@ namespace gamp::wt::event {
 
         constexpr uint16_t type() const noexcept { return m_type; }
         constexpr const jau::fraction_timespec& when() const noexcept { return m_when; }
-        constexpr const WindowPtr& source() const noexcept { return m_source; }
+        constexpr const WindowWeakPtr& source() const noexcept { return m_source; }
 
+        /** Consumed events will stop traversing through listener. */
         constexpr bool consumed() const noexcept { return m_consumed; }
+        /** Consumed events will stop traversing through listener. */
+        constexpr void setConsumed(bool v) noexcept { m_consumed = v; }
         std::string toString() const noexcept {
             std::string s = "WTEvent[consumed ";
             s.append(m_consumed ? "true" : "false");

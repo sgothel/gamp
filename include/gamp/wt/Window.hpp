@@ -159,19 +159,19 @@ namespace gamp::wt {
                 Window* m_self;
               public:
                 SelfWinListener(Window* self) noexcept : m_self(self) {}
-                void windowResized(const WindowEvent&, const Vec2i& winSize, const jau::math::Vec2i& surfSize) override {
+                void windowResized(WindowEvent&, const Vec2i& winSize, const jau::math::Vec2i& surfSize) override {
                     m_self->setWindowSize(winSize);
                     m_self->setSurfaceSize(surfSize);
                     for(const RenderListenerRef& l : *m_self->m_render_listener.snapshot()) {
                         write(l->pendingActions(), RenderActions::reshape, true);
                     }
                 }
-                void windowMoved(const WindowEvent&, const Vec2i& winPos) override { m_self->setWindowPos(winPos); }
-                void windowDestroyNotify(const WindowEvent&) override {}
-                void windowDestroyed(const WindowEvent&) override {}
-                void windowFocusChanged(const WindowEvent&, bool focused) override { m_self->setFocused(focused); }
-                void windowRepaint(const WindowEvent&) override {}
-                void windowVisibilityChanged(const WindowEvent&, bool visible) override { m_self->setVisible(visible); }
+                void windowMoved(WindowEvent&, const Vec2i& winPos) override { m_self->setWindowPos(winPos); }
+                void windowDestroyNotify(WindowEvent&) override {}
+                void windowDestroyed(WindowEvent&) override {}
+                void windowFocusChanged(WindowEvent&, bool focused) override { m_self->setFocused(focused); }
+                void windowRepaint(WindowEvent&) override {}
+                void windowVisibilityChanged(WindowEvent&, bool visible) override { m_self->setVisible(visible); }
             };
             WindowListenerRef m_win_selflistener;
 
@@ -234,6 +234,17 @@ namespace gamp::wt {
 
             /** Returns the window client-area top-left position and size excluding insets (window decorations) in window units. */
             constexpr const Recti& windowBounds() const noexcept { return m_window_bounds; }
+
+            /**
+             * Returns <code>true</code> if this window delivers PointerEvent in
+             * OpenGL's coordinate system, <i>origin at bottom left</i>.
+             * Otherwise returns <code>false</code>, i.e. <i>origin at top left</i>.
+             *
+             * Default impl. is isBLOriented(), i.e. <code>true</code> for OpenGL bottom-left coordinate system.
+             *
+             * @see isBLOriented()
+             */
+            constexpr bool isPointerBLOriented() const noexcept { return isBLOriented(); }
 
             /**
              * Returns the handle to the surface for this NativeSurface. <P>

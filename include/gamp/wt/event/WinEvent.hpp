@@ -81,10 +81,10 @@ namespace gamp::wt::event {
         virtual ~WindowListener() noexcept = default;
 
         /** Window is resized, your application shall respect the new window-size in window units and surface-size in pixel. A repaint is recommended. */
-        virtual void windowResized(const WindowEvent&, const jau::math::Vec2i& /*winSize*/, const jau::math::Vec2i& /*surfSize*/) {}
+        virtual void windowResized(WindowEvent&, const jau::math::Vec2i& /*winSize*/, const jau::math::Vec2i& /*surfSize*/) {}
 
         /** Window has been moved to given windows-position in window units. */
-        virtual void windowMoved(const WindowEvent&, const jau::math::Vec2i& /*winPos*/) {}
+        virtual void windowMoved(WindowEvent&, const jau::math::Vec2i& /*winPos*/) {}
 
         /**
          * Window destruction has been requested.
@@ -94,21 +94,21 @@ namespace gamp::wt::event {
          * </p>
          * In case the window will be destroyed (see above), release of resources is recommended.
          **/
-        virtual void windowDestroyNotify(const WindowEvent&) {}
+        virtual void windowDestroyNotify(WindowEvent&) {}
 
         /**
          * Window has been destroyed.
          */
-        virtual void windowDestroyed(const WindowEvent&) {}
+        virtual void windowDestroyed(WindowEvent&) {}
 
         /** Window gained or lost focus. */
-        virtual void windowFocusChanged(const WindowEvent&, bool /*focused*/) {}
+        virtual void windowFocusChanged(WindowEvent&, bool /*focused*/) {}
 
         /** Window area shall be repainted. */
-        virtual void windowRepaint(const WindowEvent&) {} // FIXME: WindowUpdateEvent
+        virtual void windowRepaint(WindowEvent&) {} // FIXME: WindowUpdateEvent
 
         /** Window visibility changed. */
-        virtual void windowVisibilityChanged(const WindowEvent&, bool /*visible*/) {}
+        virtual void windowVisibilityChanged(WindowEvent&, bool /*visible*/) {}
     };
     typedef std::shared_ptr<WindowListener> WindowListenerRef;
 

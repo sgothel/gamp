@@ -36,7 +36,7 @@ class RedSquareES2 : public RenderListener {
       public:
         MyKeyListener(RedSquareES2& p) : m_parent(p) {}
 
-        void keyPressed(const KeyEvent& e, const KeyboardTracker& kt) override {
+        void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
             jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
             if( e.keySym() == VKeyCode::VK_ESCAPE ) {
                 WindowRef win = e.source().lock();
@@ -50,7 +50,7 @@ class RedSquareES2 : public RenderListener {
                 jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
             }
         }
-        void keyReleased(const KeyEvent& e, const KeyboardTracker& kt) override {
+        void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
             jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
         }
     };

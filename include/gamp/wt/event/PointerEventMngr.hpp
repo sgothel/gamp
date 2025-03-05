@@ -67,7 +67,7 @@ namespace gamp::wt::event {
             if( EVENT_POINTER_MOVED == type && m_buttonDown.size() > 0 ) {
                 type = EVENT_POINTER_DRAGGED;
             }
-            const PointerEvent evt(type, when, source, mods, ptype, id, pos, clickCount, button, rotation, rotationScale);
+            PointerEvent evt(type, when, source, mods, ptype, id, pos, clickCount, button, rotation, rotationScale);
             for(const PointerListenerRef& kl : *m_pointerListener.snapshot()) {
                 try {
                     switch(type) {
@@ -92,6 +92,7 @@ namespace gamp::wt::event {
                 } catch (std::exception &err) {
                     ERR_PRINT("PointerManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
                 }
+                if( evt.consumed() ) { break; }
             }
         }
 

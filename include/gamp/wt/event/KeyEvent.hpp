@@ -896,7 +896,7 @@ namespace gamp::wt::event {
         virtual ~KeyListener() noexcept = default;
 
         /** A key has been {@link KeyEvent#EVENT_KEY_PRESSED pressed}, excluding {@link #isAutoRepeat() auto-repeat} {@link #isModifierKey() modifier} keys. See {@link KeyEvent}. */
-        virtual void keyPressed(const KeyEvent& /*e*/, const KeyboardTracker&) {}
+        virtual void keyPressed(KeyEvent& /*e*/, const KeyboardTracker&) {}
 
         /**
          * A key has been {@link KeyEvent#EVENT_KEY_RELEASED released}, excluding {@link #isAutoRepeat() auto-repeat} {@link #isModifierKey() modifier} keys. See {@link KeyEvent}.
@@ -904,7 +904,7 @@ namespace gamp::wt::event {
          * To simulated the removed <code>keyTyped(KeyEvent e)</code> semantics, see KeyEvent::isTyped().
          * </p>
          */
-        virtual void keyReleased(const KeyEvent& /*e*/, const KeyboardTracker&) {}
+        virtual void keyReleased(KeyEvent& /*e*/, const KeyboardTracker&) {}
     };
     typedef std::shared_ptr<KeyListener> KeyListenerRef;
 

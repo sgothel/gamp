@@ -101,7 +101,7 @@ static bool animating = true;
 
 class MyKeyListener : public KeyListener {
   public:
-    void keyPressed(const KeyEvent& e, const KeyboardTracker& kt) override {
+    void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
         printf("KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
         if( e.keySym() == VKeyCode::VK_ESCAPE ) {
             WindowRef win = e.source().lock();
@@ -115,7 +115,7 @@ class MyKeyListener : public KeyListener {
             printf("Source: %s\n", win ? win->toString().c_str() : "null");
         }
     }
-    void keyReleased(const KeyEvent& e, const KeyboardTracker& kt) override {
+    void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
         printf("KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
     }
 };

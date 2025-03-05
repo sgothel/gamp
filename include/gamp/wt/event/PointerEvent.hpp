@@ -85,8 +85,9 @@ namespace gamp::wt::event {
      *
      * <a name="coordUnit"><h5>Unit of Coordinates</h5></a>
      *
-     * All pointer coordinates of this interface are represented in top-left pixel units,
-     * see Surface and Window.
+     * All pointer coordinates of this interface are represented in pixel units, see Surface and Window.
+     *
+     * Orientation of coordinate system depends on isPointerBLOriented(), i.e. defaults to bottom-left.
      *
      * <a name="multiPtrEvent"><h5>Multiple-Pointer Events</h5></a>
      *
@@ -283,6 +284,8 @@ namespace gamp::wt::event {
         constexpr uint16_t clickCount() const noexcept { return m_clickCount; }
 
         /**
+         * Returns position of given pointer-index in pixel units. Orientation depends on isPointerBLOriented().
+         *
          * See details for <a href="#multiPtrEvent">multiple-pointer events</a>.
          * @param index pointer-index within [0 .. {@link #getPointerCount()}-1]
          * @return XYZ-Coord associated with the pointer-index in pixel units.
@@ -291,8 +294,10 @@ namespace gamp::wt::event {
         constexpr const jau::math::Vec2i& position(size_t index = 0) const noexcept { return m_pos[index]; }
 
         /**
+         * Returns position of all pointers in pixel units. Orientation depends on isPointerBLOriented().
+         *
          * See details for <a href="#multiPtrEvent">multiple-pointer events</a>.
-         * @return array of all X-Coords for all pointers in pixel units.
+         * @return array of all coordinates for all pointers in pixel units.
          */
         constexpr const std::vector<jau::math::Vec2i>& allPositions() const noexcept { return m_pos; }
 
@@ -478,15 +483,15 @@ namespace gamp::wt::event {
       public:
         virtual ~PointerListener() noexcept = default;
 
-        virtual void pointerClicked(const PointerEvent&) { }
+        virtual void pointerClicked(PointerEvent&) { }
         /** Only generated for {@link PointerType#Mouse} */
-        virtual void pointerEntered(const PointerEvent&) { }
+        virtual void pointerEntered(PointerEvent&) { }
         /** Only generated for {@link PointerType#Mouse} */
-        virtual void pointerExited(const PointerEvent&) { }
-        virtual void pointerPressed(const PointerEvent&) { }
-        virtual void pointerReleased(const PointerEvent&) { }
-        virtual void pointerMoved(const PointerEvent&) { }
-        virtual void pointerDragged(const PointerEvent&) { }
+        virtual void pointerExited(PointerEvent&) { }
+        virtual void pointerPressed(PointerEvent&) { }
+        virtual void pointerReleased(PointerEvent&) { }
+        virtual void pointerMoved(PointerEvent&) { }
+        virtual void pointerDragged(PointerEvent&) { }
 
         /**
          * Traditional event name originally produced by a PointerType::mouse pointer type.
@@ -494,7 +499,7 @@ namespace gamp::wt::event {
          * Triggered for any rotational pointer events, see
          * PointerEvent::rotation() and PointerEvent::rotationScale().
          */
-        virtual void pointerWheelMoved(const PointerEvent&) { }
+        virtual void pointerWheelMoved(PointerEvent&) { }
     };
     typedef std::shared_ptr<PointerListener> PointerListenerRef;
 

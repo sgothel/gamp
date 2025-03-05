@@ -46,7 +46,7 @@ namespace gamp::wt::event {
 
       public:
         void dispatch(uint16_t type, const jau::fraction_timespec& when, const WindowRef& source, bool value=true) noexcept {
-            const WindowEvent evt(type, when, source);
+            WindowEvent evt(type, when, source);
             for(const WindowListenerRef& kl : *m_windowListener.snapshot()) {
                 try {
                     switch(evt.type()) {
@@ -60,28 +60,31 @@ namespace gamp::wt::event {
                 } catch (std::exception &err) {
                     ERR_PRINT("WindowManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
                 }
+                if( evt.consumed() ) { break; }
             }
         }
         void dispatchResize(const jau::fraction_timespec& when, const WindowRef& source,
                             const jau::math::Vec2i& winSize, const jau::math::Vec2i& surfSize) noexcept {
-            const WindowEvent evt(EVENT_WINDOW_RESIZED, when, source);
+            WindowEvent evt(EVENT_WINDOW_RESIZED, when, source);
             for(const WindowListenerRef& kl : *m_windowListener.snapshot()) {
                 try {
                     kl->windowResized(evt, winSize, surfSize); break;
                 } catch (std::exception &err) {
                     ERR_PRINT("WindowManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
                 }
+                if( evt.consumed() ) { break; }
             }
         }
         void dispatchMoved(const jau::fraction_timespec& when, const WindowRef& source,
-                      const jau::math::Vec2i& winPos) noexcept {
-            const WindowEvent evt(EVENT_WINDOW_MOVED, when, source);
+                           const jau::math::Vec2i& winPos) noexcept {
+            WindowEvent evt(EVENT_WINDOW_MOVED, when, source);
             for(const WindowListenerRef& kl : *m_windowListener.snapshot()) {
                 try {
                     kl->windowMoved(evt, winPos); break;
                 } catch (std::exception &err) {
                     ERR_PRINT("WindowManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
                 }
+                if( evt.consumed() ) { break; }
             }
         }
 

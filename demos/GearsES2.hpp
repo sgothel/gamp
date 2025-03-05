@@ -45,7 +45,7 @@ using namespace gamp::render::gl::glsl;
 using namespace gamp::render::gl::data;
 
 class GearsObjectES2;
-typedef jau::function<bool(const PointerEvent& e, GearsObjectES2&)> PointerEventAction;
+typedef jau::function<bool(const PointerEvent& e, const WindowRef& win, GearsObjectES2& shape)> PointerShapeAction;
 
 /**
  * GearsObjectES2
@@ -352,12 +352,11 @@ class GearsObjectES2 {
 
         m_pmvMatrix.popMv();
     }
-    // Unrotated teeth-object space PointerEventAction!
-    bool runInObjSpace(const PointerEventAction& action, const PointerEvent& e) {
+    bool dispatchAction(const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
         m_pmvMatrix.pushMv();
         m_pmvMatrix.translateMv(m_tx);
 
-        const bool done = action(e, *this);
+        const bool done = action(e, win, *this);
 
         m_pmvMatrix.popMv();
         return done;
@@ -384,7 +383,7 @@ class GearsES2 : public RenderListener {
       public:
         MyKeyListener(GearsES2& p): m_parent(p) { }
 
-        void keyPressed(const KeyEvent& e, const KeyboardTracker&) override {
+        void keyPressed(KeyEvent& e, const KeyboardTracker&) override {
             const VKeyCode kc = e.keySym();
             if( e.keySym() == VKeyCode::VK_ESCAPE ) {
                 WindowRef win = e.source().lock();
@@ -433,15 +432,10 @@ class GearsES2 : public RenderListener {
             return m_parent.m_pmvMatrix.mapWinToRay((float)pos.x, (float)pos.y, winZ0, winZ1, m_parent.m_viewport, ray);
         }
 
-        bool pick(const PointerEvent& e, GearsObjectES2& shape) noexcept {
-            WindowRef win = e.source().lock();
-            if( !win ) {
-                return false;
-            }
-            jau::math::Vec2i winPos = e.position();
-            winPos.y = win->surfaceSize().y - winPos.y - 1; // flip to GL coordinates
+        bool pick(const PointerEvent& e, const WindowRef&, GearsObjectES2& shape) noexcept {
             jau::math::Vec3f objPos;
             jau::math::Ray3f ray;
+            const jau::math::Vec2i& winPos = e.position();
             if( !mapWinToRay(winPos, ray) ) {
                 return false;
             }
@@ -459,14 +453,9 @@ class GearsES2 : public RenderListener {
             return true;
         }
 
-        bool navigate(const PointerEvent& e, GearsObjectES2& shape) noexcept {
-            WindowRef win = e.source().lock();
-            if( !win ) {
-                return false;
-            }
-            jau::math::Vec2i winPos = e.position();
-            winPos.y = win->surfaceSize().y - winPos.y - 1; // flip to GL coordinates
+        bool navigate(const PointerEvent& e, const WindowRef& win, GearsObjectES2& shape) noexcept {
             jau::math::Vec3f objPos;
+            const jau::math::Vec2i& winPos = e.position();
             if( !mapWinToObj(shape, winPos, objPos) ) {
                 return false;
             }
@@ -493,16 +482,20 @@ class GearsES2 : public RenderListener {
             return true;
         }
 
-        PointerEventAction pickAction, navigateAction;
+        PointerShapeAction pickAction, navigateAction;
 
       public:
         MyPointerListener(GearsES2& p): m_parent(p) {
             pickAction = jau::bind_member(this, &MyPointerListener::pick);
             navigateAction = jau::bind_member(this, &MyPointerListener::navigate);
         }
-        void pointerPressed(const PointerEvent& e) override {
+        void pointerPressed(PointerEvent& e) override {
             if( e.pointerCount() == 1 ) {
-                GearsObjectES2* new_pick = m_parent.dispatchToPick(pickAction, e);
+                WindowRef win = e.source().lock();
+                if( !win ) {
+                    return;
+                }
+                GearsObjectES2* new_pick = m_parent.dispatchToPick(pickAction, e, win);
                 if( m_picked ) {
                     m_picked->picked() = false;
                 }
@@ -512,9 +505,13 @@ class GearsES2 : public RenderListener {
                 }
             }
         }
-        void pointerDragged(const PointerEvent& e) override {
+        void pointerDragged(PointerEvent& e) override {
             if( m_picked ) {
-                if( !m_parent.dispatchForShape(*m_picked, navigateAction, e) ) {
+                WindowRef win = e.source().lock();
+                if( !win ) {
+                    return;
+                }
+                if( !m_parent.dispatchForShape(*m_picked, navigateAction, e, win) ) {
                     if( m_picked ) {
                         m_picked->picked() = false;
                     }
@@ -523,7 +520,7 @@ class GearsES2 : public RenderListener {
                 }
             }
         }
-        void pointerWheelMoved(const PointerEvent& e) override {
+        void pointerWheelMoved(PointerEvent& e) override {
             const jau::math::Vec3f& rot = e.rotation();
             if( e.isControlDown() ) {
                 // alternative zoom
@@ -535,7 +532,7 @@ class GearsES2 : public RenderListener {
                 m_parent.m_panY += rot.y;  // positive -> up
             }
         }
-        void pointerReleased(const PointerEvent&) override {
+        void pointerReleased(PointerEvent&) override {
             if( m_picked ) {
                 m_picked->picked() = false;
                 printf("XXX shape: released\n");
@@ -558,11 +555,10 @@ class GearsES2 : public RenderListener {
     MyPointerListenerRef       m_pl;
 
     jau::math::Recti m_viewport;
-    // float m_view_rotx = 20.0f, m_view_roty = 30.0f, m_view_rotz = 0.0f;
     jau::math::Vec3f m_rotEuler = jau::math::Vec3f(jau::adeg_to_rad(20.0f), jau::adeg_to_rad(30.0f), jau::adeg_to_rad(0.0f));
     float m_panX = 0.0f, m_panY = 0.0f, m_panZ = 0.0f;
     /// in angle degrees
-    float m_angle        = 0.0f;
+    float m_teethAngle        = 0.0f;
     int   m_swapInterval = 1;
 
     bool             m_flipVerticalInGLOrientation = false;
@@ -728,11 +724,11 @@ class GearsES2 : public RenderListener {
             const float _w = r - l;
             const float _h = t - b;
             jau::fprintf_td(when.to_ms(), stdout, ">> GearsES2 angle %f, [l %f, r %f, b %f, t %f] %fx%f -> [l %f, r %f, b %f, t %f] %fx%f, v-flip %d",
-                   m_angle, left, right, bottom, top, w, h, l, r, b, t, _w, _h, m_flipVerticalInGLOrientation);
+                   m_teethAngle, left, right, bottom, top, w, h, l, r, b, t, _w, _h, m_flipVerticalInGLOrientation);
         }
 
         m_pmvMatrix.loadPIdentity();
-        if( m_flipVerticalInGLOrientation && win->isGLOriented() ) {
+        if( m_flipVerticalInGLOrientation && win->isBLOriented() ) {
             m_pmvMatrix.scaleP(1.0f, -1.0f, 1.0f);
         }
         m_pmvMatrix.frustumP(l, r, b, t, m_zNear, m_zFar);
@@ -749,7 +745,7 @@ class GearsES2 : public RenderListener {
 
         // Turn the gears' teeth
         if( m_doRotate ) {
-            m_angle += 0.5f;
+            m_teethAngle += 0.5f;
         }
         GL& gl = GL::downcast(win->renderContext());
         // bool m_hasFocus = win->hasFocus();
@@ -767,24 +763,24 @@ class GearsES2 : public RenderListener {
         m_pmvMatrix.rotateMv(m_rotEuler.y, 0.0f, 1.0f, 0.0f);
         m_pmvMatrix.rotateMv(m_rotEuler.z, 0.0f, 0.0f, 1.0f);
 
-        m_gear1.draw(gl, jau::adeg_to_rad( 1.0f * m_angle -  0.0f));
-        m_gear2.draw(gl, jau::adeg_to_rad(-2.0f * m_angle -  9.0f));
-        m_gear3.draw(gl, jau::adeg_to_rad(-2.0f * m_angle - 25.0f));
+        m_gear1.draw(gl, jau::adeg_to_rad( 1.0f * m_teethAngle -  0.0f));
+        m_gear2.draw(gl, jau::adeg_to_rad(-2.0f * m_teethAngle -  9.0f));
+        m_gear3.draw(gl, jau::adeg_to_rad(-2.0f * m_teethAngle - 25.0f));
         m_pmvMatrix.popMv();
         m_st.useProgram(gl, false);
 
         setGLStates(win, false);
     }
 
-    GearsObjectES2* dispatchToPick(const PointerEventAction& action, const PointerEvent& e) {
+    GearsObjectES2* dispatchToPick(const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
         // Sort gears in z-axis descending order
         std::array<GearsObjectES2*, 3> gears{ &m_gear1, &m_gear2, &m_gear3 };
-        struct ZLess {
+        struct ZDescending {
             bool operator()(GearsObjectES2* a, GearsObjectES2* b) const {
                 return a->mvHigh().z > b->mvHigh().z;
             }
-        } zLess;
-        std::sort(gears.begin(), gears.end(), zLess);
+        } zDescending;
+        std::sort(gears.begin(), gears.end(), zDescending);
 
         m_pmvMatrix.pushMv();
         m_pmvMatrix.translateMv(m_panX, m_panY, m_panZ);
@@ -795,14 +791,14 @@ class GearsES2 : public RenderListener {
         // We do not perform teeth-object rotation in object space for PointerEventAction!
         GearsObjectES2* res = nullptr;
         for(size_t i=0; !res && i<gears.size(); ++i) {
-            if( gears[i]->runInObjSpace(action, e) ) {
+            if( gears[i]->dispatchAction(action, e, win) ) {
                 res = gears[i];
             }
         }
         m_pmvMatrix.popMv();
         return res;
     }
-    bool dispatchForShape(GearsObjectES2& shape, const PointerEventAction& action, const PointerEvent& e) {
+    bool dispatchForShape(GearsObjectES2& shape, const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
         std::array<GearsObjectES2*, 3> gears{ &m_gear1, &m_gear2, &m_gear3 };
 
         m_pmvMatrix.pushMv();
@@ -814,7 +810,7 @@ class GearsES2 : public RenderListener {
         // We do not perform teeth-object rotation in object space for PointerEventAction!
         bool res = false;
         for(size_t i=0; !res && i<gears.size(); ++i) {
-            if( &shape == gears[i] && shape.runInObjSpace(action, e) ) {
+            if( &shape == gears[i] && shape.dispatchAction(action, e, win) ) {
                 res = true;
             }
         }
@@ -825,7 +821,7 @@ class GearsES2 : public RenderListener {
   private:
     void setGLStates(const WindowRef& win, bool enable) {
         // Culling only possible if we do not flip the projection matrix
-        const bool useCullFace = !(m_flipVerticalInGLOrientation && win->isGLOriented());
+        const bool useCullFace = !(m_flipVerticalInGLOrientation && win->isBLOriented());
         if( enable ) {
             ::glEnable(GL_DEPTH_TEST);
             if( useCullFace ) {

@@ -602,8 +602,12 @@ size_t gamp::handle_events() noexcept {
             case SDL_MOUSEMOTION: {
                 Window* win = getWin(sdl_event.motion.windowID);
                 if( win ) {
+                    int ypos = int((float)sdl_event.motion.y*devicePixelRatio.y);
+                    if( win->isPointerBLOriented() ) {
+                        ypos = win->surfaceSize().y - ypos - 1;
+                    }
                     win->notifyPointer(EVENT_POINTER_MOVED, when, PointerType::mouse, (uint16_t)sdl_event.motion.which,
-                                       jau::math::Vec2i(int((float)sdl_event.motion.x*devicePixelRatio.x), int((float)sdl_event.motion.y*devicePixelRatio.y)),
+                                       jau::math::Vec2i(int((float)sdl_event.motion.x*devicePixelRatio.x), ypos),
                                        /*clickCount=*/0, InputButton::none,
                                        jau::math::Vec3f(), /*rotationScale=*/0.0f);
                 } }
@@ -611,8 +615,12 @@ size_t gamp::handle_events() noexcept {
             case SDL_MOUSEBUTTONDOWN: {
                 Window* win = getWin(sdl_event.button.windowID);
                 if( win ) {
+                    int ypos = int((float)sdl_event.button.y*devicePixelRatio.y);
+                    if( win->isPointerBLOriented() ) {
+                        ypos = win->surfaceSize().y - ypos - 1;
+                    }
                     win->notifyPointer(EVENT_POINTER_PRESSED, when, PointerType::mouse, (uint16_t)0,
-                                       jau::math::Vec2i(int((float)sdl_event.button.x*devicePixelRatio.x), int((float)sdl_event.button.y*devicePixelRatio.y)),
+                                       jau::math::Vec2i(int((float)sdl_event.button.x*devicePixelRatio.x), ypos),
                                        /*clickCount=*/sdl_event.button.clicks,
                                        static_cast<InputButton>(sdl_event.button.button),
                                        jau::math::Vec3f(), /*rotationScale=*/0.0f);
@@ -621,8 +629,12 @@ size_t gamp::handle_events() noexcept {
             case SDL_MOUSEBUTTONUP: {
                 Window* win = getWin(sdl_event.button.windowID);
                 if( win ) {
+                    int ypos = int((float)sdl_event.button.y*devicePixelRatio.y);
+                    if( win->isPointerBLOriented() ) {
+                        ypos = win->surfaceSize().y - ypos - 1;
+                    }
                     win->notifyPointer(EVENT_POINTER_RELEASED, when, PointerType::mouse, (uint16_t)0,
-                                       jau::math::Vec2i(int((float)sdl_event.button.x*devicePixelRatio.x), int((float)sdl_event.button.y*devicePixelRatio.y)),
+                                       jau::math::Vec2i(int((float)sdl_event.button.x*devicePixelRatio.x), ypos),
                                        /*clickCount=*/sdl_event.button.clicks,
                                        static_cast<InputButton>(sdl_event.button.button),
                                        jau::math::Vec3f(), /*rotationScale=*/0.0f);

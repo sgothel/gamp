@@ -156,16 +156,16 @@ namespace gamp::wt {
             }
 
             /**
-             * Returns <code>true</code> if the drawable is rendered in
+             * Returns <code>true</code> if this surface is rendered in
              * OpenGL's coordinate system, <i>origin at bottom left</i>.
              * Otherwise returns <code>false</code>, i.e. <i>origin at top left</i>.
              *
-             * Default impl. is <code>true</code>, i.e. OpenGL coordinate system.
+             * Default impl. is <code>true</code>, i.e. OpenGL bottom-left coordinate system.
              *
              * Currently only MS-Windows bitmap offscreen drawable uses a non OpenGL orientation and hence returns <code>false</code>.<br/>
              * This removes the need of a vertical flip when used in AWT or Windows applications.
              */
-            constexpr bool isGLOriented() const noexcept { return true; }
+            constexpr bool isBLOriented() const noexcept { return true; }
 
             /** Returns the surface size of the client area excluding insets (window decorations) in pixel units. */
             constexpr const Vec2i& surfaceSize() const noexcept { return m_surface_size; }
