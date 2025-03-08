@@ -126,7 +126,7 @@ class RedSquareES2 : public RenderListener {
     Recti m_viewport;
     PMVMat4f m_pmv;
     bool m_initialized;
-    jau::fraction_timespec t_last;
+    jau::fraction_timespec m_tlast;
 
     void updatePMv()  {
         if( !m_initialized ) {
@@ -148,7 +148,7 @@ class RedSquareES2 : public RenderListener {
 
     bool init(const WindowRef&, const jau::fraction_timespec& when) override {
         printf("RL::init: %s\n", toString().c_str());
-        t_last = when;
+        m_tlast = when;
         // Create and compile vertex shader
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, 1, &vertexSource, nullptr);
@@ -217,7 +217,7 @@ class RedSquareES2 : public RenderListener {
         m_pmv.translateMv(0, 0, -10);
         static float t_sum_ms = 0;
         if( animating ) {
-            t_sum_ms += float( (when - t_last).to_ms() );
+            t_sum_ms += float( (when - m_tlast).to_ms() );
         }
         const float ang = jau::adeg_to_rad(t_sum_ms * 360.0f) / 4000.0f;
         m_pmv.rotateMv(ang, 0, 0, 1);
@@ -225,7 +225,7 @@ class RedSquareES2 : public RenderListener {
         updatePMv();
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        t_last = when;
+        m_tlast = when;
     }
 
     void reshape(const WindowRef&, const jau::math::Recti& viewport, const jau::fraction_timespec& /*when*/) override {

@@ -13,7 +13,6 @@
 #define GAMP_DEMOS_REDSQUAREES2_HPP_
 
 #include <cstdio>
-#include <memory>
 
 #include <gamp/render/gl/GLTypes.hpp>
 #include <gamp/render/gl/data/GLArrayDataServer.hpp>
@@ -30,54 +29,29 @@ using namespace gamp::render::gl::data;
 
 class RedSquareES2 : public RenderListener {
   private:
-    class MyKeyListener : public KeyListener {
-      private:
-        RedSquareES2& m_parent;
-      public:
-        MyKeyListener(RedSquareES2& p) : m_parent(p) {}
-
-        void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
-            if( e.keySym() == VKeyCode::VK_ESCAPE ) {
-                WindowRef win = e.source().lock();
-                if( win ) {
-                    win->dispose(e.when());
-                }
-            } else if( e.keySym() == VKeyCode::VK_PAUSE || e.keySym() == VKeyCode::VK_P ) {
-                m_parent.animating = !m_parent.animating;
-            } else if( e.keySym() == VKeyCode::VK_W ) {
-                WindowRef win = e.source().lock();
-                jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
-            }
-        }
-        void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
-        }
-    };
-    typedef std::shared_ptr<MyKeyListener> MyKeyListenerRef;
-
-    ShaderState st;
+    ShaderState m_st;
     Recti m_viewport;
     PMVMat4f m_pmv;
-    MyKeyListenerRef m_kl;
     bool m_initialized;
-    bool animating = true;
-    jau::fraction_timespec t_last;
+    bool m_animating = true;
+    jau::fraction_timespec m_tlast;
 
   public:
     RedSquareES2()
     : RenderListener(RenderListener::Private()),
-      m_pmv(), m_kl(std::make_shared<MyKeyListener>(*this)), m_initialized(false) {  }
+      m_pmv(), m_initialized(false) {  }
 
     Recti& viewport() noexcept { return m_viewport; }
     const Recti& viewport() const noexcept { return m_viewport; }
 
     PMVMat4f& pmv() noexcept { return m_pmv; }
     const PMVMat4f& pmv() const noexcept { return m_pmv; }
+    bool animating() const noexcept { return m_animating; }
+    bool& animating() noexcept { return m_animating; }
 
     bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
-        t_last = when;
+        m_tlast = when;
 
         GL& gl = GL::downcast(win->renderContext());
         ShaderCodeRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
@@ -98,12 +72,12 @@ class RedSquareES2 : public RenderListener {
             win->dispose(when);
             return false;
         }
-        st.attachShaderProgram(gl, sp0, true);
+        m_st.attachShaderProgram(gl, sp0, true);
 
         // setup mgl_PMVMatrix
         m_pmv.getP().loadIdentity();
         m_pmv.getMv().loadIdentity();
-        st.ownUniform(gl, GLUniformSyncMatrices4f::create("mgl_PMVMatrix", m_pmv.getSyncPMv()));
+        m_st.ownUniform(gl, GLUniformSyncMatrices4f::create("mgl_PMVMatrix", m_pmv.getSyncPMv()));
 
         // Allocate Vertex Array
         GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("mgl_Vertex", 3, false, 4, GL_STATIC_DRAW);
@@ -112,7 +86,7 @@ class RedSquareES2 : public RenderListener {
         vertices->put3f( 2,  2, 0);
         vertices->put3f(-2, -2, 0);
         vertices->put3f( 2, -2, 0);
-        st.ownAttribute(vertices, true);
+        m_st.ownAttribute(vertices, true);
         vertices->seal(gl, true);
 
         // Allocate Color Array
@@ -122,18 +96,16 @@ class RedSquareES2 : public RenderListener {
         colors->put4f(0, 0, 1, 1);
         colors->put4f(1, 0, 0, 1);
         colors->put4f(1, 0, 0, 1);
-        st.ownAttribute(colors, true);
+        m_st.ownAttribute(colors, true);
         colors->seal(gl, true);
 
         ::glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
         ::glEnable(GL_DEPTH_TEST);
 
         m_initialized = sp0->inUse();
-        if( m_initialized ) {
-            win->addKeyListener(m_kl);
-        } else {
+        if( !m_initialized ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
-            st.destroy(gl);
+            m_st.destroy(gl);
             win->dispose(when);
         }
         return m_initialized;
@@ -141,8 +113,7 @@ class RedSquareES2 : public RenderListener {
 
     void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", toString().c_str());
-        win->removeKeyListener(m_kl);
-        st.destroy(GL::downcast(win->renderContext()));
+        m_st.destroy(GL::downcast(win->renderContext()));
         m_initialized = false;
     }
 
@@ -158,7 +129,7 @@ class RedSquareES2 : public RenderListener {
         const float zNear=1.0f;
         const float zFar=100.0f;
         m_pmv.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
-        st.pushAllUniforms(GL::downcast(win->renderContext()));
+        m_st.pushAllUniforms(GL::downcast(win->renderContext()));
     }
 
     void display(const WindowRef& win, const jau::fraction_timespec& when) override {
@@ -169,23 +140,23 @@ class RedSquareES2 : public RenderListener {
         GL& gl = GL::downcast(win->renderContext());
         ::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        st.useProgram(gl, true);
+        m_st.useProgram(gl, true);
         m_pmv.getMv().loadIdentity();
         m_pmv.translateMv(0, 0, -10);
         static float t_sum_ms = 0;
-        if( animating ) {
-            t_sum_ms += float( (when - t_last).to_ms() );
+        if( m_animating ) {
+            t_sum_ms += float( (when - m_tlast).to_ms() );
         }
         const float ang = jau::adeg_to_rad(t_sum_ms * 360.0f) / 4000.0f;
         m_pmv.rotateMv(ang, 0, 0, 1);
         m_pmv.rotateMv(ang, 0, 1, 0);
-        st.pushAllUniforms(gl);
+        m_st.pushAllUniforms(gl);
 
         // Draw a square
         ::glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        st.useProgram(gl, false);
+        m_st.useProgram(gl, false);
 
-        t_last = when;
+        m_tlast = when;
     }
 
     std::string toStringImpl() const noexcept override { return "RedSquareES2"; }
