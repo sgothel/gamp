@@ -87,7 +87,7 @@ namespace gamp::wt::event {
      *
      * All pointer coordinates of this interface are represented in pixel units, see Surface and Window.
      *
-     * Orientation of coordinate system depends on isPointerBLOriented(), i.e. defaults to bottom-left.
+     * Orientation of coordinate system depends on Window::isPointerBLOriented(), i.e. defaults to bottom-left.
      *
      * <a name="multiPtrEvent"><h5>Multiple-Pointer Events</h5></a>
      *
@@ -284,7 +284,7 @@ namespace gamp::wt::event {
         constexpr uint16_t clickCount() const noexcept { return m_clickCount; }
 
         /**
-         * Returns position of given pointer-index in pixel units. Orientation depends on isPointerBLOriented().
+         * Returns position of given pointer-index in pixel units. Orientation depends on Window::isPointerBLOriented().
          *
          * See details for <a href="#multiPtrEvent">multiple-pointer events</a>.
          * @param index pointer-index within [0 .. {@link #getPointerCount()}-1]
@@ -294,7 +294,7 @@ namespace gamp::wt::event {
         constexpr const jau::math::Vec2i& position(size_t index = 0) const noexcept { return m_pos[index]; }
 
         /**
-         * Returns position of all pointers in pixel units. Orientation depends on isPointerBLOriented().
+         * Returns position of all pointers in pixel units. Orientation depends on Window::isPointerBLOriented().
          *
          * See details for <a href="#multiPtrEvent">multiple-pointer events</a>.
          * @return array of all coordinates for all pointers in pixel units.
