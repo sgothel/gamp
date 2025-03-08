@@ -32,6 +32,7 @@
 #include <jau/float_math.hpp>
 #include <jau/functional.hpp>
 #include <jau/math/geom/aabbox3f.hpp>
+#include <jau/math/mat4f.hpp>
 #include <jau/math/util/float_util.hpp>
 #include <jau/math/vec2f.hpp>
 #include <jau/math/vec3f.hpp>
@@ -67,8 +68,8 @@ class GearsObjectES2 {
     jau::math::Vec3f  m_tx;
     bool              m_useMappedBuffers;
     bool              m_picked;
-    jau::math::geom::AABBox3f m_sbox;
-    jau::math::Vec3f  m_mvHigh;
+    jau::math::geom::AABBox3f m_objbox, m_viewbox;
+    jau::math::Mat4f  m_PMvi;
 
     GLFloatArrayDataServerRef m_frontFace;
     GLFloatArrayDataServerRef m_frontSide;
@@ -94,7 +95,7 @@ class GearsObjectES2 {
     void vert(GLFloatArrayDataServerRef& array, float x, float y, float z, const jau::math::Vec3f& n) {
         array->put3f(x, y, z);
         array->put3f(n);
-        m_sbox.resize(x, y, z);
+        m_objbox.resize(x, y, z);
     }
 
     static void sincos(float x, float sin[], int sinIdx, float cos[], int cosIdx) {
@@ -134,7 +135,7 @@ class GearsObjectES2 {
                    PMVMat4f& pmvMatrix, GLUniformDataRef pmvMatrixUniform, GLUniformVec4fRef colorUniform)
     : m_name(name), m_st(st), m_pmvMatrix(pmvMatrix), m_pmvMatrixUniform(std::move(pmvMatrixUniform)),
       m_colorUniform(std::move(colorUniform)), m_gearColor(gearColor), m_tx(tx),
-      m_useMappedBuffers(false), m_picked(false), m_sbox() {
+      m_useMappedBuffers(false), m_picked(false), m_objbox(), m_viewbox(), m_PMvi() {
         const float dz = width * 0.5f;
         float       u, v, len;
         float       s[5];
@@ -330,10 +331,9 @@ class GearsObjectES2 {
     void draw(GL& gl, float ang_rad) {
         m_pmvMatrix.pushMv();
         m_pmvMatrix.translateMv(m_tx);
+        m_objbox.transform(m_pmvMatrix.getMv(), m_viewbox); // view-box for findPick
         m_pmvMatrix.rotateMv(ang_rad, 0.0f, 0.0f, 1.0f);
         m_st.pushUniform(gl, m_pmvMatrixUniform);  // automatic sync + update of Mvi + Mvit
-
-        m_mvHigh = m_pmvMatrix.getMv() * m_sbox.high();
 
         if( m_picked ) {
             const float gray = ( m_gearColor.x + m_gearColor.y + m_gearColor.z ) / 3.0f;
@@ -350,6 +350,7 @@ class GearsObjectES2 {
         draw(gl, m_outwardFace, GL_TRIANGLE_STRIP);
         draw(gl, m_insideRadiusCyl, GL_TRIANGLE_STRIP);
 
+        m_PMvi = m_pmvMatrix.getPMvi();
         m_pmvMatrix.popMv();
     }
     bool dispatchAction(const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
@@ -363,9 +364,11 @@ class GearsObjectES2 {
     }
 
     bool& picked() noexcept { return m_picked; }
-    const jau::math::geom::AABBox3f& bounds() const noexcept { return m_sbox; }
-    const jau::math::Vec3f& mvHigh() const noexcept { return m_mvHigh; }
-    std::string toString() const noexcept { return std::string("GearsObjES2[").append(std::to_string(m_name).append(", mvHigh ").append(m_mvHigh.toString())).append("]"); }
+    const jau::math::geom::AABBox3f& objBounds() const noexcept { return m_objbox; }
+    const jau::math::geom::AABBox3f& viewBounds() const noexcept { return m_viewbox; }
+    const jau::math::Mat4f& matPMvi() const noexcept { return m_PMvi; }
+    constexpr int name() const noexcept { return m_name; }
+    std::string toString() const noexcept { return std::string("GearsObjES2[").append(std::to_string(m_name).append(", view ").append(m_viewbox.toString())).append("]"); }
 };
 
 /**
@@ -412,39 +415,43 @@ class GearsES2 : public RenderListener {
       private:
         GearsES2&        m_parent;
         jau::math::Vec2i preWinPos;
-        jau::math::Vec3f startObjPos;
+        jau::math::Vec3f startPos;
         GearsObjectES2* m_picked = nullptr;
         bool m_dragInit = true;
 
-        bool mapWinToObj(const GearsObjectES2& shape, const jau::math::Vec2i& winPos, jau::math::Vec3f& objPos) noexcept {
+        bool mapWinToObj(const GearsObjectES2& shape, const jau::math::Vec2i& winPos, jau::math::Vec3f& viewPos) noexcept {
             // OK global: m_parent.m_pmvMatrix, m_parent.m_viewport
-            const jau::math::Vec3f& ctr = shape.bounds().center();
-            if( m_parent.m_pmvMatrix.mapObjToWin(ctr, m_parent.m_viewport, objPos) ) {
-                const float winZ = objPos.z;
-                return m_parent.m_pmvMatrix.mapWinToObj((float)winPos.x, (float)winPos.y, winZ, m_parent.m_viewport, objPos);
+            const jau::math::Vec3f& ctr = shape.objBounds().center();
+            if( m_parent.m_pmvMatrix.mapObjToWin(ctr, m_parent.m_viewport, viewPos) ) {
+                const float winZ = viewPos.z;
+                return m_parent.m_pmvMatrix.mapWinToObj((float)winPos.x, (float)winPos.y, winZ, m_parent.m_viewport, viewPos);
             }
             return false;
         }
-        bool mapWinToRay(const jau::math::Vec2i& pos, jau::math::Ray3f& ray) noexcept {
+        bool mapWinToObjRay(const jau::math::Vec2i& pos, jau::math::Ray3f& ray, const Mat4f& mPmvi) noexcept {
             // OK global: m_parent.m_pmvMatrix, m_parent.m_viewport
             constexpr float winZ0 = 0.0f;
             constexpr float winZ1 = 0.3f;
-            return m_parent.m_pmvMatrix.mapWinToRay((float)pos.x, (float)pos.y, winZ0, winZ1, m_parent.m_viewport, ray);
+            return Mat4f::mapWinToAnyRay((float)pos.x, (float)pos.y, winZ0, winZ1, mPmvi, m_parent.m_viewport, ray);
         }
 
         bool pick(const PointerEvent& e, const WindowRef&, GearsObjectES2& shape) noexcept {
+            // While being processed fast w/o matrix traversal of shapes,
+            // we still need to use the cached PMvi matrix for win->obj ray for accuracy.
+            // A win->view ray fails in certain angles in edge cases!
             jau::math::Vec3f objPos;
-            jau::math::Ray3f ray;
+            jau::math::Ray3f objRay;
             const jau::math::Vec2i& winPos = e.position();
-            if( !mapWinToRay(winPos, ray) ) {
+            if( !mapWinToObjRay(winPos, objRay, shape.matPMvi()) ) {
                 return false;
             }
-            const jau::math::geom::AABBox3f& box = shape.bounds();
-            if( !box.intersectsRay(ray) ) {
+            const jau::math::geom::AABBox3f& objBox = shape.objBounds();
+
+            if( !objBox.intersectsRay(objRay) ) {
                 return false;
             }
-            if( !box.getRayIntersection(objPos, ray, std::numeric_limits<float>::epsilon(), /*assumeIntersection=*/true) ) {
-                ERR_PRINT("getRayIntersection failed", E_FILE_LINE);
+            if( !objBox.getRayIntersection(objPos, objRay, std::numeric_limits<float>::epsilon(), /*assumeIntersection=*/true) ) {
+                printf("obj  getRayIntersection failed\n");
                 return false;
             }
             preWinPos = winPos;
@@ -462,10 +469,10 @@ class GearsES2 : public RenderListener {
             if( e.isControlDown() ) {
                 if( m_dragInit ) {
                     m_dragInit = false;
-                    startObjPos = objPos;
+                    startPos = objPos;
                 } else {
                     jau::math::Vec3f flip = jau::math::util::getEulerAngleOrientation(m_parent.m_rotEuler);
-                    jau::math::Vec3f diffPos = ( objPos - startObjPos ).mul(flip);
+                    jau::math::Vec3f diffPos = ( objPos - startPos ).mul(flip);
                     m_parent.m_panX += diffPos.x;
                     m_parent.m_panY += diffPos.y;
                 }
@@ -495,7 +502,7 @@ class GearsES2 : public RenderListener {
                 if( !win ) {
                     return;
                 }
-                GearsObjectES2* new_pick = m_parent.dispatchToPick(pickAction, e, win);
+                GearsObjectES2* new_pick = m_parent.findPick(pickAction, e, win); // no matrix traversal
                 if( m_picked ) {
                     m_picked->picked() = false;
                 }
@@ -511,7 +518,7 @@ class GearsES2 : public RenderListener {
                 if( !win ) {
                     return;
                 }
-                if( !m_parent.dispatchForShape(*m_picked, navigateAction, e, win) ) {
+                if( !m_parent.dispatchForShape(*m_picked, navigateAction, e, win) ) { // matrix traversal
                     if( m_picked ) {
                         m_picked->picked() = false;
                     }
@@ -575,7 +582,7 @@ class GearsES2 : public RenderListener {
     GearsES2()
     : RenderListener(RenderListener::Private()),
       m_st(),
-      m_pmvMatrix(PMVMat4f::INVERSE_MODELVIEW | PMVMat4f::INVERSE_TRANSPOSED_MODELVIEW),
+      m_pmvMatrix(PMVMat4f::INVERSE_PROJECTION | PMVMat4f::INVERSE_MODELVIEW | PMVMat4f::INVERSE_TRANSPOSED_MODELVIEW),
       m_pmvMatrixUniform(GLUniformSyncMatrices4f::create("pmvMatrix", m_pmvMatrix.getSyncPMvMviMvit())),  // P, Mv, Mvi and Mvit
       m_colorUniform(GLUniformVec4f::create("color", GearsObjectES2::red)),
       m_useMappedBuffers(false),
@@ -735,9 +742,18 @@ class GearsES2 : public RenderListener {
 
         m_pmvMatrix.loadMvIdentity();
         m_pmvMatrix.translateMv(0.0f, 0.0f, -m_zViewDist);
+
         m_st.useProgram(gl, true);
         m_st.pushUniform(gl, m_pmvMatrixUniform);
         m_st.useProgram(gl, false);
+    }
+
+    static constexpr float getTeethRotation(int name, float adeg) noexcept {
+        switch(name) {
+            case 1: return jau::adeg_to_rad( 1.0f * adeg -  0.0f);
+            case 2: return jau::adeg_to_rad(-2.0f * adeg -  9.0f);
+            default: return jau::adeg_to_rad(-2.0f * adeg - 25.0f);
+        }
     }
 
     void display(const WindowRef& win, const jau::fraction_timespec&) override {
@@ -763,57 +779,45 @@ class GearsES2 : public RenderListener {
         m_pmvMatrix.rotateMv(m_rotEuler.y, 0.0f, 1.0f, 0.0f);
         m_pmvMatrix.rotateMv(m_rotEuler.z, 0.0f, 0.0f, 1.0f);
 
-        m_gear1.draw(gl, jau::adeg_to_rad( 1.0f * m_teethAngle -  0.0f));
-        m_gear2.draw(gl, jau::adeg_to_rad(-2.0f * m_teethAngle -  9.0f));
-        m_gear3.draw(gl, jau::adeg_to_rad(-2.0f * m_teethAngle - 25.0f));
+        m_gear1.draw(gl, getTeethRotation(1, m_teethAngle));
+        m_gear2.draw(gl, getTeethRotation(2, m_teethAngle));
+        m_gear3.draw(gl, getTeethRotation(3, m_teethAngle));
         m_pmvMatrix.popMv();
         m_st.useProgram(gl, false);
 
         setGLStates(win, false);
     }
 
-    GearsObjectES2* dispatchToPick(const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
+    /// Fast loop through all shapes using PointerShapeAction w/o matrix traversal using view-coordinates
+    GearsObjectES2* findPick(const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
         // Sort gears in z-axis descending order
         std::array<GearsObjectES2*, 3> gears{ &m_gear1, &m_gear2, &m_gear3 };
         struct ZDescending {
             bool operator()(GearsObjectES2* a, GearsObjectES2* b) const {
-                return a->mvHigh().z > b->mvHigh().z;
+                return a->viewBounds().high().z > b->viewBounds().high().z;
             }
         } zDescending;
         std::sort(gears.begin(), gears.end(), zDescending);
 
-        m_pmvMatrix.pushMv();
-        m_pmvMatrix.translateMv(m_panX, m_panY, m_panZ);
-        m_pmvMatrix.rotateMv(m_rotEuler.x, 1.0f, 0.0f, 0.0f);
-        m_pmvMatrix.rotateMv(m_rotEuler.y, 0.0f, 1.0f, 0.0f);
-        m_pmvMatrix.rotateMv(m_rotEuler.z, 0.0f, 0.0f, 1.0f);
-
         // We do not perform teeth-object rotation in object space for PointerEventAction!
         GearsObjectES2* res = nullptr;
         for(size_t i=0; !res && i<gears.size(); ++i) {
-            if( gears[i]->dispatchAction(action, e, win) ) {
+            if( action(e, win, *gears[i]) ) {
                 res = gears[i];
             }
         }
-        m_pmvMatrix.popMv();
         return res;
     }
+    /// Dispatch PointerShapeAction to given shape w/ matrix traversal
     bool dispatchForShape(GearsObjectES2& shape, const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
-        std::array<GearsObjectES2*, 3> gears{ &m_gear1, &m_gear2, &m_gear3 };
-
         m_pmvMatrix.pushMv();
         m_pmvMatrix.translateMv(m_panX, m_panY, m_panZ);
         m_pmvMatrix.rotateMv(m_rotEuler.x, 1.0f, 0.0f, 0.0f);
         m_pmvMatrix.rotateMv(m_rotEuler.y, 0.0f, 1.0f, 0.0f);
         m_pmvMatrix.rotateMv(m_rotEuler.z, 0.0f, 0.0f, 1.0f);
 
-        // We do not perform teeth-object rotation in object space for PointerEventAction!
-        bool res = false;
-        for(size_t i=0; !res && i<gears.size(); ++i) {
-            if( &shape == gears[i] && shape.dispatchAction(action, e, win) ) {
-                res = true;
-            }
-        }
+        const bool res = shape.dispatchAction(action, e, win);
+
         m_pmvMatrix.popMv();
         return res;
     }
