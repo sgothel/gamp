@@ -960,9 +960,9 @@ namespace gamp::render::gl::glsl {
         static bool readShaderSource(const string_t& conn, string_t& result, int& lineno) noexcept {
             if(DEBUG_CODE) {
                 if(0 == lineno) {
-                    result.append("// "+conn+"\n"); // conn.getURL().toExternalForm()
+                    result.append("// '"+conn+"'\n"); // conn.getURL().toExternalForm()
                 } else {
-                    result.append("// included @ line "+std::to_string(lineno)+": "+conn+"\n"); // conn.getURL().toExternalForm()
+                    result.append("// included @ line "+std::to_string(lineno)+": '"+conn+"'\n"); // conn.getURL().toExternalForm()
                 }
             }
             std::ifstream reader(conn);
@@ -978,26 +978,22 @@ namespace gamp::render::gl::glsl {
                         if( s.starts_with("\"") && s.ends_with("\"")) {
                             s = s.substr(1, s.length()-2);
                         }
-                        includeFile = gamp::resolve_asset(s);
+                        includeFile = s;
                     }
-                    string_t nextConn;
+                    string_t nextConn = gamp::resolve_asset(includeFile);
 
-                    // Try relative of current shader location
-                    if( !jau::fs::isAbsolute(includeFile) ) {
-                        nextConn = jau::fs::dirname(conn).append("/").append(includeFile);
-                        if( !jau::fs::exists(nextConn) ) {
-                            nextConn.clear();
+                    if( nextConn.empty() && !jau::fs::isAbsolute(includeFile) ) {
+                        // Try relative of current shader location
+                        includeFile = jau::fs::dirname(conn).append("/").append(includeFile);
+                        if( jau::fs::exists(includeFile) ) {
+                            nextConn = includeFile;
                         }
                     }
                     if( nextConn.empty() ) {
-                        nextConn = gamp::resolve_asset(includeFile);
-                    }
-                    if( nextConn.empty() ) {
-                        jau::PLAIN_PRINT(true, "readShaderSource: Can't resolve include file %s", includeFile.c_str());
                         return false;
                     }
                     if( DEBUG_CODE ) {
-                        jau::PLAIN_PRINT(true, "readShaderSource: including %s -> %s", includeFile.c_str(), conn.c_str());
+                        jau::PLAIN_PRINT(true, "readShaderSource: including '%s' -> '%s'", includeFile.c_str(), nextConn.c_str());
                     }
                     lineno = readShaderSource(nextConn, result, lineno);
                 } else {
