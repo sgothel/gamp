@@ -8,7 +8,7 @@
   #define mgl_FragColor gl_FragColor
 #endif
 
-uniform vec4 color;
+uniform vec4 mgl_StaticColor;
 
 varying vec3 normal;
 varying vec4 position;
@@ -26,11 +26,11 @@ const float matShininess = 0.5;
 
 void main()
 {
-    vec4 ambient = color * matAmbient;
+    vec4 ambient = mgl_StaticColor * matAmbient;
     vec4 specular = vec4(0.0);
 
     float lambertTerm = dot(normal, lightDir);
-    vec4 diffuse = color * lambertTerm *  attenuation * matDiffuse;
+    vec4 diffuse = mgl_StaticColor * lambertTerm *  attenuation * matDiffuse;
     if (lambertTerm > 0.0) {
         float NdotHV;
         /*
@@ -41,7 +41,7 @@ void main()
         vec3 R = reflect(-lightDir, normal);
         NdotHV   = max(0.0, dot(R, E));
 
-        specular += color * pow(NdotHV, matShininess) * attenuation * matSpecular;
+        specular += mgl_StaticColor * pow(NdotHV, matShininess) * attenuation * matSpecular;
     }
 
     mgl_FragColor = ambient + diffuse + specular ;

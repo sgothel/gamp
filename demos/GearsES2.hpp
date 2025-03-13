@@ -88,8 +88,8 @@ class GearsObjectES2 {
     }
 
     void addInterleavedVertexAndNormalArrays(GLFloatArrayDataServerRef& array, GLsizei compsPerElem) {
-        array->addGLSLSubArray("vertices", compsPerElem, GL_ARRAY_BUFFER);
-        array->addGLSLSubArray("normals", compsPerElem, GL_ARRAY_BUFFER);
+        array->addGLSLSubArray("mgl_Vertex", compsPerElem, GL_ARRAY_BUFFER);
+        array->addGLSLSubArray("mgl_Normal", compsPerElem, GL_ARRAY_BUFFER);
     }
 
     void vert(GLFloatArrayDataServerRef& array, float x, float y, float z, const jau::math::Vec3f& n) {
@@ -409,8 +409,8 @@ class GearsES2 : public RenderListener {
     : RenderListener(RenderListener::Private()),
       m_st(),
       m_pmvMatrix(PMVMat4f::INVERSE_PROJECTION | PMVMat4f::INVERSE_MODELVIEW | PMVMat4f::INVERSE_TRANSPOSED_MODELVIEW),
-      m_pmvMatrixUniform(GLUniformSyncMatrices4f::create("pmvMatrix", m_pmvMatrix.getSyncPMvMviMvit())),  // P, Mv, Mvi and Mvit
-      m_colorUniform(GLUniformVec4f::create("color", GearsObjectES2::red)),
+      m_pmvMatrixUniform(GLUniformSyncMatrices4f::create("mgl_PMVMatrix", m_pmvMatrix.getSyncPMvMviMvit())),  // P, Mv, Mvi and Mvit
+      m_colorUniform(GLUniformVec4f::create("mgl_StaticColor", GearsObjectES2::red)),
       m_useMappedBuffers(false),
       m_gear1Color(GearsObjectES2::red),
       m_gear2Color(GearsObjectES2::green),
@@ -455,9 +455,9 @@ class GearsES2 : public RenderListener {
 
         // m_st.setVerbose(true);
         ShaderCodeRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
-                                               "demos/glsl/bin", "gears");
+                                               "demos/glsl/bin", "SingleLight0");
         ShaderCodeRef fp0 = ShaderCode::create(gl, GL_FRAGMENT_SHADER, "demos/glsl",
-                                               "demos/glsl/bin", "gears");
+                                               "demos/glsl/bin", "SingleLight0");
         if( !vp0 || !fp0 ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
             win->dispose(when);
@@ -479,16 +479,14 @@ class GearsES2 : public RenderListener {
         m_gear3.initGL(gl);
 
         // st.attachObject("pmvMatrix", pmvMatrix);
-        m_st.ownUniform(gl, m_pmvMatrixUniform);
-        m_st.pushUniform(gl, m_pmvMatrixUniform);
+        m_st.ownUniform(m_pmvMatrixUniform, true);
 
-        GLUniformVec3fRef lightU = GLUniformVec3f::create("lightPos", lightPos);
-        m_st.ownUniform(gl, lightU);
-        m_st.pushUniform(gl, lightU);
+        GLUniformVec3fRef lightU = GLUniformVec3f::create("mgl_LightPos", lightPos);
+        m_st.ownUniform(lightU, true);
 
         m_colorUniform = GLUniformVec4f::create("color", GearsObjectES2::red);
-        m_st.ownUniform(gl, m_colorUniform);
-        m_st.pushUniform(gl, m_colorUniform);
+        m_st.ownUniform(m_colorUniform, true);
+        m_st.pushAllUniforms(gl);
 
         if( m_clearBuffers ) {
             ::glClearColor(m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w);
