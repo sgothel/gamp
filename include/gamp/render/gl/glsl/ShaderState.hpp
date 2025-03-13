@@ -328,7 +328,7 @@ namespace gamp::render::gl::glsl {
             if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
             if(m_shaderProgram->linked()) throw RenderException("Program is already linked", E_FILE_LINE);
             m_activeAttribLocationMap.put(name, location);
-            glBindAttribLocation(m_shaderProgram->program(), location, name.c_str());
+            ::glBindAttribLocation(m_shaderProgram->program(), location, name.c_str());
         }
 
         /**
@@ -352,6 +352,7 @@ namespace gamp::render::gl::glsl {
             m_activeAttribLocationMap.put(name, location);
             attr->setLocation(gl, m_shaderProgram->program(), location);
             m_activeAttribDataMap.put(name, attr);
+            ::glBindAttribLocation(m_shaderProgram->program(), location, name.c_str());
         }
 
         /**
@@ -375,7 +376,7 @@ namespace gamp::render::gl::glsl {
             GLint location = getCachedAttribLocation(name);
             if(0>location) {
                 if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
-                location = glGetAttribLocation(m_shaderProgram->program(), name.c_str());
+                location = ::glGetAttribLocation(m_shaderProgram->program(), name.c_str());
                 if(0<=location) {
                     m_activeAttribLocationMap.put(name, location);
                     if(verbose()) {
@@ -462,7 +463,7 @@ namespace gamp::render::gl::glsl {
             if(verbose()) {
                 jau::INFO_PRINT("ShaderState: glEnableVertexAttribArray: %s, loc: %d", name.c_str(), location);
             }
-            glEnableVertexAttribArray(location);
+            ::glEnableVertexAttribArray(location);
             return true;
         }
 
@@ -536,7 +537,7 @@ namespace gamp::render::gl::glsl {
             if(verbose()) {
                 jau::INFO_PRINT("ShaderState: glDisableVertexAttribArray: %s", name.c_str());
             }
-            glDisableVertexAttribArray(location);
+            ::glDisableVertexAttribArray(location);
             return true;
         }
 
@@ -676,7 +677,7 @@ namespace gamp::render::gl::glsl {
                 }
                 const GLint index = getAttribLocation(gl, name);
                 if(0<=index) {
-                    glDisableVertexAttribArray(index);
+                    ::glDisableVertexAttribArray(index);
                 }
             }
         }
@@ -693,13 +694,13 @@ namespace gamp::render::gl::glsl {
                 }
                 if(isVertexAttribArrayEnabled(name)) {
                     // enable attrib, VBO and pass location/data
-                    glEnableVertexAttribArray(loc);
+                    ::glEnableVertexAttribArray(loc);
                 }
 
                 if( attribute.isVBO() ) {
-                    glBindBuffer(GL_ARRAY_BUFFER, attribute.vboName());
+                    ::glBindBuffer(GL_ARRAY_BUFFER, attribute.vboName());
                     attribute.glVertexAttribPointer(gl);
-                    glBindBuffer(GL_ARRAY_BUFFER, 0);
+                    ::glBindBuffer(GL_ARRAY_BUFFER, 0);
                 } else {
                     attribute.glVertexAttribPointer(gl);
                 }
@@ -749,13 +750,13 @@ namespace gamp::render::gl::glsl {
 
                 if(isVertexAttribArrayEnabled(name)) {
                     // enable attrib, VBO and pass location/data
-                    glEnableVertexAttribArray(loc);
+                    ::glEnableVertexAttribArray(loc);
                 }
 
                 if( attribute.isVBO() ) {
-                    glBindBuffer(GL_ARRAY_BUFFER, attribute.vboName());
+                    ::glBindBuffer(GL_ARRAY_BUFFER, attribute.vboName());
                     attribute.glVertexAttribPointer(gl);
-                    glBindBuffer(GL_ARRAY_BUFFER, 0);
+                    ::glBindBuffer(GL_ARRAY_BUFFER, 0);
                 } else {
                     attribute.glVertexAttribPointer(gl);
                 }
@@ -841,7 +842,7 @@ namespace gamp::render::gl::glsl {
             GLint location = getCachedUniformLocation(name);
             if(0>location) {
                 if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
-                location = glGetUniformLocation(m_shaderProgram->program(), name.c_str());
+                location = ::glGetUniformLocation(m_shaderProgram->program(), name.c_str());
                 if(0<=location) {
                     m_activeUniformLocationMap.put(name, location);
                 } else if(verbose()) {
