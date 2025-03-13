@@ -415,7 +415,8 @@ namespace gamp::render::gl::data {
       public:
 #endif
 
-        std::string toString() const noexcept override {
+        std::string toString() const noexcept override { return toString(false); }
+        std::string toString(bool withData) const noexcept override {
             std::string r(className());
             r.append("[").append(proxy_t::m_name)
             .append(", location ")
@@ -452,10 +453,11 @@ namespace gamp::render::gl::data {
             .append(", enabled ")
             .append(std::to_string(client_t::m_bufferEnabled))
             .append(", written ")
-            .append(std::to_string(client_t::m_bufferWritten))
-            .append(", buffer ")
-            .append(proxy_t::usesClientMem() ? m_buffer.toString() : "nil")
-            .append(", alive ")
+            .append(std::to_string(client_t::m_bufferWritten));
+            if( withData ) {
+                r.append(", buffer ").append(proxy_t::usesClientMem() ? m_buffer.toString() : "nil");
+            }
+            r.append(", alive ")
             .append(std::to_string(proxy_t::m_alive))
             .append("]");
             return r;

@@ -168,7 +168,8 @@ namespace gamp::render::gl::data {
             }
         }
 
-        std::string toString() const noexcept override {
+        std::string toString() const noexcept override { return toString(false); }
+        virtual std::string toString(bool withData) const noexcept {
             std::string r(className());
             r.append("[").append(m_name)
              .append(", location ").append(std::to_string(m_location))
@@ -177,9 +178,11 @@ namespace gamp::render::gl::data {
              .append(", compsPerElem ").append(std::to_string(m_compsPerElement))
              .append(", stride ").append(std::to_string(m_strideB)).append("b ").append(std::to_string(m_strideL)).append("c")
              .append(", mappedElemCount ").append(std::to_string(m_mappedElemCount))
-             .append(", ").append(elemStatsToString())
-             .append(", buffer ").append(usesClientMem()?m_bufferptr->toString():"nil")
-             .append(", vboEnabled ").append(std::to_string(m_vboEnabled))
+             .append(", ").append(elemStatsToString());
+            if( withData ) {
+                r.append(", buffer ").append(usesClientMem()?m_bufferptr->toString():"nil");
+            }
+            r.append(", vboEnabled ").append(std::to_string(m_vboEnabled))
              .append(", vboName ").append(std::to_string(m_vboName))
              .append(", vboUsage ").append(jau::to_hexstring(m_vboUsage))
              .append(", vboTarget ").append(jau::to_hexstring(m_vboTarget))
@@ -328,7 +331,8 @@ namespace gamp::render::gl::data {
           m_bufferptr(nullptr)
         {
             if( 0 == mappedElementCount ) {
-                throw jau::IllegalArgumentError("mappedElementCount:=" + std::to_string(mappedElementCount) + " specified for memory map", E_FILE_LINE);
+                throw jau::IllegalArgumentError("mappedElementCount:=" + std::to_string(mappedElementCount)
+                    + " specified for memory map:\n\t" + toStringImpl(), E_FILE_LINE);
             }
         }
 

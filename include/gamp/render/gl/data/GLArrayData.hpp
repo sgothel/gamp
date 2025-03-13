@@ -276,7 +276,7 @@ namespace gamp::render::gl::data {
         GLsizei stride() const noexcept {  return m_strideB; }
 
         /** Returns class name of implementing class. */
-        virtual std::string_view className() const noexcept = 0;
+        virtual std::string_view className() const noexcept { return "GLArrayData"; }
 
         /** Returns type signature of implementing class. See compTypeSignature() as well. */
         virtual const jau::type_info& classSignature() const noexcept = 0;
@@ -321,7 +321,7 @@ namespace gamp::render::gl::data {
         /**
          * Returns a string with detailed buffer element stats, i.e. sealed, count, position, remaining, limit and capacity.
          */
-        virtual std::string elemStatsToString() const noexcept = 0;
+        virtual std::string elemStatsToString() const noexcept { return ""; }
 
         virtual void destroy(GL&) {
             // m_buffer = nullptr;
@@ -331,15 +331,15 @@ namespace gamp::render::gl::data {
             m_alive = false;
         }
 
-        virtual std::string toString() const noexcept {
-            std::string r(className());
+      protected:
+        std::string toStringImpl() const noexcept {
+            std::string r("GLArrayData");
             r.append("[").append(m_name)
              .append(", location ").append(std::to_string(m_location))
              .append(", isVertexAttribute ").append(std::to_string(m_isVertexAttr))
              .append(", dataType ").append(jau::to_hexstring(m_compType))
              .append(", compsPerElem ").append(std::to_string(m_compsPerElement))
              .append(", stride ").append(std::to_string(m_strideB)).append("b ").append(std::to_string(m_strideL)).append("c")
-             .append(", ").append(elemStatsToString())
              .append(", vboEnabled ").append(std::to_string(m_vboEnabled))
              .append(", vboName ").append(std::to_string(m_vboName))
              .append(", vboUsage ").append(jau::to_hexstring(m_vboUsage))
@@ -348,6 +348,9 @@ namespace gamp::render::gl::data {
              .append(", alive ").append(std::to_string(m_alive)).append("]");
             return r;
         }
+
+      public:
+        virtual std::string toString() const noexcept { return toStringImpl(); }
 
         //
         // OpenGL pass through funcs
@@ -401,10 +404,11 @@ namespace gamp::render::gl::data {
                 // Set/Check name .. - Required for GLSL case. Validation and debug-name for FFP.
                 m_name = name;
                 if( m_name.empty() ) {
-                    throw RenderException("Missing attribute name", E_FILE_LINE);
+                    throw RenderException("Missing attribute name:\n\t" + toStringImpl(), E_FILE_LINE);
                 }
             } else if( 0 < vboTarget ) {
-                throw RenderException("Invalid GPUBuffer target: " + jau::to_hexstring(vboTarget), E_FILE_LINE);
+                throw RenderException("Invalid GPUBuffer target: " + jau::to_hexstring(vboTarget)
+                    + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
 
             // immutable types
@@ -412,18 +416,20 @@ namespace gamp::render::gl::data {
             m_compTypeSignature = compTypeSignature;
             m_bytesPerComp  = GLBuffers::sizeOfGLType(componentType);
             if( 0 == m_bytesPerComp ) {
-                throw RenderException("Given componentType not supported: " + jau::to_hexstring(componentType) + ":\n\t" + toString(), E_FILE_LINE);
+                throw RenderException("Given componentType not supported: " + jau::to_hexstring(componentType) + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
             if( 0 >= componentsPerElement ) {
-                throw RenderException("Invalid number of components: " + std::to_string(componentsPerElement), E_FILE_LINE);
+                throw RenderException("Invalid number of components: " + std::to_string(componentsPerElement) + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
             m_compsPerElement = componentsPerElement;
 
             if( 0 < stride && stride < componentsPerElement * m_bytesPerComp ) {
-                throw RenderException("stride (" + std::to_string(stride) + ") lower than component bytes, " + std::to_string(componentsPerElement) + " * " + std::to_string(m_bytesPerComp), E_FILE_LINE);
+                throw RenderException("stride (" + std::to_string(stride) + ") lower than component bytes, " + std::to_string(componentsPerElement)
+                    + " * " + std::to_string(m_bytesPerComp) + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
             if( 0 < stride && stride % m_bytesPerComp != 0 ) {
-                throw RenderException("stride (" + std::to_string(stride) + ") not a multiple of bpc " + std::to_string(m_bytesPerComp), E_FILE_LINE);
+                throw RenderException("stride (" + std::to_string(stride) + ") not a multiple of bpc "
+                    + std::to_string(m_bytesPerComp) + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
             m_strideB = (0 == stride) ? componentsPerElement * m_bytesPerComp : stride;
             m_strideL = m_strideB / m_bytesPerComp;
@@ -450,7 +456,7 @@ namespace gamp::render::gl::data {
                 case GL_STREAM_DRAW: // GL2ES2
                     break;
                 default:
-                    throw RenderException("invalid gpuBufferUsage: " + jau::to_hexstring(vboUsage) + ":\n\t" + toString(), E_FILE_LINE);
+                    throw RenderException("invalid gpuBufferUsage: " + jau::to_hexstring(vboUsage) + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
             switch( vboTarget ) {
                 case 0:  // nop
@@ -458,7 +464,7 @@ namespace gamp::render::gl::data {
                 case GL_ELEMENT_ARRAY_BUFFER: // GL
                     break;
                 default:
-                    throw RenderException("invalid gpuBufferTarget: " + jau::to_hexstring(vboTarget) + ":\n\t" + toString(), E_FILE_LINE);
+                    throw RenderException("invalid gpuBufferTarget: " + jau::to_hexstring(vboTarget) + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
             m_vboUsage  = vboUsage;
             m_vboTarget = vboTarget;

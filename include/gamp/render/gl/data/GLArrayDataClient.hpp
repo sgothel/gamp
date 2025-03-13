@@ -244,7 +244,7 @@ namespace gamp::render::gl::data {
          * The default is 'false'
          *
          * This is useful when you mix up
-         * GL&ArrayData usage with conventional GL& array calls
+         * GLArrayData usage with conventional GL array calls
          * or in case of a buggy GL& VBO implementation.
          *
          * @see #enableBuffer(GL&, bool)
@@ -365,7 +365,8 @@ namespace gamp::render::gl::data {
             return putN(v.x, v.y, v.z, v.w);
         }
 
-        std::string toString() const noexcept override {
+        std::string toString() const noexcept override { return toString(false); }
+        std::string toString(bool withData) const noexcept override {
             std::string r("GLArrayDataWrapper[");
             r.append(proxy_t::m_name)
              .append(", location ").append(std::to_string(proxy_t::m_location))
@@ -377,9 +378,11 @@ namespace gamp::render::gl::data {
              .append(", mappedElements ").append(std::to_string(proxy_t::m_mappedElemCount))
              .append(", ").append(proxy_t::elemStatsToString())
              .append(", enabled ").append(std::to_string(m_bufferEnabled))
-             .append(", written ").append(std::to_string(m_bufferWritten))
-             .append(", buffer ").append(proxy_t::usesClientMem()?m_buffer.toString():"nil")
-             .append(", alive ").append(std::to_string(proxy_t::m_alive)).append("]");
+             .append(", written ").append(std::to_string(m_bufferWritten));
+            if( withData ) {
+                r.append(", buffer ").append(proxy_t::usesClientMem()?m_buffer.toString():"nil");
+            }
+            r.append(", alive ").append(std::to_string(proxy_t::m_alive)).append("]");
             return r;
         }
 
