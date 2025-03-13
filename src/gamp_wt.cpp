@@ -9,10 +9,13 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
+#include <gamp/GampTypes.hpp>
 #include <gamp/wt/Surface.hpp>
 #include <gamp/wt/event/KeyEvent.hpp>
 #include <gamp/wt/Window.hpp>
 #include <gamp/render/gl/GLHeader.hpp>
+#include <stdexcept>
+#include <jau/basic_types.hpp>
 
 using namespace jau;
 using namespace gamp::wt::event;
@@ -79,6 +82,7 @@ void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
     const jau::math::Recti viewport(0, 0, surfaceSize().x, surfaceSize().y);
     const WindowRef& self = shared();
     for(const RenderListenerRef& l : *m_render_listener.snapshot()) {
+        std::exception_ptr eptr;
         try {
             const gamp::render::RenderContext* ctx = renderContext();
             bool initOK = ctx && ctx->isValid();
@@ -99,16 +103,25 @@ void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
                 }
                 l->display(self, when);
             }
-        } catch (std::exception &err) {
+        } catch (const std::exception &e) {
+            eptr = std::current_exception();
+            ERR_PRINT2("Caught exception %s", e.what());
+        } catch (...) {
+            eptr = std::current_exception();
+            ERR_PRINT2("Caught unknown exception");
+        }
+        if( eptr ) {
             try {
                 RenderListenerRef l2 = l;
                 m_render_listener.erase_if(false,
                    [l](const RenderListenerRef& a) noexcept -> bool { return a.get() == l.get(); } );
                 l2->dispose(self, when);
-            } catch (std::exception &err2) {
-                ERR_PRINT("Caught exception %s", err2.what());
+            } catch (const std::exception &e) {
+                ERR_PRINT2("Caught exception %s", e.what());
+            } catch (...) {
+                ERR_PRINT2("Caught unknown exception");
             }
-            ERR_PRINT("Removed listener (sz %zu), caught exception %s", m_render_listener.size(), err.what());
+            WARN_PRINT("Removed listener (sz %zu)", m_render_listener.size());
         }
     }
 }
