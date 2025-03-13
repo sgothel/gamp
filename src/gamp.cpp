@@ -50,11 +50,11 @@ gamp::GampEnv::GampEnv() noexcept
 : DEBUG_GLOBAL( jau::environment::get("gamp").debug ),
   exploding( true ), // jau::environment::getExplodingProperties("gamp_debug") ),
   DEBUG_WT_EVENT( jau::environment::getBooleanProperty("gamp.debug.wt.event", false) ),
-  DEBUG_RENDERER_GL_GLSL_CODE( jau::environment::getBooleanProperty("gamp.debug.renderer.gl.glsl.code", false) ),
-  DEBUG_RENDERER_GL_GLSL_STATE( jau::environment::getBooleanProperty("gamp.debug.renderer.gl.glsl.state", false) )
+  DEBUG_RENDER_GL_GLSL_CODE( jau::environment::getBooleanProperty("gamp.debug.render.gl.glsl.code", false) ),
+  DEBUG_RENDER_GL_GLSL_STATE( jau::environment::getBooleanProperty("gamp.debug.render.gl.glsl.state", false) )
 {
-    jau::INFO_PRINT("GampEnv: Debug[global %d, wt.event %d, renderer.gl.glsl[code %d, state %d]]",
-        DEBUG_GLOBAL, DEBUG_WT_EVENT, DEBUG_RENDERER_GL_GLSL_CODE, DEBUG_RENDERER_GL_GLSL_STATE);
+    jau::INFO_PRINT("GampEnv: Debug[global %d, wt.event %d, render.gl.glsl[code %d, state %d]]",
+        DEBUG_GLOBAL, DEBUG_WT_EVENT, DEBUG_RENDER_GL_GLSL_CODE, DEBUG_RENDER_GL_GLSL_STATE);
 }
 
 std::string gamp::render::RenderContext::toString() const {
@@ -66,7 +66,7 @@ std::string gamp::render::RenderContext::toString() const {
        .append(m_surface?jau::to_hexstring(m_surface->surfaceHandle()):"nil").append("]");
 }
 
-bool gamp::render::gl::glsl::ShaderCode::DEBUG_CODE = GampEnv::get().DEBUG_RENDERER_GL_GLSL_CODE;
-bool gamp::render::gl::glsl::ShaderState::DEBUG_STATE = GampEnv::get().DEBUG_RENDERER_GL_GLSL_STATE;
+bool gamp::render::gl::glsl::ShaderCode::DEBUG_CODE = GampEnv::get().DEBUG_RENDER_GL_GLSL_CODE;
+bool gamp::render::gl::glsl::ShaderState::DEBUG_STATE = GampEnv::get().DEBUG_RENDER_GL_GLSL_STATE;
 
 

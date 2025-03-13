@@ -145,18 +145,18 @@ namespace gamp {
             /**
              * Debug shader code, i.e. ShaderCode
              *
-             * Environment variable is 'gamp.debug.renderer.gl.glsl.code'.
+             * Environment variable is 'gamp.debug.render.gl.glsl.code'.
              *
              */
-            const bool DEBUG_RENDERER_GL_GLSL_CODE;
+            const bool DEBUG_RENDER_GL_GLSL_CODE;
 
             /**
              * Debug shader state, i.e. ShaderState
              *
-             * Environment variable is 'gamp.debug.renderer.gl.glsl.state'.
+             * Environment variable is 'gamp.debug.render.gl.glsl.state'.
              *
              */
-            const bool DEBUG_RENDERER_GL_GLSL_STATE;
+            const bool DEBUG_RENDER_GL_GLSL_STATE;
 
         public:
             static GampEnv& get() noexcept {
