@@ -1,6 +1,7 @@
 include_directories(
   ${PROJECT_SOURCE_DIR}/jaulib/include
   ${PROJECT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_BINARY_DIR}/../ports/glutess2/include
 )
 
 # These examples use the standard separate compilation

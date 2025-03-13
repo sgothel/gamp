@@ -1,6 +1,7 @@
 set (gamp_LIB_INCLUDE_DIRS
   ${PROJECT_SOURCE_DIR}/jaulib/include
   ${PROJECT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_BINARY_DIR}/../ports/glutess2/include
 )
 
 include_directories(
@@ -41,6 +42,7 @@ target_link_libraries (
   gamp
   ${LIBUNWIND_LIBNAME}
   ${CMAKE_THREAD_LIBS_INIT}
+  glutess2
 )
 
 #if( (USE_STRIP) AND (NOT EMSCRIPTEN) )

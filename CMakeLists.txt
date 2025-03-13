@@ -8,6 +8,7 @@ set(DONT_USE_RTTI ON CACHE BOOL "" FORCE)
 if (EMSCRIPTEN)
   set(USE_LIBUNWIND OFF CACHE BOOL "" FORCE)
 endif()
+set(GLU_TESS_API_FLOAT ON CACHE BOOL "" FORCE)
 
 # Enforce debug mode and disabled testing (low power machines, ..)
 #
@@ -126,6 +127,7 @@ if (BUILD_TESTING)
   add_subdirectory (test)
 endif(BUILD_TESTING)
 
+add_subdirectory (ports/glutess2)
 add_subdirectory (src)
 add_subdirectory (examples)
 
