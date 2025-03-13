@@ -383,7 +383,7 @@ namespace gamp::render::gl::glsl {
                         jau::INFO_PRINT("ShaderState: glGetAttribLocation: %s, loc: %d", name.c_str(), location);
                     }
                 } else if(verbose()) {
-                    jau::INFO_PRINT("ShaderState: glGetAttribLocation failed, no location for: %s, loc: ", name.c_str(), location);
+                    jau::INFO_PRINT("ShaderState: glGetAttribLocation failed, no location for: %s, loc: %d", name.c_str(), location);
                 }
             }
             return location;
@@ -420,10 +420,10 @@ namespace gamp::render::gl::glsl {
                 if(0<=location) {
                     m_activeAttribLocationMap.put(name, location);
                     if(verbose()) {
-                        jau::INFO_PRINT("ShaderState: glGetAttribLocation: %s, loc: %d", name.c_str(), location);
+                        jau::INFO_PRINT("ShaderState: glGetAttribLocation: %s, loc: %d", data->name().c_str(), location);
                     }
                 } else if(verbose()) {
-                    jau::INFO_PRINT("ShaderState: glGetAttribLocation failed, no location for: %s, loc: %d", name.c_str(), location);
+                    jau::INFO_PRINT("ShaderState: glGetAttribLocation failed, no location for: %s", data->name().c_str());
                 }
             }
             m_activeAttribDataMap.put(data->name(), data);
@@ -455,7 +455,7 @@ namespace gamp::render::gl::glsl {
                 location = getAttribLocation(gl, name);
                 if(0>location) {
                     if(verbose()) {
-                        jau::INFO_PRINT("ShaderState: glEnableVertexAttribArray failed, no index for: %s", name.c_str());
+                        jau::INFO_PRINT("ShaderState: glEnableVertexAttribArray failed, no location for: %s", name.c_str());
                     }
                     return false;
                 }
@@ -529,13 +529,13 @@ namespace gamp::render::gl::glsl {
                 location = getAttribLocation(gl, name);
                 if(0>location) {
                     if(verbose()) {
-                        jau::INFO_PRINT("ShaderState: glDisableVertexAttribArray failed, no index for: %s", name.c_str());
+                        jau::INFO_PRINT("ShaderState: glDisableVertexAttribArray failed, no location for: %s", name.c_str());
                     }
                     return false;
                 }
             }
             if(verbose()) {
-                jau::INFO_PRINT("ShaderState: glDisableVertexAttribArray: %s", name.c_str());
+                jau::INFO_PRINT("ShaderState: glDisableVertexAttribArray: %s, %d", name.c_str(), location);
             }
             ::glDisableVertexAttribArray(location);
             return true;
@@ -616,15 +616,18 @@ namespace gamp::render::gl::glsl {
             if(0 > location) {
                 location = getAttribLocation(gl, data);
             }
-            if(0 <= location) {
-                // only pass the data, if the attribute exists in the current shader
+            if(0>location) {
                 if(verbose()) {
-                    jau::INFO_PRINT("ShaderState: glVertexAttribPointer: %s", data->toString().c_str());
+                    jau::INFO_PRINT("ShaderState: glVertexAttribPointer failed, no location for: %s", data->name().c_str());
                 }
-                data->glVertexAttribPointer(gl);
-                return true;
+                return false;
             }
-            return false;
+            // only pass the data, if the attribute exists in the current shader
+            if(verbose()) {
+                jau::INFO_PRINT("ShaderState: glVertexAttribPointer: %s, location %d", data->name().c_str(), location);
+            }
+            data->glVertexAttribPointer(gl);
+            return true;
         }
 
         /**
@@ -690,7 +693,7 @@ namespace gamp::render::gl::glsl {
             if(0<=loc) {
                 m_activeAttribLocationMap.put(name, loc);
                 if(verbose()) {
-                    jau::INFO_PRINT("ShaderState: relocateAttribute: %s, loc: %d", name.c_str(), loc);
+                    jau::INFO_PRINT("ShaderState: relocateAttribute: %s, loc: %d", attribute.toString().c_str(), loc);
                 }
                 if(isVertexAttribArrayEnabled(name)) {
                     // enable attrib, VBO and pass location/data
@@ -792,26 +795,27 @@ namespace gamp::render::gl::glsl {
          *
          * If a uniform location is cached it is promoted to the {@link GLUniformData} instance.
          *
-         * The attribute will be destroyed with {@link #destroy(GL2ES2)}
+         * The uniform will be destroyed with {@link #destroy(GL2ES2)}
          * and it's location will be reset when switching shader with {@link #attachShaderProgram(GL2ES2, ShaderProgram)}.
          *
-         * The data will be transfered to the GPU using pushUniform() if shaderProgram() is inUse(), otherwise call pushUniform() manually later on.
+         * The data will not be transfered to the GPU, use pushUniform() additionally.
          *
          * @param uniform the {@link GLUniformData} which lifecycle shall be managed
          *
          * @see #getUniform(String)
          */
-        void ownUniform(const GL& gl, const GLUniformDataRef& data) {
-            if(m_shaderProgram->inUse()) {
-                pushUniform(gl, data);
-            } else {
+        void ownUniform(const GLUniformDataRef& data, bool own) {
+            if(own) {
                 const GLint location = getCachedUniformLocation(data->name());
                 if(0<=location) {
                     data->setLocation(location);
                 }
+                m_activeUniformDataMap.put(data->name(), data);
+                m_managedUniforms.push_back(data);
+            } else {
+                m_activeUniformDataMap.remove(data->name());
+                std::erase(m_managedUniforms, data);
             }
-            m_activeUniformDataMap.put(data->name(), data);
-            m_managedUniforms.push_back(data);
         }
 
         bool ownsUniform(const GLUniformDataRef& uniform) {
@@ -846,7 +850,7 @@ namespace gamp::render::gl::glsl {
                 if(0<=location) {
                     m_activeUniformLocationMap.put(name, location);
                 } else if(verbose()) {
-                    jau::INFO_PRINT("ShaderState: glUniform failed, no location for: %s, index: %s", name.c_str(), location);
+                    jau::INFO_PRINT("ShaderState: glUniform failed, no location for: %s", name.c_str());
                 }
             }
             return location;
@@ -884,7 +888,7 @@ namespace gamp::render::gl::glsl {
                 if(0<=location) {
                     m_activeUniformLocationMap.put(name, location);
                 } else if(verbose()) {
-                    jau::INFO_PRINT("ShaderState: glUniform failed, no location for: %s, index: %s", name.c_str(), location);
+                    jau::INFO_PRINT("ShaderState: glUniform failed, no location for: %s", data->name().c_str());
                 }
             }
             m_activeUniformDataMap.put(name, data);
@@ -913,15 +917,18 @@ namespace gamp::render::gl::glsl {
             if(0>location) {
                 location = getUniformLocation(gl, data);
             }
-            if(0<=location) {
-                // only pass the data, if the uniform exists in the current shader
+            if(0>location) {
                 if(verbose()) {
-                    jau::INFO_PRINT("ShaderState: glUniform: %s", data->toString().c_str());
+                    jau::INFO_PRINT("ShaderState: glUniform failed, no location for: %s", data->name().c_str());
                 }
-                data->send(gl);
-                return true;
+                return false;
             }
-            return false;
+            // only pass the data, if the uniform exists in the current shader
+            if(verbose()) {
+                jau::INFO_PRINT("ShaderState: glUniform: %s, location %d", data->name().c_str(), location);
+            }
+            data->send(gl);
+            return true;
         }
         /** Same as pushUniform(), but retrieves GLUniformDataRef by name first. */
         bool pushUniform(const GL& gl, const stringview_t& name) {
@@ -985,7 +992,7 @@ namespace gamp::render::gl::glsl {
                     // only pass the data, if the uniform exists in the current shader
                     m_activeUniformLocationMap.put(data->name(), loc);
                     if(verbose()) {
-                        jau::INFO_PRINT("ShaderState: resetAllUniforms: %s", data->toString().c_str());
+                        jau::INFO_PRINT("ShaderState: resetAllUniforms: %s", data->name().c_str());
                     }
                     data->send(gl);
                 }
