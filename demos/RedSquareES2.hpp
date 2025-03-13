@@ -77,7 +77,7 @@ class RedSquareES2 : public RenderListener {
         // setup mgl_PMVMatrix
         m_pmv.getP().loadIdentity();
         m_pmv.getMv().loadIdentity();
-        m_st.ownUniform(gl, GLUniformSyncMatrices4f::create("mgl_PMVMatrix", m_pmv.getSyncPMv()));
+        m_st.ownUniform(GLUniformSyncMatrices4f::create("mgl_PMVMatrix", m_pmv.getSyncPMv()), true);
 
         // Allocate Vertex Array
         GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("mgl_Vertex", 3, false, 4, GL_STATIC_DRAW);
@@ -118,6 +118,7 @@ class RedSquareES2 : public RenderListener {
     }
 
     void reshape(const WindowRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
+        GL& gl = GL::downcast(win->renderContext());
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
 
@@ -129,7 +130,9 @@ class RedSquareES2 : public RenderListener {
         const float zNear=1.0f;
         const float zFar=100.0f;
         m_pmv.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
-        m_st.pushAllUniforms(GL::downcast(win->renderContext()));
+        m_st.useProgram(gl, true);
+        m_st.pushAllUniforms(gl);
+        m_st.useProgram(gl, false);
     }
 
     void display(const WindowRef& win, const jau::fraction_timespec& when) override {
