@@ -43,8 +43,10 @@ namespace gamp::render::gl::data {
     template <typename Value_type>
     using GLArrayDataServerRef = std::shared_ptr<GLArrayDataServer<Value_type>>;
 
-    typedef GLArrayDataServer<float>    GLFloatArrayDataServer;
-    typedef GLArrayDataServerRef<float> GLFloatArrayDataServerRef;
+    typedef GLArrayDataServer<float>      GLFloatArrayDataServer;
+    typedef GLArrayDataServerRef<float>   GLFloatArrayDataServerRef;
+    typedef GLArrayDataServer<int32_t>    GLIntArrayDataServer;
+    typedef GLArrayDataServerRef<int32_t> GLIntArrayDataServerRef;
 
     /**
      * Server data buffer for VBO GLArrayData usage of given template-type Value_type.
@@ -150,7 +152,7 @@ namespace gamp::render::gl::data {
         static server_ref createData(GLsizei compsPerElement,
                                      GLsizei initialElementCount, GLenum vboUsage, GLenum vboTarget) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               name, compsPerElement,
+               "", compsPerElement,
                /*normalized=*/false, /*stride=*/0, initialElementCount, client_t::DEFAULT_GROWTH_FACTOR,
                /*isVertexAttribute=*/false, std::move(std::make_unique<impl::GLDataArrayHandler<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, vboTarget);
@@ -174,7 +176,7 @@ namespace gamp::render::gl::data {
         static server_ref createData(GLsizei compsPerElement,
                                      GLsizei stride, buffer_t&& buffer, GLenum vboUsage, GLenum vboTarget) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               name, compsPerElement,
+               "", compsPerElement,
                /*normalized=*/false, stride, std::move(buffer), client_t::DEFAULT_GROWTH_FACTOR,
                /*isVertexAttribute=*/false, std::move(std::make_unique<impl::GLDataArrayHandler<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, vboTarget);
@@ -197,7 +199,7 @@ namespace gamp::render::gl::data {
         static server_ref createDataMapped(GLsizei compsPerElement,
                                            GLsizei mappedElementCount, GLenum vboUsage, GLenum vboTarget) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               name, compsPerElement,
+               "", compsPerElement,
                /*normalized=*/false, /*stride=*/0, mappedElementCount,
                /*isVertexAttribute=*/false, std::move(std::make_unique<impl::GLDataArrayHandler<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, vboTarget);
