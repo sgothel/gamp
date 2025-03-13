@@ -11,19 +11,20 @@
 #ifndef JAU_GAMP_GRAPH_GL_GLUTESSELATOR_HPP_
 #define JAU_GAMP_GRAPH_GL_GLUTESSELATOR_HPP_
 
+#include <string_view>
+#include <vector>
+
 #include <GL/gl.h>
 #include <GL/glutess2.h>
+
+#include <jau/cpp_lang_util.hpp>
+#include <jau/debug.hpp>
+#include <jau/string_util.hpp>
 
 #include <gamp/graph/Outline.hpp>
 #include <gamp/graph/OutlineShape.hpp>
 #include <gamp/render/gl/GLContext.hpp>
 #include <gamp/render/gl/data/GLArrayDataServer.hpp>
-
-#include <string_view>
-#include <jau/cpp_lang_util.hpp>
-#include <jau/debug.hpp>
-#include <jau/string_util.hpp>
-#include <vector>
 
 namespace gamp::graph::gl {
 
