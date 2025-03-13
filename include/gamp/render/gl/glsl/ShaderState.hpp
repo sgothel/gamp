@@ -929,7 +929,7 @@ namespace gamp::render::gl::glsl {
         }
         /** Same as pushUniform(), but for all active uniforms. */
         void pushAllUniforms(const GL& gl) {
-            if(!m_shaderProgram->inUse()) throw new RenderException("Program is not in use", E_FILE_LINE);
+            if(!m_shaderProgram->inUse()) throw RenderException("Program is not in use", E_FILE_LINE);
             for (const std::pair<const std::string, GLUniformDataRef>& n : m_activeUniformDataMap.map()) {
                 const GLUniformDataRef& data = n.second;
                 pushUniform(gl, data);
@@ -972,7 +972,7 @@ namespace gamp::render::gl::glsl {
          * @see #attachShaderProgram(GL2ES2, ShaderProgram)
          */
         void resetAllUniforms(const GL& gl) {
-            if(!m_shaderProgram->inUse()) throw new RenderException("Program is not in use", E_FILE_LINE);
+            if(!m_shaderProgram->inUse()) throw RenderException("Program is not in use", E_FILE_LINE);
             m_activeUniformLocationMap.clear();
             for(const GLUniformDataRef& u : m_managedUniforms) {
                 u->setLocation(-1);

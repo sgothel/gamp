@@ -63,7 +63,7 @@ namespace gamp::render::gl::glsl {
             sp.add(rsVp);
             sp.add(rsFp);
             if(!sp.link(gl, System.err)) {
-                throw new GLException("Couldn't link program: "+sp);
+                throw GLException("Couldn't link program: "+sp);
             }
             sp.useProgram(gl, true);
 
@@ -73,13 +73,13 @@ namespace gamp::render::gl::glsl {
             pmvMatrix.loadMvIdentity();
             pmvMatrixUniform = new GLUniformData("mgl_PMVMatrix", 4, 4, pmvMatrix.getSyncPMv()); // P, Mv
             if( pmvMatrixUniform.setLocation(gl, sp.program()) < 0 ) {
-                throw new GLException("Couldn't locate "+pmvMatrixUniform+" in shader: "+sp);
+                throw GLException("Couldn't locate "+pmvMatrixUniform+" in shader: "+sp);
             }
             gl.glUniform(pmvMatrixUniform);
 
             activeTexUniform = new GLUniformData("mgl_Texture0", textureUnit);
             if( activeTexUniform.setLocation(gl, sp.program()) < 0 ) {
-                throw new GLException("Couldn't locate "+activeTexUniform+" in shader: "+sp);
+                throw GLException("Couldn't locate "+activeTexUniform+" in shader: "+sp);
             }
             gl.glUniform(activeTexUniform);
 
@@ -94,11 +94,11 @@ namespace gamp::render::gl::glsl {
             {
                 final GLArrayData vArrayData = interleavedVBO.addGLSLSubArray("mgl_Vertex",        3, GL.GL_ARRAY_BUFFER);
                 if( vArrayData.setLocation(gl, sp.program()) < 0 ) {
-                    throw new GLException("Couldn't locate "+vArrayData+" in shader: "+sp);
+                    throw GLException("Couldn't locate "+vArrayData+" in shader: "+sp);
                 }
                 final GLArrayData tArrayData = interleavedVBO.addGLSLSubArray("mgl_MultiTexCoord", 2, GL.GL_ARRAY_BUFFER);
                 if( tArrayData.setLocation(gl, sp.program()) < 0 ) {
-                    throw new GLException("Couldn't locate "+tArrayData+" in shader: "+sp);
+                    throw GLException("Couldn't locate "+tArrayData+" in shader: "+sp);
                 }
                 final FloatBuffer ib = (FloatBuffer)interleavedVBO.getBuffer();
                 for(int i=0; i<4; i++) {
