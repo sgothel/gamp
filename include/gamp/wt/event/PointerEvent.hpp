@@ -244,7 +244,7 @@ namespace gamp::wt::event {
          * See details for <a href="#multiPtrEvent">multiple-pointer events</a>.
          * </p>
          */
-        constexpr int pointerId(size_t index) const noexcept {
+        constexpr int pointerId(size_t index = 0) const noexcept {
             if( index >= m_pointerID.size() ) {
                 return -1;
             }
