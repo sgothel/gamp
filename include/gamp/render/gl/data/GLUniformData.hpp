@@ -168,7 +168,7 @@ namespace gamp::render::gl::data {
         }
         const void* data() const noexcept override { return m_data.syncedData(); }
 
-        const GLfloat* floats() const { return m_data.floats(); }
+        constexpr const GLfloat* floats() const { return m_data.floats(); }
     };
     typedef std::shared_ptr<GLUniformSyncMatrices4f> GLUniformSyncMatrices4fRef;
 
@@ -187,8 +187,8 @@ namespace gamp::render::gl::data {
         }
         const void* data() const noexcept override { return m_data.cbegin(); }
 
-        const jau::math::Vec4f& vec4f() const { return m_data; }
-        jau::math::Vec4f& vec4f() { return m_data; }
+        constexpr const jau::math::Vec4f& vec4f() const { return m_data; }
+        constexpr jau::math::Vec4f& vec4f() { return m_data; }
     };
     typedef std::shared_ptr<GLUniformVec4f> GLUniformVec4fRef;
 
@@ -207,8 +207,8 @@ namespace gamp::render::gl::data {
         }
         const void* data() const noexcept override { return m_data.cbegin(); }
 
-        const jau::math::Vec3f& vec3f() const { return m_data; }
-        jau::math::Vec3f& vec3f() { return m_data; }
+        constexpr const jau::math::Vec3f& vec3f() const { return m_data; }
+        constexpr jau::math::Vec3f& vec3f() { return m_data; }
     };
     typedef std::shared_ptr<GLUniformVec3f> GLUniformVec3fRef;
 
