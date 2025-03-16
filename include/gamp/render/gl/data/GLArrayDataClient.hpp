@@ -17,6 +17,7 @@
 
 #include <jau/basic_types.hpp>
 #include <jau/float_types.hpp>
+#include <jau/int_types.hpp>
 #include <jau/type_info.hpp>
 
 #include <gamp/render/gl/data/GLArrayDataProxy.hpp>
@@ -339,12 +340,11 @@ namespace gamp::render::gl::data {
             }
             return *this;
         }
+        constexpr_cxx20 client_t& puti(const int32_t v) {
+            return put(static_cast<value_type>(v));
+        }
         constexpr_cxx20 client_t& putf(const float v) {
-            if( !proxy_t::sealed() ) {
-                growIfNeeded(1);
-                m_buffer.put(static_cast<value_type>(v));
-            }
-            return *this;
+            return put(static_cast<value_type>(v));
         }
         constexpr_cxx20 client_t& put2f(const float x, const float y) {
             return putN(x, y);

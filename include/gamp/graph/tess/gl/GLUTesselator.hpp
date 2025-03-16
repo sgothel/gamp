@@ -8,30 +8,29 @@
  * If a copy of the MIT was not distributed with this file,
  * you can obtain one at https://opensource.org/license/mit/.
  */
-#ifndef JAU_GAMP_GRAPH_GL_GLUTESSELATOR_HPP_
-#define JAU_GAMP_GRAPH_GL_GLUTESSELATOR_HPP_
+#ifndef JAU_GAMP_GRAPH_TESS_GL_GLUTESSELATOR_HPP_
+#define JAU_GAMP_GRAPH_TESS_GL_GLUTESSELATOR_HPP_
 
 #include <string_view>
 #include <vector>
 
-#include <GL/gl.h>
 #include <GL/glutess2.h>
 
 #include <jau/cpp_lang_util.hpp>
 #include <jau/debug.hpp>
+#include <jau/int_types.hpp>
 #include <jau/string_util.hpp>
 
+#include <gamp/GampTypes.hpp>
 #include <gamp/graph/Outline.hpp>
 #include <gamp/graph/OutlineShape.hpp>
-#include <gamp/render/gl/GLContext.hpp>
 #include <gamp/render/gl/data/GLArrayDataServer.hpp>
 
-namespace gamp::graph::gl {
+namespace gamp::graph::tess {
 
     using namespace jau::math;
     using namespace jau::math::geom;
     using namespace gamp::graph;
-    using namespace gamp::render::gl;
     using namespace gamp::render::gl::data;
 
     /** \addtogroup Gamp_Graph
@@ -59,15 +58,13 @@ namespace gamp::graph::gl {
         typedef std::vector<Segment> SegmentList;
 
         struct Segment {
+            /// render implementation specific triangle type, i.e. triangle-strip, -fan or just triangles.
             GLenum type;
+            /// index of first element in data-sink for this segment
             GLint first;
+            /// number of elements in data-sink for this segment
             GLsizei count;
 
-            constexpr static void drawArrays(GL&, const SegmentList& segments) noexcept {
-                for(const Segment& s : segments ) {
-                    ::glDrawArrays(s.type, s.first, s.count);
-                }
-            }
             inline static std::string toString(const std::string& pre, const SegmentList& segments) noexcept {
                 size_t i=0;
                 std::string r;
@@ -135,25 +132,19 @@ namespace gamp::graph::gl {
         /// Returns true if segments() is empty
         bool empty() const noexcept { return m_segments.empty(); }
 
-        GLsizei elementCount() const noexcept { return m_array.elemCount(); }
+        jau::nsize_t elementCount() const noexcept { return m_array.elemCount(); }
 
-        constexpr const render::gl::data::GLFloatArrayDataServer& array() const noexcept { return m_array; }
-        constexpr const render::gl::data::GLIntArrayDataServer* indices() const noexcept { return m_indices; }
         constexpr const std::vector<Segment>& segments() const noexcept { return m_segments; }
-
-        constexpr void drawArrays(GL& gl) noexcept {
-            Segment::drawArrays(gl, m_segments);
-        }
 
       private:
 
         static void cbBeginData( GLenum type, void *polygonData ) {
             GLUtilTesselator* os = reinterpret_cast<GLUtilTesselator*>(polygonData);
             os->m_curIndex = os->m_nextIndex++;
-            Segment s{.type=type, .first=os->m_array.elemCount(), .count=0 };
+            Segment s{.type=type, .first=castOrThrow<size_t, GLint>(os->m_array.elemCount()), .count=0 };
             os->m_segments.push_back(s);
             if( os->m_indices ) {
-                os->m_indices->put(os->m_curIndex);
+                os->m_indices->puti(os->m_curIndex);
             }
             if( os->verbose() ) {
                 jau::INFO_PRINT("GLUtess begin %02d, type 0x%X, %s", os->m_curIndex, type, s.toString().c_str());
@@ -173,7 +164,7 @@ namespace gamp::graph::gl {
         static void cbEndData( void *polygonData ) {
             GLUtilTesselator* os = reinterpret_cast<GLUtilTesselator*>(polygonData);
             Segment& s = os->m_segments.at(os->m_segments.size()-1);
-            s.count = os->m_array.elemCount() - s.first;
+            s.count = castOrThrow<size_t, GLsizei>(os->m_array.elemCount() - s.first);
             if( os->verbose() ) {
                 jau::INFO_PRINT("GLUtess end %02d, %s", os->m_curIndex, s.toString().c_str());
             }
@@ -268,6 +259,6 @@ namespace gamp::graph::gl {
 
     /**@}*/
 
-} // namespace gamp::graph::gl
+} // namespace gamp::graph::tess
 
-#endif /*  JAU_GAMP_GRAPH_GL_GLUTESSELATOR_HPP_ */
+#endif /*  JAU_GAMP_GRAPH_TESS_GL_GLUTESSELATOR_HPP_ */

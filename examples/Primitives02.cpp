@@ -20,21 +20,22 @@
 #include <jau/float_math.hpp>
 #include <jau/float_types.hpp>
 #include <jau/fraction_type.hpp>
-#include <jau/math/geom/aabbox3f.hpp>
-#include <jau/math/geom/geom3f.hpp>
-#include <jau/math/geom/plane/affine_transform.hpp>
 #include <jau/math/vec3f.hpp>
 #include <jau/math/vec4f.hpp>
 #include <jau/math/vec4f.hpp>
 #include <jau/math/quaternion.hpp>
+#include <jau/math/geom/aabbox3f.hpp>
+#include <jau/math/geom/geom3f.hpp>
+#include <jau/math/geom/plane/affine_transform.hpp>
 
 #include <gamp/Gamp.hpp>
-#include <gamp/graph/OutlineShape.hpp>
-#include <gamp/graph/gl/GLUTesselator.hpp>
 #include <gamp/render/RenderContext.hpp>
 #include <gamp/render/gl/data/GLArrayDataServer.hpp>
 #include <gamp/render/gl/data/GLUniformData.hpp>
 #include <gamp/render/gl/glsl/ShaderState.hpp>
+
+#include <gamp/graph/OutlineShape.hpp>
+#include <gamp/graph/tess/gl/GLUTesselator.hpp>
 
 #include "../demos/GLLauncher01.hpp"
 
@@ -42,11 +43,12 @@ using namespace jau::math;
 using namespace jau::math::util;
 using namespace jau::math::geom;
 
+using namespace gamp;
 using namespace gamp::wt;
 using namespace gamp::wt::event;
 
 using namespace gamp::graph;
-using namespace gamp::graph::gl;
+using namespace gamp::graph::tess;
 using namespace gamp::render::gl::glsl;
 using namespace gamp::render::gl::data;
 
@@ -119,7 +121,10 @@ class Shape {
 
         m_st.pushUniform(gl, m_uColor);
 
-        GLUtilTesselator::Segment::drawArrays(gl, m_segments);
+        for(const GLUtilTesselator::Segment& s : m_segments ) {
+            ::glDrawArrays(s.type, s.first, s.count);
+        }
+
         m_pmvMat.m.popMv();
     }
 

@@ -1,6 +1,6 @@
 /*
- * Author: Sven Gothel <sgothel@jausoft.com>
- * Copyright Gothel Software e.K.
+ * Author: Sven Gothel <sgothel@jausoft.com> (C++, Java) and Rami Santina (Java)
+ * Copyright Gothel Software e.K. and the authors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,13 +11,14 @@
 #ifndef JAU_GAMP_GRAPH_OUTLINE_HPP_
 #define JAU_GAMP_GRAPH_OUTLINE_HPP_
 
-#include <limits>
 #include <jau/darray.hpp>
 #include <jau/math/geom/geom.hpp>
 #include <jau/math/vec3f.hpp>
 #include <jau/math/geom/geom3f.hpp>
 #include <jau/math/geom/aabbox3f.hpp>
 #include <jau/math/geom/plane/affine_transform.hpp>
+
+#include <gamp/graph/PrimTypes.hpp>
 
 namespace gamp::graph {
 
@@ -31,92 +32,6 @@ namespace gamp::graph {
      *
      *  @{
      */
-
-    // typedef Vec3f Vertex;
-    class Vertex {
-      private:
-        int m_id;
-        Vec3f m_coord;
-        Vec3f m_color;
-        Vec3f m_texCoord;
-        bool m_onCurve;
-
-      public:
-        constexpr Vertex() noexcept
-        : m_id(std::numeric_limits<int>::max()),
-          m_coord(), m_color(), m_texCoord(), m_onCurve(true) {}
-
-        constexpr Vertex(const float x_, const float y_, const float z_, bool onCurve) noexcept
-        : m_id(std::numeric_limits<int>::max()),
-          m_coord(x_, y_, z_), m_color(), m_texCoord(), m_onCurve(onCurve) {}
-
-        constexpr Vertex(const float x_, const float y_, bool onCurve) noexcept
-        : m_id(std::numeric_limits<int>::max()),
-          m_coord(x_, y_, 0), m_color(), m_texCoord(), m_onCurve(onCurve) {}
-
-        constexpr int id() const noexcept { return m_id; }
-        constexpr int& id() noexcept { return m_id; }
-
-        constexpr const Vec3f& coord() const noexcept { return m_coord; }
-        constexpr Vec3f& coord() noexcept { return m_coord; }
-
-        constexpr const Vec3f& color() const noexcept { return m_color; }
-        constexpr Vec3f& color() noexcept { return m_color; }
-
-        constexpr const Vec3f& texCoord() const noexcept { return m_texCoord; }
-        constexpr Vec3f& texCoord() noexcept { return m_texCoord; }
-
-        constexpr bool onCurve() const noexcept { return m_onCurve; }
-        constexpr bool& onCurve() noexcept { return m_onCurve; }
-
-        std::string toString() const noexcept {
-            return std::string("Vert[")
-                .append(std::to_string(m_id))
-                .append(", onCurve ").append(std::to_string(m_onCurve))
-                .append(", p ").append(m_coord.toString())
-                .append("]");
-        }
-    };
-
-    typedef jau::darray<Vertex> VertexList;
-
-    /**
-     * Computes the area of a list of vertices via shoelace formula.
-     *
-     * This method is utilized e.g. to reliably compute the {@link Winding} of complex shapes.
-     *
-     * Implementation uses double precision.
-     *
-     * @param vertices
-     * @return positive area if ccw else negative area value
-     * @see #getWinding()
-     */
-    constexpr double area2D(const VertexList& vertices) noexcept {
-        size_t n = vertices.size();
-        double area = 0.0;
-        for (size_t p = n - 1, q = 0; q < n; p = q++) {
-            const Vec3f& pCoord = vertices[p].coord();
-            const Vec3f& qCoord = vertices[q].coord();
-            area += (double)pCoord.x * (double)qCoord.y - (double)qCoord.x * (double)pCoord.y;
-        }
-        return area;
-    }
-
-    /**
-     * Compute the winding using the area2D() function over all vertices for complex shapes.
-     *
-     * Uses the {@link #area(List)} function over all points
-     * on complex shapes for a reliable result!
-     *
-     * Implementation uses double precision.
-     *
-     * @param vertices array of Vertices
-     * @return Winding::CCW or Winding::CLW
-     * @see area2D()
-     */
-    constexpr Winding getWinding(const VertexList& vertices) noexcept {
-        return area2D(vertices) >= 0 ? Winding::CCW : Winding::CW ;
-    }
 
     class Outline {
       private:
@@ -278,23 +193,18 @@ namespace gamp::graph {
             m_dirtyBits |= DIRTY_WINDING | DIRTY_COMPLEXSHAPE;
         }
 
-        /**
-         * Return a transformed instance with all vertices are copied and transformed.
-         */
+        /// Returns a transformed copy of this instance using the given AffineTransform.
         Outline transform(const AffineTransform& t) const {
             Outline newOutline;
-            const size_t vsize = m_vertices.size();
-            for(size_t i=0; i<vsize; ++i) {
-                const Vertex& v = m_vertices[i];
-                Vertex w(v);
-                t.transform(v.coord(), w.coord());
-                newOutline.addVertex(w);
+            for(const Vertex& v : m_vertices) {
+                newOutline.addVertex(v.transform(t));
             }
             newOutline.m_closed = m_closed;
             return newOutline;
         }
 
     };
+    // typedef std::shared_ptr<Outline> OutlineRef;
     typedef jau::darray<Outline> OutlineList;
 
 

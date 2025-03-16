@@ -1,6 +1,6 @@
 /*
- * Author: Sven Gothel <sgothel@jausoft.com>
- * Copyright Gothel Software e.K.
+ * Author: Sven Gothel <sgothel@jausoft.com> (C++, Java) and Rami Santina (Java)
+ * Copyright Gothel Software e.K. and the authors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ namespace gamp::graph {
           m_bbox(),
           m_dirtyBits(0)
         {
-            m_outlines.push_back(Outline(outlineVertCapacity));
+            m_outlines.emplace_back(outlineVertCapacity);
         }
 
         constexpr void reserve(size_t newCapacity) { m_outlines.reserve(newCapacity); }
@@ -65,7 +65,7 @@ namespace gamp::graph {
         /** Clears all data and reset all states as if this instance was newly created */
         void clear() {
             m_outlines.clear();
-            m_outlines.push_back(Outline(m_outlineVertCapacity));
+            m_outlines.emplace_back(m_outlineVertCapacity);
             // m_outlineState = VerticesState.UNDEFINED;
             m_bbox.reset();
             // m_triangles.clear();
@@ -142,7 +142,7 @@ namespace gamp::graph {
          */
         void addEmptyOutline() {
             if( !lastOutline().empty() ) {
-                m_outlines.push_back(Outline(m_outlineVertCapacity));
+                m_outlines.emplace_back(m_outlineVertCapacity);
             }
         }
 

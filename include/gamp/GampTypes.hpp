@@ -57,6 +57,10 @@ namespace gamp {
     };
 
     template<typename T, typename U>
+    inline bool checkOverflow(T has) {
+        return has <= std::numeric_limits<U>::max();
+    }
+    template<typename T, typename U>
     inline void throwOnOverflow(T has) {
         if( has > std::numeric_limits<U>::max() ) {
             throw GampException("Value "+std::to_string(has)+" > "+std::to_string(std::numeric_limits<U>::max()), E_FILE_LINE);
