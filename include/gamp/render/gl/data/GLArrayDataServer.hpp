@@ -45,8 +45,8 @@ namespace gamp::render::gl::data {
 
     typedef GLArrayDataServer<float>      GLFloatArrayDataServer;
     typedef GLArrayDataServerRef<float>   GLFloatArrayDataServerRef;
-    typedef GLArrayDataServer<int32_t>    GLIntArrayDataServer;
-    typedef GLArrayDataServerRef<int32_t> GLIntArrayDataServerRef;
+    typedef GLArrayDataServer<uint32_t>    GLUIntArrayDataServer;
+    typedef GLArrayDataServerRef<uint32_t> GLUIntArrayDataServerRef;
 
     /**
      * Server data buffer for VBO GLArrayData usage of given template-type Value_type.

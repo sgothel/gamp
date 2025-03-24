@@ -271,7 +271,7 @@ namespace gamp::render::gl::data {
          */
         void clear() {
             m_buffer.clear();
-            proxy_t::m_sealed      = false;
+            proxy_t::m_sealed = false;
             m_bufferEnabled = false;
             m_bufferWritten = proxy_t::usesClientMem() ? false : true;
         }
@@ -340,7 +340,10 @@ namespace gamp::render::gl::data {
             }
             return *this;
         }
-        constexpr_cxx20 client_t& puti(const int32_t v) {
+        constexpr_cxx20 client_t& puti32(const int32_t v) {
+            return put(static_cast<value_type>(v));
+        }
+        constexpr_cxx20 client_t& putu32(const uint32_t v) {
             return put(static_cast<value_type>(v));
         }
         constexpr_cxx20 client_t& putf(const float v) {

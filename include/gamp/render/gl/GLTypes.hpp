@@ -46,20 +46,25 @@ namespace gamp::render::gl {
     constexpr GLenum glType() noexcept { return GL_FLOAT; }
 
     template<typename T,
-        std::enable_if_t< std::is_same_v<int32_t, T> , bool> = true>
-    constexpr GLenum glType() noexcept { return GL_INT; }
-
-    template<typename T,
         std::enable_if_t< std::is_same_v<uint32_t, T> , bool> = true>
     constexpr GLenum glType() noexcept { return GL_UNSIGNED_INT; }
+
+    template<typename T,
+        std::enable_if_t< std::is_same_v<uint16_t, T> , bool> = true>
+    constexpr GLenum glType() noexcept { return GL_UNSIGNED_SHORT; }
+
+    template<typename T,
+        std::enable_if_t< std::is_same_v<uint8_t, T> , bool> = true>
+    constexpr GLenum glType() noexcept { return GL_UNSIGNED_BYTE; }
+
+    template<typename T,
+        std::enable_if_t< std::is_same_v<int32_t, T> , bool> = true>
+    constexpr GLenum glType() noexcept { return GL_INT; }
 
     template<typename T,
         std::enable_if_t< std::is_same_v<int16_t, T> , bool> = true>
     constexpr GLenum glType() noexcept { return GL_SHORT; }
 
-    template<typename T,
-        std::enable_if_t< std::is_same_v<uint16_t, T> , bool> = true>
-    constexpr GLenum glType() noexcept { return GL_UNSIGNED_SHORT; }
 
     /**
      * Runtime GL type retrieval using compile-time-type-info (CTTI) jau::type_info.
