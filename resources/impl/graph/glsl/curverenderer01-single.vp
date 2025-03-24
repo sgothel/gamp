@@ -9,29 +9,58 @@
 #include attributes.glsl
 #include varyings.glsl
 
+#ifdef USE_LIGHT0
+    const float constantAttenuation = 0.5; // 1.0;
+    const float linearAttenuation   = 0.001; // 0.0;
+    const float quadraticAttenuation= 0.0002; // 0.0;
+#endif
+
 void main(void)
 {
-    gl_Position = gcu_PMVMatrix01[0] * gcu_PMVMatrix01[1] * gca_Vertices;
-#if 1
-    gcv_CurveParam = gca_CurveParams;
+#ifdef USE_LIGHT0
+    // Transforming The Vertex Position To ModelView-Space
+    gcv_position  = gcu_PMVMatrix[1] * gca_Vertex; // vertex eye position
+
+    // incl. projection
+    gl_Position = gcu_PMVMatrix[0] * gcv_position;
+
+    // Transforming The Normal To ModelView-Space
+    gcv_Normal = normalize((gcu_PMVMatrix[3] * gca_Normal).xyz);
+
+    // Calculating The Vector From The Vertex Position To The Light Position
+    gcv_lightDir = gcu_LightPos - gcv_position.xyz;
+    float d = length(gcv_lightDir);
+    gcv_attenuation = 1.0 / (
+                       constantAttenuation +
+                       linearAttenuation    * d +
+                       quadraticAttenuation * d * d );
+    gcv_lightDir = normalize(gcv_lightDir);
+    gcv_cameraDir  = normalize((gcu_PMVMatrix[2] * vec4(0,0,0,1.0)).xyz - gca_Vertex.xyz);
 #else
-    if( gcv_CurveParams.x <= -10.0 ) {
-        // vec4 tc = gcu_PMVMatrix01[0] * gcu_PMVMatrix01[1] * vec4(gca_CurveParams.xy, gca_Vertices.z, 1);
-        // gcv_CurveParams = vec3(tc.xy, gca_CurveParams.z);
-        gcv_CurveParam = gca_CurveParams;
+    gl_Position = gcu_PMVMatrix[0] * gcu_PMVMatrix[1] * gca_Vertex;
+#endif
+
+#if 1
+    gcv_CurveParam = gca_CurveParam;
+#else
+    if( gcv_CurveParam.x <= -10.0 ) {
+        // vec4 tc = gcu_PMVMatrix[0] * gcu_PMVMatrix[1] * vec4(gca_CurveParam.xy, gca_Vertex.z, 1);
+        // gcv_CurveParam = vec3(tc.xy, gca_CurveParam.z);
+        gcv_CurveParam = gca_CurveParam;
     } else {
-        gcv_CurveParam = gca_CurveParams;
+        gcv_CurveParam = gca_CurveParam;
     }
 #endif
 
 #ifdef USE_FRUSTUM_CLIPPING
-    gcv_ClipCoord = (gcu_PMVMatrix01[1] * gca_Vertices).xyz; // Mv
+    gcv_ClipCoord = (gcu_PMVMatrix[1] * gcu_Vertex).xyz; // Mv
 #endif
 
 #ifdef USE_COLOR_TEXTURE
-    gcv_ColorTexCoord = ( gca_Vertices.xy - gcu_ColorTexBBox[0] ) / ( gcu_ColorTexBBox[1] - gcu_ColorTexBBox[0] );
+    gcv_ColorTexCoord = ( gca_Vertex.xy - gcu_ColorTexBBox[0] ) / ( gcu_ColorTexBBox[1] - gcu_ColorTexBBox[0] );
 #endif
 #ifdef USE_COLOR_CHANNEL
     gcv_Color = gca_Colors;
 #endif
+
 }

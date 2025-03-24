@@ -15,6 +15,7 @@
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <jau/basic_algos.hpp>
 #include <jau/darray.hpp>
 #include <jau/bitfield.hpp>
 #include <jau/math/geom/geom.hpp>
@@ -35,38 +36,46 @@ namespace gamp::graph {
      *  @{
      */
 
-    // typedef Vec3f Vertex;
     class Vertex {
       private:
-        int m_id;
+        uint32_t m_id;
         Vec3f m_coord;
         Vec3f m_texCoord;
         bool m_onCurve;
 
       public:
         constexpr Vertex() noexcept
-        : m_id(std::numeric_limits<int>::max()),
+        : m_id(std::numeric_limits<uint32_t>::max()),
           m_coord(), m_texCoord(), m_onCurve(true) {}
 
+
+        constexpr Vertex(const Vec3f& coord, const Vec3f& texCoord, bool onCurve) noexcept
+        : m_id(std::numeric_limits<uint32_t>::max()),
+          m_coord(coord), m_texCoord(texCoord), m_onCurve(onCurve) {}
+
+        constexpr Vertex clone() const noexcept {
+            return Vertex(m_coord, m_texCoord, m_onCurve);
+        }
+
         constexpr Vertex(const float x_, const float y_, const float z_, bool onCurve) noexcept
-        : m_id(std::numeric_limits<int>::max()),
+        : m_id(std::numeric_limits<uint32_t>::max()),
           m_coord(x_, y_, z_), m_texCoord(), m_onCurve(onCurve) {}
 
         constexpr Vertex(const Vec2f& coord, bool onCurve) noexcept
-        : m_id(std::numeric_limits<int>::max()),
+        : m_id(std::numeric_limits<uint32_t>::max()),
           m_coord(coord.x, coord.y, 0), m_texCoord(), m_onCurve(onCurve)
         {}
 
         constexpr Vertex(const float x_, const float y_, bool onCurve) noexcept
-        : m_id(std::numeric_limits<int>::max()),
+        : m_id(std::numeric_limits<uint32_t>::max()),
           m_coord(x_, y_, 0), m_texCoord(), m_onCurve(onCurve) {}
 
         constexpr Vertex(const Vec3f& coord, bool onCurve) noexcept
-        : m_id(std::numeric_limits<int>::max()),
+        : m_id(std::numeric_limits<uint32_t>::max()),
           m_coord(coord), m_texCoord(), m_onCurve(onCurve)
         {}
 
-        constexpr Vertex(int id, bool onCurve, const Vec3f& texCoord) noexcept
+        constexpr Vertex(uint32_t id, bool onCurve, const Vec3f& texCoord) noexcept
         : m_id(id),
           m_coord(), m_texCoord(texCoord), m_onCurve(onCurve)
         {}
@@ -78,8 +87,8 @@ namespace gamp::graph {
             return v;
         }
 
-        constexpr int id() const noexcept { return m_id; }
-        constexpr int& id() noexcept { return m_id; }
+        constexpr uint32_t id() const noexcept { return m_id; }
+        constexpr uint32_t& id() noexcept { return m_id; }
 
         constexpr const Vec3f& coord() const noexcept { return m_coord; }
         constexpr Vec3f& coord() noexcept { return m_coord; }
@@ -112,11 +121,11 @@ namespace gamp::graph {
                 .append("]");
         }
     };
-    typedef jau::darray<Vertex> VertexList;
+    typedef jau::darray<Vertex, uint32_t> VertexList;
 
     class Triangle;
     typedef std::shared_ptr<Triangle> TriangleRef;
-    typedef std::vector<TriangleRef> TriangleRefList;
+    typedef jau::darray<TriangleRef, uint32_t> TriangleRefList;
 
     class Triangle {
       public:
@@ -124,47 +133,37 @@ namespace gamp::graph {
         typedef jau::bitfield<3> tribit_t;
 
       private:
-        int m_id;
+        uint32_t m_id;
         trivert_t m_vertices;
         tribit_t m_boundaryEdges;
         tribit_t m_boundaryVertices;
 
-        constexpr Triangle(Vertex v1, Vertex v2, Vertex v3, const tribit_t& boundaryVertices) noexcept
-        : m_id(std::numeric_limits<int>::max()),
-          m_vertices(), m_boundaryVertices(boundaryVertices)
-        {
-            m_vertices[0] = v1;
-            m_vertices[1] = v2;
-            m_vertices[2] = v3;
-        }
-        constexpr Triangle(const trivert_t& vertices, const tribit_t& boundaryVertices) noexcept
-        : m_id(std::numeric_limits<int>::max()),
-          m_vertices(vertices), m_boundaryVertices(boundaryVertices)
-        { }
-
-        constexpr Triangle(int id, const tribit_t& boundaryEdges, const tribit_t& boundaryVertices) noexcept
-        : m_id(id), m_boundaryEdges(boundaryEdges), m_boundaryVertices(boundaryVertices)
-        { }
-
-        static TriangleRef createImpl(int id, const tribit_t& boundaryEdges, const tribit_t& boundaryVertices) noexcept {
-            return std::make_shared<Triangle>(id, boundaryEdges, boundaryVertices);
-        }
+        struct Private{ explicit Private() = default; };
 
       public:
-        static TriangleRef create(Vertex v1, Vertex v2, Vertex v3, const tribit_t& boundaryVertices) noexcept {
-            return std::make_shared<Triangle>(v1, v2, v3, boundaryVertices);
-        }
-        static TriangleRef create(const trivert_t& vertices, const tribit_t& boundaryVertices) noexcept {
-            return std::make_shared<Triangle>(vertices, boundaryVertices);
+        Triangle(Private, const Vertex& v1, const Vertex& v2, const Vertex& v3, const tribit_t& boundaryVertices) noexcept
+        : m_id(std::numeric_limits<uint32_t>::max()),
+          m_vertices({ v1, v2, v3 }),
+          m_boundaryVertices(boundaryVertices)
+        { }
+
+        Triangle(Private, uint32_t id, const tribit_t& boundaryEdges, const tribit_t& boundaryVertices) noexcept
+        : m_id(id),
+          m_vertices(),
+          m_boundaryEdges(boundaryEdges), m_boundaryVertices(boundaryVertices)
+        { }
+
+        static TriangleRef create(const Vertex& v1, const Vertex& v2, const Vertex& v3, const tribit_t& boundaryVertices) noexcept {
+            return std::make_shared<Triangle>(Private(), v1, v2, v3, boundaryVertices);
         }
 
         /// Returns a transformed copy of this instance using the given AffineTransform.
-        TriangleRef transform(const AffineTransform& t) const noexcept {
-            TriangleRef tri = createImpl(m_id, m_boundaryEdges, m_boundaryVertices);
-            tri->m_vertices[0] = m_vertices[0].transform(t);
-            tri->m_vertices[1] = m_vertices[1].transform(t);
-            tri->m_vertices[2] = m_vertices[2].transform(t);
-            return tri;
+        TriangleRef transform(const AffineTransform& t) const {
+            TriangleRef r = std::make_shared<Triangle>(Private(), m_id, m_boundaryEdges, m_boundaryVertices);
+            r->m_vertices[0] = m_vertices[0].transform(t);
+            r->m_vertices[1] = m_vertices[1].transform(t);
+            r->m_vertices[2] = m_vertices[2].transform(t);
+            return r;
         }
 
         /// Returns true if all vertices are on-curve, otherwise false.
@@ -179,8 +178,8 @@ namespace gamp::graph {
                    m_vertices[2].texCoord().is_zero() ;
         }
 
-        constexpr int id() const noexcept { return m_id; }
-        constexpr int& id() noexcept { return m_id; }
+        constexpr uint32_t id() const noexcept { return m_id; }
+        constexpr uint32_t& id() noexcept { return m_id; }
 
         /// Returns array of 3 vertices, denominating the triangle.
         constexpr const trivert_t& vertices() const noexcept { return m_vertices; }
@@ -204,51 +203,13 @@ namespace gamp::graph {
         std::string toString() const noexcept {
             return std::string("Tri[id ")
                 .append(std::to_string(m_id))
-                .append(", onCurve ").append(std::to_string(onCurve()))
+                .append(", onCurve ").append(jau::to_string(onCurve())).append(", ")
                 .append(m_vertices[0].toString()).append(", bound ").append(jau::to_string(m_boundaryVertices[0])).append("\n\t")
                 .append(m_vertices[1].toString()).append(", bound ").append(jau::to_string(m_boundaryVertices[1])).append("\n\t")
                 .append(m_vertices[2].toString()).append(", bound ").append(jau::to_string(m_boundaryVertices[2]))
                 .append("]");
         }
     };
-
-    /**
-     * Computes the area of a list of vertices via shoelace formula.
-     *
-     * This method is utilized e.g. to reliably compute the {@link Winding} of complex shapes.
-     *
-     * Implementation uses double precision.
-     *
-     * @param vertices
-     * @return positive area if ccw else negative area value
-     * @see #getWinding()
-     */
-    constexpr double area2D(const VertexList& vertices) noexcept {
-        size_t n = vertices.size();
-        double area = 0.0;
-        for (size_t p = n - 1, q = 0; q < n; p = q++) {
-            const Vec3f& pCoord = vertices[p].coord();
-            const Vec3f& qCoord = vertices[q].coord();
-            area += (double)pCoord.x * (double)qCoord.y - (double)qCoord.x * (double)pCoord.y;
-        }
-        return area;
-    }
-
-    /**
-     * Compute the winding using the area2D() function over all vertices for complex shapes.
-     *
-     * Uses the {@link #area(List)} function over all points
-     * on complex shapes for a reliable result!
-     *
-     * Implementation uses double precision.
-     *
-     * @param vertices array of Vertices
-     * @return Winding::CCW or Winding::CLW
-     * @see area2D()
-     */
-    constexpr Winding getWinding(const VertexList& vertices) noexcept {
-        return area2D(vertices) >= 0 ? Winding::CCW : Winding::CW ;
-    }
 
     /**@}*/
 

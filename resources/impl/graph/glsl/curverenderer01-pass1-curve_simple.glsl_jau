@@ -11,7 +11,6 @@
         #endif
     } else
 #endif
-
     if( gcv_CurveParam.x == 0.0 && gcv_CurveParam.y == 0.0 ) {
         // pass-1: Lines
 #if defined(USE_COLOR_TEXTURE) && defined(USE_COLOR_CHANNEL)
@@ -26,6 +25,7 @@
         graphColor = gcv_Color * gcu_StaticColor;
 #else
         graphColor = gcu_StaticColor;
+        graphColor.r = 1.0;
 #endif
     } else {
         // pass-1: curves
@@ -38,28 +38,21 @@
         float position = rtex.y - (rtex.x * (1.0 - rtex.x));
 
         float a = clamp(0.5 - ( position/length(f) ) * sign(gcv_CurveParam.y), 0.0, 1.0);
-        if( false && 0.0 == a ) {
-            #if USE_DISCARD
-                discard; // freezes NV tegra2 compiler
-            #else
-                graphColor = vec4(0);
-            #endif
-        } else {
 #if defined(USE_COLOR_TEXTURE) && defined(USE_COLOR_CHANNEL)
-            vec4 t = clip_coord(gcuTexture2D(gcu_ColorTexUnit, gcv_ColorTexCoord.st), gcu_ColorTexClearCol, gcv_ColorTexCoord, vec2(0), gcu_ColorTexBBox[2]);
+        vec4 t = clip_coord(gcuTexture2D(gcu_ColorTexUnit, gcv_ColorTexCoord.st), gcu_ColorTexClearCol, gcv_ColorTexCoord, vec2(0), gcu_ColorTexBBox[2]);
 
-            graphColor = vec4( mix( t.rgb * gcu_StaticColor.rgb, gcv_Color.rgb, gcv_Color.a ),
-                               a * mix( t.a * gcu_StaticColor.a, 1, gcv_Color.a) );
+        graphColor = vec4( mix( t.rgb * gcu_StaticColor.rgb, gcv_Color.rgb, gcv_Color.a ),
+                             a * mix( t.a * gcu_StaticColor.a, 1, gcv_Color.a) );
 #elif defined(USE_COLOR_TEXTURE)
-            vec4 t = clip_coord(gcuTexture2D(gcu_ColorTexUnit, gcv_ColorTexCoord.st), gcu_ColorTexClearCol, gcv_ColorTexCoord, vec2(0), gcu_ColorTexBBox[2]);
+        vec4 t = clip_coord(gcuTexture2D(gcu_ColorTexUnit, gcv_ColorTexCoord.st), gcu_ColorTexClearCol, gcv_ColorTexCoord, vec2(0), gcu_ColorTexBBox[2]);
 
-            graphColor = vec4(t.rgb * gcu_StaticColor.rgb, t.a * gcu_StaticColor.a * a);
+        graphColor = vec4(t.rgb * gcu_StaticColor.rgb, t.a * gcu_StaticColor.a * a);
 #elif defined(USE_COLOR_CHANNEL)
-            graphColor = vec4(gcv_Color.rgb * gcu_StaticColor.rgb, gcv_Color.a * gcu_StaticColor.a * a);
+        graphColor = vec4(gcv_Color.rgb * gcu_StaticColor.rgb, gcv_Color.a * gcu_StaticColor.a * a);
 #else
-            graphColor = vec4(gcu_StaticColor.rgb, gcu_StaticColor.a * a);
+        graphColor = vec4(gcu_StaticColor.rgb, gcu_StaticColor.a * a);
+        graphColor.b = 1.0;
 #endif
-        }
     }
 
 #ifdef USE_LIGHT0

@@ -11,14 +11,24 @@
 #ifndef JAU_GAMP_GRAPH_OUTLINESHAPE_HPP_
 #define JAU_GAMP_GRAPH_OUTLINESHAPE_HPP_
 
+#include <jau/basic_algos.hpp>
+#include <jau/basic_types.hpp>
+#include <jau/debug.hpp>
+#include <jau/enum_util.hpp>
+#include <jau/math/geom/geom3f.hpp>
 #include <jau/math/geom/plane/affine_transform.hpp>
 
+#include <gamp/graph/Graph.hpp>
 #include <gamp/graph/Outline.hpp>
+#include <gamp/graph/PrimTypes.hpp>
+#include <gamp/graph/tess/CDTriangulator2D.hpp>
+#include <gamp/graph/tess/impl/HEdge.hpp>
 
 namespace gamp::graph {
 
     using namespace jau::math;
     using namespace jau::math::geom;
+    using namespace jau::enums;
     using jau::math::geom::plane::AffineTransform;
 
     /** \addtogroup Gamp_Graph
@@ -26,56 +36,174 @@ namespace gamp::graph {
      *  @{
      */
 
+    /**
+     * A Generic shape objects which is defined by a list of Outlines.
+     * This Shape can be transformed to triangulations.
+     * The list of triangles generated are render-able by a Region object.
+     * The triangulation produced by this Shape will define the
+     * closed region defined by the outlines.
+     *
+     * One or more OutlineShape Object can be associated to a region
+     * this is left as a high-level representation of the Objects. For
+     * optimizations, flexibility requirements for future features.
+
+     * <a name="windingrules">
+     * Outline shape general {@link Winding} rules
+     * - Outer boundary-shapes are required as Winding::CCW
+     * - Inner hole-shapes should be Winding::CW
+     * - If unsure
+     *   - You may check Winding via getWindingOfLastOutline() or Outline::getWinding() (optional, might be incorrect)
+     *   - Use setWindingOfLastOutline(Winding) before {@link #closeLastOutline(boolean)} or {@link #closePath()} } to enforce Winding::CCW, or
+     *   - use Outline::setWinding(Winding) on a specific Outline to enforce Winding::CCW.
+     *   - If e.g. the Winding has changed for an Outline by above operations, its vertices have been reversed.
+     * - Safe path: Simply create all outer boundary-shapes with Winding::CCW and inner hole-shapes with Winding::CW.
+     *
+     * Example to creating an Outline Shape:
+     * <pre>
+          addVertex(...)
+          addVertex(...)
+          addVertex(...)
+          addEmptyOutline()
+          addVertex(...)
+          addVertex(...)
+          addVertex(...)
+     * </pre>
+     *
+     * The above will create two outlines each with three vertices. By adding these two outlines to
+     * the OutlineShape, we are stating that the combination of the two outlines represent the shape.
+     *
+     * To specify that the shape is curved at a region, the on-curve flag should be set to false
+     * for the vertex that is in the middle of the curved region (if the curved region is defined by 3
+     * vertices (quadratic curve).
+     *
+     * In case the curved region is defined by 4 or more vertices the middle vertices should both have
+     * the on-curve flag set to false.
+     *
+     * Example:
+     * <pre>
+          addVertex(0,0, true);
+          addVertex(0,1, false);
+          addVertex(1,1, false);
+          addVertex(1,0, true);
+     * </pre>
+     *
+     * The above snippet defines a cubic nurbs curve where (0,1 and 1,1)
+     * do not belong to the final rendered shape.
+     *
+     * <i>Implementation Notes:</i><br>
+     * - The first vertex of any outline belonging to the shape should be on-curve
+     * - Intersections between off-curved parts of the outline is not handled
+     *
+     * @see Outline
+     * @see Region
+     */
     class OutlineShape {
       public:
-        static constexpr int DIRTY_BOUNDS = 1 << 0;
-        static constexpr int DIRTY_VERTICES = 1 << 1;
-        static constexpr int DIRTY_TRIANGLES = 1 << 2;
-        static constexpr int DIRTY_CONVEX  = 1 << 3;
-        static constexpr int OVERRIDE_CONVEX  = 1 << 4;
+        typedef uint32_t size_type;
+
+        /// byte-size int32_t limit: 536'870'911 (FIXME: Adjust to actual type, i.e. Vertex = 2x Vec3f?)
+        constexpr static size_type max_elements = std::numeric_limits<uint32_t>::max() / sizeof(uint32_t);
+
+        /** Initial sharpness() value, which can be modified via setSharpness(float). */
+        static constexpr float DEFAULT_SHARPNESS = 0.5f;
+
+        enum class DirtyBits : uint16_t {
+            none = 0,
+            bounds = 1 << 0,
+            vertices = 1 << 1,  /// <Modified shape, requires to update the vertices and triangles, here: vertices
+            triangles = 1 << 2, /// <Modified shape, requires to update the vertices and triangles, here: triangulation.
+            convex = 1 << 3,    /// <Modified shape, requires to update the convex determination
+            convexOverride = 1 << 4
+        };
+        JAU_MAKE_BITFIELD_ENUM_STRING_MEMBER(DirtyBits, bounds, vertices, triangles, convex, convexOverride);
+
+        enum class VertexState : uint16_t { undefined = 0, quadratic_nurbs = 1 };
+        JAU_MAKE_ENUM_STRING_MEMBER(VertexState, quadratic_nurbs);
 
       private:
-        size_t m_outlineVertCapacity;
-        OutlineList m_outlines;
+        size_type m_outlineVertCapacity;
         Vec3f m_normal;
-        // VertexList m_vertices;
+        OutlineList m_outlines;
         mutable AABBox3f m_bbox;
-        mutable int m_dirtyBits;
+        mutable DirtyBits m_dirtyBits;
+        size_type m_addedVertexCount;
+        mutable bool m_complexShape;
+        VertexState m_outlineState;
+        float m_sharpness;
+        VertexList m_vertices;
+        TriangleRefList m_triangles;
 
       public:
 
         OutlineShape() : OutlineShape(2, 3) {}
-        OutlineShape(size_t capacity, size_t outlineVertCapacity)
+        OutlineShape(size_type capacity, size_type outlineVertCapacity)
         : m_outlineVertCapacity(capacity),
-          m_outlines(m_outlineVertCapacity),
           m_normal(0, 0, 1),
+          m_outlines(m_outlineVertCapacity),
           m_bbox(),
-          m_dirtyBits(0)
+          m_dirtyBits(DirtyBits::none),
+          m_addedVertexCount(0),
+          m_complexShape(false),
+          m_outlineState(VertexState::undefined),
+          m_sharpness(DEFAULT_SHARPNESS)
         {
             m_outlines.emplace_back(outlineVertCapacity);
         }
 
-        constexpr void reserve(size_t newCapacity) { m_outlines.reserve(newCapacity); }
 
-        constexpr int dirtyBits() const noexcept { return m_dirtyBits; }
-        constexpr bool verticesDirty() const noexcept { return 0 != ( m_dirtyBits & DIRTY_VERTICES); }
-        constexpr bool trianglesDirty() const noexcept { return 0 != ( m_dirtyBits & DIRTY_TRIANGLES); }
-        void markClean(int flags) noexcept { m_dirtyBits &= ~flags; }
+        /** Normal vector, optionally used by tesselator to add (interleaved) normals.  */
+        constexpr const Vec3f& normal() const noexcept { return m_normal; }
+        /** Writing the normal vector, optionally used by tesselator to add (interleaved) normals.  */
+        constexpr Vec3f& normal() noexcept { return m_normal; }
+
+        /**
+         * Return the number of newly added vertices during getTriangles(VerticesState)
+         * while transforming the outlines to VerticesState::QUADRATIC_NURBS and triangulation.
+         * @see setIsQuadraticNurbs()
+         */
+        constexpr size_type addedVertexCount() const noexcept { return m_addedVertexCount; }
+
+        /** Sharpness value, defaults to DEFAULT_SHARPNESS. */
+        constexpr float sharpness() const noexcept { return m_sharpness; }
+
+        /** Sets sharpness, defaults to DEFAULT_SHARPNESS. */
+        void setSharpness(float s) noexcept {
+            if( m_sharpness != s ) {
+                clearCache();
+                m_sharpness=s;
+            }
+        }
 
         /** Clears all data and reset all states as if this instance was newly created */
         void clear() {
             m_outlines.clear();
             m_outlines.emplace_back(m_outlineVertCapacity);
-            // m_outlineState = VerticesState.UNDEFINED;
+            m_outlineState = VertexState::undefined;
             m_bbox.reset();
-            // m_triangles.clear();
-            // m_addedVerticeCount = 0;
-            m_dirtyBits = 0;
+            m_vertices.clear();
+            m_triangles.clear();
+            m_addedVertexCount = 0;
+            m_complexShape = false;
+            m_dirtyBits = DirtyBits::none;
         }
+
+        /** Clears cached triangulated data, i.e. {@link #getTriangles(VerticesState)} and {@link #getVertices()}.  */
+        void clearCache() noexcept {
+            m_vertices.clear();
+            m_triangles.clear();
+            m_dirtyBits |= DirtyBits::triangles | DirtyBits::vertices | DirtyBits::convex;
+        }
+
+        constexpr void reserve(size_type newCapacity) { m_outlines.reserve(newCapacity); }
+
+        constexpr DirtyBits dirtyBits() const noexcept { return m_dirtyBits; }
+        constexpr bool verticesDirty() const noexcept { return is_set(m_dirtyBits, DirtyBits::vertices); }
+        constexpr bool trianglesDirty() const noexcept { return is_set(m_dirtyBits, DirtyBits::triangles); }
+        void markClean(DirtyBits flags) noexcept { m_dirtyBits &= ~flags; }
 
       private:
         void validateBoundingBox() const noexcept {
-            m_dirtyBits &= ~DIRTY_BOUNDS;
+            m_dirtyBits &= ~DirtyBits::bounds;
             m_bbox.reset();
             for (const auto & m_outline : m_outlines) {
                 m_bbox.resize(m_outline.bounds());
@@ -84,7 +212,7 @@ namespace gamp::graph {
 
       public:
         const AABBox3f& bounds() const noexcept {
-            if ( 0 != ( m_dirtyBits & DIRTY_BOUNDS ) ) {
+            if ( is_set(m_dirtyBits, DirtyBits::bounds) ) {
                 validateBoundingBox();
             }
             return m_bbox;
@@ -92,17 +220,14 @@ namespace gamp::graph {
 
         bool empty() const noexcept { return m_outlines.empty(); }
 
-        constexpr const Vec3f& normal() const noexcept { return m_normal; }
-        constexpr Vec3f& normal() noexcept { return m_normal; }
-
         /** Returns the number of {@link Outline}s. */
-        size_t outlineCount() const noexcept {
+        size_type outlineCount() const noexcept {
             return m_outlines.size();
         }
 
         /** Returns the total {@link Outline#getVertexCount() vertex number} of all {@link Outline}s. */
-        size_t vertexCount() const noexcept {
-            size_t res = 0;
+        size_type vertexCount() const noexcept {
+            size_type res = 0;
             for(const Outline& o : m_outlines) {
                 res += o.vertexCount();
             }
@@ -112,8 +237,8 @@ namespace gamp::graph {
         const OutlineList& outlines() const noexcept { return m_outlines; }
         OutlineList& outlines() noexcept { return m_outlines; }
 
-        const Outline& outline(size_t i) const noexcept { return m_outlines[i]; }
-        Outline& outline(size_t i) noexcept { return m_outlines[i]; }
+        const Outline& outline(size_type i) const noexcept { return m_outlines[i]; }
+        Outline& outline(size_type i) noexcept { return m_outlines[i]; }
 
         /**
          * Get the last added outline to the list
@@ -130,6 +255,65 @@ namespace gamp::graph {
          */
         Outline& lastOutline() noexcept {
             return m_outlines[m_outlines.size()-1];
+        }
+
+        /**
+         * Compute the {@link Winding} of the {@link #getLastOutline()} using the {@link VectorUtil#area(ArrayList)} function over all of its vertices.
+         * @return {@link Winding#CCW} or {@link Winding#CW}
+         */
+        Winding windingOfLastOutline() const noexcept {
+            return lastOutline().getWinding();
+        }
+
+        /**
+         * Sets the enforced {@link Winding} of the {@link #getLastOutline()}.
+         */
+        void setWindingOfLastOutline(Winding enforced) {
+            lastOutline().setWinding(enforced);
+        }
+
+        /**
+         * Returns cached or computed result if at least one `polyline` outline(size_type) is a complex shape, see Outline::isComplex().
+         * <p>
+         * A polyline with less than 3 elements is marked a simple shape for simplicity.
+         * </p>
+         * <p>
+         * The result is cached.
+         * </p>
+         * @see #setOverrideConvex(boolean)
+         * @see #clearOverrideConvex()
+         */
+        bool isComplex() const noexcept {
+            if( !is_set(m_dirtyBits, DirtyBits::convexOverride) &&
+                 is_set(m_dirtyBits, DirtyBits::convex) )
+            {
+                m_complexShape = false;
+                size_type sz = outlineCount();
+                for(size_type i=0; i<sz && !m_complexShape; ++i) {
+                    m_complexShape = outline(i).isComplex();
+                }
+                m_dirtyBits &= ~DirtyBits::convex;
+            }
+            return m_complexShape;
+        }
+        /**
+         * Overrides {@link #isComplex()} using the given value instead of computing via {@link Outline#isComplex()}.
+         * @see #clearOverrideConvex()
+         * @see #isComplex()
+         */
+        void setOverrideConvex(bool convex) noexcept {
+            m_dirtyBits |= DirtyBits::convexOverride;
+            m_complexShape = convex;
+        }
+
+        /**
+         * Clears the {@link #isComplex()} override done by {@link #setOverrideConvex(boolean)}
+         * @see #setOverrideConvex(boolean)
+         * @see #isComplex()
+         */
+        void clearOverrideConvex() noexcept {
+            m_dirtyBits &= ~DirtyBits::convexOverride;
+            m_dirtyBits |= DirtyBits::convex;
         }
 
         /**
@@ -172,7 +356,7 @@ namespace gamp::graph {
          * @throws NullPointerException if the  {@link Outline} element is null
          * @throws IndexOutOfBoundsException if position is out of range (position < 0 || position > getOutlineNumber())
          */
-        void addOutline(size_t position, const Outline& outline) {
+        void addOutline(size_type position, const Outline& outline) {
             if( m_outlines.size() == position ) {
                 const Outline& last = lastOutline();
                 if( outline.empty() && last.empty() ) {
@@ -180,19 +364,19 @@ namespace gamp::graph {
                 }
                 if( last.empty() ) {
                     m_outlines[position-1] = outline;
-                    if( 0 == ( m_dirtyBits & DIRTY_BOUNDS ) ) {
+                    if( !is_set(m_dirtyBits, DirtyBits::bounds) ) {
                         m_bbox.resize(outline.bounds());
                     }
                     // vertices.addAll(outline.getVertices()); // FIXME: can do and remove DIRTY_VERTICES ?
-                    m_dirtyBits |= DIRTY_TRIANGLES | DIRTY_VERTICES | DIRTY_CONVEX;
+                    m_dirtyBits |= DirtyBits::triangles | DirtyBits::vertices | DirtyBits::convex;
                     return;
                 }
             }
             m_outlines.insert(position, outline);
-            if( 0 == ( m_dirtyBits & DIRTY_BOUNDS ) ) {
+            if( !is_set(m_dirtyBits, DirtyBits::bounds) ) {
                 m_bbox.resize(outline.bounds());
             }
-            m_dirtyBits |= DIRTY_TRIANGLES | DIRTY_VERTICES | DIRTY_CONVEX;
+            m_dirtyBits |= DirtyBits::triangles | DirtyBits::vertices | DirtyBits::convex;
         }
 
         /**
@@ -205,7 +389,7 @@ namespace gamp::graph {
          */
         void addOutlineShape(const OutlineShape& outlineShape) {
             closeLastOutline(true);
-            for(size_t i=0; i<outlineShape.outlineCount(); i++) {
+            for(size_type i=0; i<outlineShape.outlineCount(); i++) {
                 addOutline(outlineShape.outline(i));
             }
         }
@@ -219,9 +403,9 @@ namespace gamp::graph {
          * @throws NullPointerException if the  {@link Outline} element is null
          * @throws IndexOutOfBoundsException if position is out of range (position < 0 || position >= getOutlineNumber())
          */
-        void setOutline(size_t position, const Outline& outline) {
+        void setOutline(size_type position, const Outline& outline) {
             m_outlines.insert(position, outline);
-            m_dirtyBits |= DIRTY_BOUNDS | DIRTY_TRIANGLES | DIRTY_VERTICES | DIRTY_CONVEX;
+            m_dirtyBits |= DirtyBits::bounds | DirtyBits::triangles | DirtyBits::vertices | DirtyBits::convex;
         }
 
         /**
@@ -231,24 +415,9 @@ namespace gamp::graph {
          * @param position of the to be removed Outline
          * @throws IndexOutOfBoundsException if position is out of range (position < 0 || position >= getOutlineNumber())
          */
-        void removeOutline(size_t position) {
-            m_dirtyBits |= DIRTY_BOUNDS | DIRTY_TRIANGLES | DIRTY_VERTICES | DIRTY_CONVEX;
+        void removeOutline(size_type position) {
+            m_dirtyBits |= DirtyBits::bounds | DirtyBits::triangles | DirtyBits::vertices | DirtyBits::convex;
             m_outlines.erase(position);
-        }
-
-        /**
-         * Compute the {@link Winding} of the {@link #getLastOutline()} using the {@link VectorUtil#area(ArrayList)} function over all of its vertices.
-         * @return {@link Winding#CCW} or {@link Winding#CW}
-         */
-        Winding windingOfLastOutline() const noexcept {
-            return lastOutline().getWinding();
-        }
-
-        /**
-         * Sets the enforced {@link Winding} of the {@link #getLastOutline()}.
-         */
-        void setWindingOfLastOutline(Winding enforced) {
-            lastOutline().setWinding(enforced);
         }
 
         //
@@ -263,11 +432,11 @@ namespace gamp::graph {
         void addVertex(const Vertex& v) {
             Outline& lo = lastOutline();
             lo.addVertex(v);
-            if( 0 == ( m_dirtyBits & DIRTY_BOUNDS ) ) {
+            if( !is_set(m_dirtyBits, DirtyBits::bounds) ) {
                 m_bbox.resize(v.coord());
             }
             // vertices.add(v); // FIXME: can do and remove DIRTY_VERTICES ?
-            m_dirtyBits |= DIRTY_TRIANGLES | DIRTY_VERTICES | DIRTY_CONVEX;
+            m_dirtyBits |= DirtyBits::triangles | DirtyBits::vertices | DirtyBits::convex;
         }
 
         /**
@@ -277,41 +446,14 @@ namespace gamp::graph {
          * @param v the vertex to be added to the OutlineShape
          * @see <a href="#windingrules">see winding rules</a>
          */
-        void addVertex(size_t position, const Vertex& v) {
+        void addVertex(size_type position, const Vertex& v) {
             Outline& lo = lastOutline();
             lo.addVertex(position, v);
-            if( 0 == ( m_dirtyBits & DIRTY_BOUNDS ) ) {
+            if( !is_set(m_dirtyBits, DirtyBits::bounds) ) {
                 m_bbox.resize(v.coord());
             }
             // vertices.add(v); // FIXME: can do and remove DIRTY_VERTICES ?
-            m_dirtyBits |= DIRTY_TRIANGLES | DIRTY_VERTICES | DIRTY_CONVEX;
-        }
-
-        /**
-         * Add a 2D {@link Vertex} to the last open outline to the shape's tail.
-         * The 2D vertex will be represented as Z=0.
-         *
-         * @param x the x coordinate
-         * @param y the y coordniate
-         * @param onCurve flag if this vertex is on the curve or defines a curved region of the shape around this vertex.
-         * @see <a href="#windingrules">see winding rules</a>
-         */
-        void addVertex(float x, float y, bool onCurve) {
-            addVertex(Vertex(x, y, onCurve));
-        }
-
-        /**
-         * Add a 2D {@link Vertex} to the last open outline to the shape at {@code position}.
-         * The 2D vertex will be represented as Z=0.
-         *
-         * @param position index within the last open outline, at which the vertex will be added
-         * @param x the x coordinate
-         * @param y the y coordniate
-         * @param onCurve flag if this vertex is on the curve or defines a curved region of the shape around this vertex.
-         * @see <a href="#windingrules">see winding rules</a>
-         */
-        void addVertex(size_t position, float x, float y, bool onCurve) {
-            addVertex(position, Vertex(x, y, onCurve));
+            m_dirtyBits |= DirtyBits::triangles | DirtyBits::vertices | DirtyBits::convex;
         }
 
         /**
@@ -328,6 +470,40 @@ namespace gamp::graph {
         }
 
         /**
+         * Add a 3D {@link Vertex} to the last open outline to the shape's tail.
+         *
+         * @param v the Vec3f coordinates
+         * @param onCurve flag if this vertex is on the curve or defines a curved region of the shape around this vertex.
+         * @see <a href="#windingrules">see winding rules</a>
+         */
+        void addVertex(const Vec3f& v, bool onCurve) {
+            addVertex(Vertex(v, onCurve));
+        }
+
+        /**
+         * Add a 2D {@link Vertex} to the last open outline to the shape's tail.
+         *
+         * @param x the x coordinate
+         * @param y the y coordinate
+         * @param onCurve flag if this vertex is on the curve or defines a curved region of the shape around this vertex.
+         * @see <a href="#windingrules">see winding rules</a>
+         */
+        void addVertex(float x, float y, bool onCurve) {
+            addVertex(Vertex(x, y, onCurve));
+        }
+
+        /**
+         * Add a 2D {@link Vertex} to the last open outline to the shape's tail.
+         *
+         * @param v the Vec2f coordinates
+         * @param onCurve flag if this vertex is on the curve or defines a curved region of the shape around this vertex.
+         * @see <a href="#windingrules">see winding rules</a>
+         */
+        void addVertex(const Vec2f& v, bool onCurve) {
+            addVertex(Vertex(v, onCurve));
+        }
+
+        /**
          * Add a 3D {@link Vertex} to the last open outline to the shape at {@code position}.
          *
          * @param position index within the last open outline, at which the vertex will be added
@@ -337,36 +513,8 @@ namespace gamp::graph {
          * @param onCurve flag if this vertex is on the curve or defines a curved region of the shape around this vertex.
          * @see <a href="#windingrules">see winding rules</a>
          */
-        void addVertex(size_t position, float x, float y, float z, bool onCurve) {
+        void addVertex(size_type position, float x, float y, float z, bool onCurve) {
             addVertex(position, Vertex(x, y, z, onCurve));
-        }
-
-        /**
-         * Closes the last outline in the shape.
-         * <p>
-         * Checks whether the last vertex equals to the first of the last outline.
-         * If not equal, it either appends a copy of the first vertex
-         * or prepends a copy of the last vertex, depending on <code>closeTail</code>.
-         * </p>
-         * @param closeTail if true, a copy of the first vertex will be appended,
-         *                  otherwise a copy of the last vertex will be prepended.
-         */
-        void closeLastOutline(bool closeTail) {
-            if( lastOutline().setClosed( closeTail ) ) {
-                m_dirtyBits |= DIRTY_TRIANGLES | DIRTY_VERTICES | DIRTY_CONVEX;
-            }
-        }
-
-        /**
-         * Closes the current sub-path segment by drawing a straight line back to the coordinates of the last moveTo. If the path is already closed then this method has no effect.
-         * @see Path2F#closePath()
-         * @see #addPath(com.jogamp.math.geom.plane.Path2F.Iterator, boolean)
-         */
-        void closePath() {
-            if ( 0 < lastOutline().vertexCount() ) {
-                closeLastOutline(true);
-                addEmptyOutline();
-            }
         }
 
         /**
@@ -404,6 +552,85 @@ namespace gamp::graph {
         }
 
         /**
+         * Add a quadratic curve segment, intersecting the last point and the second given point x2/y2 (P2).
+         *
+         * @param x1 quadratic parametric control point (P1)
+         * @param y1 quadratic parametric control point (P1)
+         * @param z1 quadratic parametric control point (P1)
+         * @param x2 final interpolated control point (P2)
+         * @param y2 final interpolated control point (P2)
+         * @param z2 quadratic parametric control point (P2)
+         * @see Path2F#quadTo(float, float, float, float)
+         * @see #addPath(com.jogamp.math.geom.plane.Path2F.Iterator, boolean)
+         * @see <a href="#windingrules">see winding rules</a>
+         */
+        void quadTo(float x1, float y1, float z1, float x2, float y2, float z2) {
+            addVertex(x1, y1, z1, false);
+            addVertex(x2, y2, z2, true);
+        }
+
+        /**
+         * Add a cubic Bézier curve segment, intersecting the last point and the second given point x3/y3 (P3).
+         *
+         * @param x1 Bézier control point (P1)
+         * @param y1 Bézier control point (P1)
+         * @param z1 Bézier control point (P1)
+         * @param x2 Bézier control point (P2)
+         * @param y2 Bézier control point (P2)
+         * @param z2 Bézier control point (P2)
+         * @param x3 final interpolated control point (P3)
+         * @param y3 final interpolated control point (P3)
+         * @param z3 final interpolated control point (P3)
+         * @see Path2F#cubicTo(float, float, float, float, float, float)
+         * @see #addPath(com.jogamp.math.geom.plane.Path2F.Iterator, boolean)
+         * @see <a href="#windingrules">see winding rules</a>
+         */
+        void cubicTo(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3) {
+            addVertex(x1, y1, z1, false);
+            addVertex(x2, y2, z2, false);
+            addVertex(x3, y3, z3, true);
+        }
+
+        /**
+         * Closes the last outline in the shape.
+         * <p>
+         * Checks whether the last vertex equals to the first of the last outline.
+         * If not equal, it either appends a copy of the first vertex
+         * or prepends a copy of the last vertex, depending on <code>closeTail</code>.
+         * </p>
+         * @param closeTail if true, a copy of the first vertex will be appended,
+         *                  otherwise a copy of the last vertex will be prepended.
+         */
+        void closeLastOutline(bool closeTail) {
+            if( lastOutline().setClosed( closeTail ) ) {
+                m_dirtyBits |= DirtyBits::triangles | DirtyBits::vertices | DirtyBits::convex;
+            }
+        }
+
+        /**
+         * Closes the current sub-path segment by drawing a straight line back to the coordinates of the last moveTo. If the path is already closed then this method has no effect.
+         * @see Path2F#closePath()
+         * @see #addPath(com.jogamp.math.geom.plane.Path2F.Iterator, boolean)
+         */
+        void closePath() {
+            if ( 0 < lastOutline().vertexCount() ) {
+                closeLastOutline(true);
+                addEmptyOutline();
+            }
+        }
+
+        VertexState outlineState() const noexcept { return m_outlineState; }
+
+        /**
+         * Claim this outline's vertices are all VertexState::quadratic_nurbs,
+         * hence no cubic transformations will be performed.
+         */
+        void setIsQuadraticNurbs() noexcept {
+            m_outlineState = VertexState::quadratic_nurbs;
+            // checkPossibleOverlaps = false;
+        }
+
+        /**
          * Return a transformed instance with all {@link Outline}s are copied and transformed.
          * <p>
          * Note: Triangulated data is lost in returned instance!
@@ -411,8 +638,8 @@ namespace gamp::graph {
          */
         OutlineShape transform(const AffineTransform& t) const {
             OutlineShape newOutlineShape;
-            size_t osize = m_outlines.size();
-            for(size_t i=0; i<osize; i++) {
+            size_type osize = m_outlines.size();
+            for(size_type i=0; i<osize; i++) {
                 newOutlineShape.addOutline( m_outlines[i].transform(t) );
             }
             return newOutlineShape;
@@ -420,16 +647,330 @@ namespace gamp::graph {
 
         /// Returns a copy of this instance with normal() and all outlines() vertices()'s z-axis sign-flipped,
         /// used to generate a back-face from a front-face shape.
-        OutlineShape flipFace() const {
+        OutlineShape flipFace(float zoffset=0) const {
             OutlineShape nshape = *this;
             nshape.normal().z *= -1;
             for(Outline& o : nshape.outlines()) {
                 for(Vertex& v : o.vertices()) {
-                    v.coord().z *= -1.0f;
+                    v.coord().z = ( v.coord().z * -1.0f ) + zoffset;
                 }
             }
             return nshape;
         }
+
+        /**
+         * Compare two outline shape's Bounding Box size.
+         * @return <0, 0, >0 if this this object is less than, equal to, or greater than the other object.
+         * @see AABBox3f::size()
+         */
+        int compareTo(const OutlineShape& other) const noexcept {
+            const float thisSize = bounds().size();
+            const float otherSize = other.bounds().size();
+            if( jau::equals2(thisSize, otherSize) ) {
+                return 0;
+            } else if(thisSize < otherSize){
+                return -1;
+            } else {
+                return 1;
+            }
+        }
+
+        /**
+         * @return true if {@code o} equals bounds and vertices in the same order
+         */
+        constexpr bool operator==(const OutlineShape& o) const noexcept {
+            if( this == &o) {
+                return true;
+            }
+            if(outlineState() != o.outlineState()) {
+                return false;
+            }
+            if(outlineCount() != o.outlineCount()) {
+                return false;
+            }
+            if( bounds() != o.bounds() ) {
+                return false;
+            }
+            for (size_type i=outlineCount(); i-- > 0;) {
+                if( outline(i) != o.outline(i) ) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+      private:
+        //
+        // prost-processing
+        //
+
+        void subdivideTriangle(Outline& outline, const Vertex& a, Vertex& b, const Vertex& c, size_type index) {
+            Vec3f v1 = midpoint( a.coord(), b.coord() );
+            Vec3f v3 = midpoint( b.coord(), c.coord() );
+            Vec3f v2 = midpoint( v1, v3 );
+
+            // COLOR
+            // tmpC1.set(a.getColor()).add(b.getColor()).scale(0.5f);
+            // tmpC3.set(b.getColor()).add(b.getColor()).scale(0.5f);
+            // tmpC2.set(tmpC1).add(tmpC1).scale(0.5f);
+
+            //drop off-curve vertex to image on the curve
+            b.coord() = v2;
+            b.onCurve() = true;
+
+            outline.addVertex(index, Vertex(v1, false));
+            outline.addVertex(index+2, Vertex(v3, false));
+
+            m_addedVertexCount += 2;
+        }
+
+        /**
+         * Check overlaps between curved triangles
+         * first check if any vertex in triangle a is in triangle b
+         * second check if edges of triangle a intersect segments of triangle b
+         * if any of the two tests is true we divide current triangle
+         * and add the other to the list of overlaps
+         *
+         * Loop until overlap array is empty. (check only in first pass)
+         */
+        void checkOverlaps() {
+            VertexList overlaps(3);
+            const size_type count = outlineCount();
+            bool firstpass = true;
+            do {
+                for (size_type cc = 0; cc < count; ++cc) {
+                    Outline& ol = outline(cc);
+                    size_type vertexCount = ol.vertexCount();
+                    for(size_type i=0; i < ol.vertexCount(); ++i) {
+                        Vertex& currentVertex = ol.vertex(i);
+                        if ( !currentVertex.onCurve()) {
+                            const Vertex& nextV = ol.vertex((i+1)%vertexCount);
+                            const Vertex& prevV = ol.vertex((i+vertexCount-1)%vertexCount);
+                            Vertex* overlap;
+
+                            // check for overlap even if already set for subdivision
+                            // ensuring both triangular overlaps get divided
+                            // for pref. only check in first pass
+                            // second pass to clear the overlaps array(reduces precision errors)
+                            if( firstpass ) {
+                                overlap = checkTriOverlaps0(prevV, currentVertex, nextV);
+                            } else {
+                                overlap = nullptr;
+                            }
+                            if( overlap || jau::contains(overlaps, currentVertex) ) {
+                                jau::eraseFirst(overlaps, currentVertex);
+
+                                subdivideTriangle(ol, prevV, currentVertex, nextV, i);
+                                i+=3;
+                                vertexCount+=2;
+                                m_addedVertexCount+=2;
+
+                                if(overlap && !overlap->onCurve()) {
+                                    if(!jau::contains(overlaps, *overlap)) {
+                                        overlaps.push_back(*overlap);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                firstpass = false;
+            } while( !overlaps.empty() );
+        }
+
+        Vertex* checkTriOverlaps0(const Vertex& a, const Vertex& b, const Vertex& c) {
+            size_type count = outlineCount();
+            for (size_type cc = 0; cc < count; ++cc) {
+                Outline& ol = outline(cc);
+                size_type vertexCount = ol.vertexCount();
+                for(size_type i=0; i < vertexCount; ++i) {
+                    Vertex& currV = ol.vertex(i);
+                    if( !currV.onCurve() && currV != a && currV != b && currV != c) {
+                        Vertex& nextV = ol.vertex((i+1)%vertexCount);
+                        Vertex& prevV = ol.vertex((i+vertexCount-1)%vertexCount);
+
+                        //skip neighboring triangles
+                        if(prevV != c && nextV != a) {
+                            if( isInTriangle3(a.coord(), b.coord(), c.coord(),
+                                              currV.coord(), nextV.coord(), prevV.coord()) ) {
+                                return &currV;
+                            }
+                            if(testTri2SegIntersection2D(a, b, c, prevV, currV) ||
+                               testTri2SegIntersection2D(a, b, c, currV, nextV) ||
+                               testTri2SegIntersection2D(a, b, c, prevV, nextV) ) {
+                                return &currV;
+                            }
+                        }
+                    }
+                }
+            }
+            return nullptr;
+        }
+
+        void cleanupOutlines() {
+            const bool transformOutlines2Quadratic = VertexState::quadratic_nurbs != m_outlineState;
+            size_type count = outlineCount();
+            for (size_type cc = 0; cc < count; ++cc) {
+                Outline& ol = outline(cc);
+                size_type vertexCount = ol.vertexCount();
+
+                if( transformOutlines2Quadratic ) {
+                    for(size_type i=0; i < vertexCount; ++i) {
+                        Vertex& currentVertex = ol.vertex(i);
+                        size_type j = (i+1)%vertexCount;
+                        Vertex& nextVertex = ol.vertex(j);
+                        if ( !currentVertex.onCurve() && !nextVertex.onCurve() ) {
+                            Vec3f mp = midpoint(currentVertex.coord(), nextVertex.coord());
+                            // System.err.println("XXX: Cubic: "+i+": "+currentVertex+", "+j+": "+nextVertex);
+                            Vertex v(mp, true);
+                            // COLOR: tmpC1.set(currentVertex.getColor()).add(nextVertex.getColor()).scale(0.5f)
+                            ++i;
+                            ++vertexCount;
+                            ++m_addedVertexCount;
+                            ol.addVertex(i, v);
+                        }
+                    }
+                }
+                if( 0 == vertexCount ) {
+                    jau::eraseFirst(m_outlines, ol); // empty
+                    --cc;
+                    --count;
+                } else if( 0 < vertexCount &&
+                           ol.vertex(0).coord() == ol.lastVertex().coord() )
+                {
+                    ol.removeVertex(vertexCount-1); // closing vertex
+                }
+            }
+            m_outlineState = VertexState::quadratic_nurbs;
+            checkOverlaps();
+        }
+
+        uint32_t generateVertexIds() {
+            uint32_t maxVertexId = 0;
+            for(size_type i=0; i<m_outlines.size(); ++i) {
+                VertexList& vertices = outline(i).vertices();
+                for(auto & vertice : vertices) {
+                    vertice.id() = maxVertexId++;
+                }
+            }
+            return maxVertexId;
+        }
+
+      public:
+        /**
+         * Return list of concatenated vertices associated with all
+         * {@code Outline}s of this object.
+         * <p>
+         * Vertices are cached until marked dirty.
+         * </p>
+         * <p>
+         * Should always be called <i>after</i> {@link #getTriangles(VerticesState)},
+         * since the latter will mark all cached vertices dirty!
+         * </p>
+         */
+        const VertexList& getVertices() {
+            bool updated = false;
+            if( is_set(m_dirtyBits, DirtyBits::vertices ) ) {
+                m_vertices.clear();
+                for(const Outline& ol : m_outlines) {
+                    const VertexList& v = ol.vertices();
+                    m_vertices.push_back(v.begin(), v.end());
+                }
+                m_dirtyBits &= ~DirtyBits::vertices;
+                updated = true;
+            }
+            if(Graph::DEBUG_MODE) {
+                jau::PLAIN_PRINT(true, "OutlineShape.getVertices().X: %u, updated %d", m_vertices.size(), updated);
+                if( updated ) {
+                    size_type i=0;
+                    for(Vertex& v : m_vertices) {
+                        jau::PLAIN_PRINT(false, "- [%u]: %s", i++, v.toString().c_str());
+                    }
+                }
+            }
+            return m_vertices;
+        }
+
+      private:
+        struct SizeDescending {
+            bool operator()(Outline& a, Outline& b) const {
+                return a.compareTo(b) >= 1;
+            }
+        } sizeDescending;
+
+        /**
+         * Sort the outlines from large
+         * to small depending on the AABox
+         */
+        void sortOutlines() {
+            std::sort(m_outlines.begin(), m_outlines.end(), sizeDescending);
+        }
+
+        void triangulateImpl() {
+            if( 0 < m_outlines.size() ) {
+                sortOutlines();
+                generateVertexIds();
+
+                m_triangles.clear();
+                tess::CDTriangulator2D triangulator2d;
+                triangulator2d.setComplexShape( isComplex() );
+                for(Outline& ol : m_outlines) {
+                    triangulator2d.addCurve(m_triangles, ol, m_sharpness);
+                }
+                triangulator2d.generate(m_triangles);
+                m_addedVertexCount += triangulator2d.getAddedVerticeCount();
+                triangulator2d.reset();
+            }
+        }
+
+      public:
+        /**
+         * Triangulate the {@link OutlineShape} generating a list of triangles,
+         * while {@link #transformOutlines(VerticesState)} beforehand.
+         *
+         * Triangles are cached until marked dirty.
+         *
+         * @return an arraylist of triangles representing the filled region
+         * which is produced by the combination of the outlines
+         */
+        const TriangleRefList& getTriangles(VertexState destinationType = VertexState::quadratic_nurbs) {
+            bool updated = false;
+            if(destinationType != VertexState::quadratic_nurbs) {
+                throw jau::IllegalStateError("destinationType "+to_string(destinationType)+" not supported (currently "+to_string(m_outlineState)+")", E_FILE_LINE);
+            }
+            if( is_set(m_dirtyBits, DirtyBits::triangles ) ) {
+                cleanupOutlines();
+                triangulateImpl();
+                updated = true;
+                m_dirtyBits |= DirtyBits::vertices;
+                m_dirtyBits &= ~DirtyBits::triangles;
+            } else {
+                updated = false;
+            }
+            if(Graph::DEBUG_MODE) {
+                jau::PLAIN_PRINT(true, "OutlineShape.getTriangles().X: %u, updated %d", m_triangles.size(), updated);
+                if( updated ) {
+                    size_type i=0;
+                    for(TriangleRef& t : m_triangles) {
+                        jau::PLAIN_PRINT(false, "- [%u]: %s", i++, t->toString().c_str());
+                    }
+                }
+            }
+            return m_triangles;
+        }
+
+      public:
+
+        std::string toString() const noexcept {
+            std::string r("OutlineShape[");
+            r.append("dirty ").append(to_string(m_dirtyBits))
+             .append(", outlines ").append(std::to_string(outlineCount()))
+             .append(", vertices ").append(std::to_string(vertexCount()))
+             .append("]");
+            return r;
+        }
+
+      private:
 
     };
 

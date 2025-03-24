@@ -3,8 +3,7 @@
 #ifndef attributes_glsl
 #define attributes_glsl
 
-// attribute vec3    gca_Vertices;
-attribute vec4    gca_Vertices;
+attribute vec4    gca_Vertex;
 
 /**
  * CDTriangulator2D.extractBoundaryTriangles(..):
@@ -13,19 +12,21 @@ attribute vec4    gca_Vertices;
  *     hole or holeLike: 0 > y
  *     !hole           : 0 < y
  *
- *     0   == gcv_CurveParams.x : vertex-0 of triangle
- *     0.5 == gcv_CurveParams.x : vertex-1 of triangle
- *     1   == gcv_CurveParams.x : vertex-2 of triangle
+ *     0   == gca_CurveParam.x : vertex-0 of triangle
+ *     0.5 == gca_CurveParam.x : vertex-1 of triangle
+ *     1   == gca_CurveParam.x : vertex-2 of triangle
  */
-attribute vec3    gca_CurveParams;
+attribute vec3    gca_CurveParam;
 
-attribute vec4    gca_FboVertices;
-attribute vec2    gca_FboTexCoords;
+attribute vec4    gca_FboVertex;
+attribute vec2    gca_FboTexCoord;
 
 #ifdef USE_COLOR_CHANNEL
-    attribute vec4    gca_Colors;
+    attribute vec4    gca_Color;
 #endif
 
-//attribute vec3    gca_Normals;
+#ifdef USE_NORMAL_CHANNEL
+    attribute vec4    gca_Normal;
+#endif
 
 #endif // attributes_glsl

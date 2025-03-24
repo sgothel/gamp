@@ -18,5 +18,16 @@ varying vec2  gcv_FboTexCoord;
     varying vec4  gcv_Color;
 #endif
 
+#ifdef USE_NORMAL_CHANNEL
+    varying vec3 gcv_Normal;
+#endif
+
+#ifdef USE_LIGHT0
+    varying vec4 gcv_position;
+    varying vec3 gcv_lightDir;
+    varying float gcv_attenuation;
+    varying vec3 gcv_cameraDir;
+#endif
+
 #endif // varyings_glsl
 
