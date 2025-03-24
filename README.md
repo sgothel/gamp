@@ -24,7 +24,9 @@ allowing a similar workflow on native targets *and* within the browser via [WebA
 
 Ironically this will bring back *runs everywhere* including *the web*.
 
-Initial goal is to reimplement [Graph/GraphUI](https://jausoft.com/blog/tag/graph_type_rendering/).
+Initial goal is to reimplement [Graph/GraphUI](https://jausoft.com/blog/tag/graph_type_rendering/)
+utilizing Rami Santina's *Resolution independent NURBS curves rendering using programmable graphics pipeline*
+2011 ([paper](https://jausoft.com/cgit/gamp.git/doc/gpunurbs2011/p70-santina.pdf) [slides](https://jausoft.com/cgit/gamp.git/doc/gpunurbs2011/p70-santina.pdf)).
 
 *Gamp* uses [jaulib](https://jausoft.com/cgit/jaulib.git/about/) for general purpose
 functionality including linear algebra and geometry.
@@ -34,7 +36,14 @@ functionality including linear algebra and geometry.
 
 ## Online WebAssembly Examples
 * [Gears](https://jausoft.com/projects/gamp/GearsES2.html) (source: [rendering](https://jausoft.com/projects/gamp/build/documentation/cpp/html/GearsES2_8hpp-example.html), [input](https://jausoft.com/projects/gamp/build/documentation/cpp/html/GearsES2_8cpp-example.html))
+  - The infamous gears example, here with per-pixel-lighting and ray-cast AABBox selection.
+* [GraphShapes01](https://jausoft.com/projects/gamp/GraphShapes01.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/GraphShapes01_8cpp-example.html))
+  - This is the first C++ example demonstrating [Graph resolution independent GPU curve rendering](https://jausoft.com/blog/tag/graph_type_rendering/).
+    Multiple complex shapes are rotated with front- and back-face using per-pixel-lighting.
+* [Primitives02](https://jausoft.com/projects/gamp/Primitives02.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/Primitives02_8cpp-example.html))
+  - This C++ example demonstrates simple polylines using the the GLU tesselator and per-pixel-lighting.
 * [RedSquare](https://jausoft.com/projects/gamp/RedSquareES2.html) (source: [rendering](https://jausoft.com/projects/gamp/build/documentation/cpp/html/RedSquareES2_8hpp-example.html), [input](https://jausoft.com/projects/gamp/build/documentation/cpp/html/RedSquareES2_8cpp-example.html))
+  - The mandatory most simple example.
 
 ## Earlier Work
 [gfxbox2](https://jausoft.com/cgit/cs_class/gfxbox2.git/about/) of our CS class
@@ -65,12 +74,13 @@ development with whoever might be interested.
 - [ ] Offscreen `Surface` / `FBObject`
 - [ ] Shared `OpenGL` Context
   - Prepared, untested
-- [ ] Primitive rendering API (poly-lines, circle/ball, boxes, textures)
+- [x] Primitive rendering API (poly-lines, circle/ball, boxes, textures)
   - Allow supporting simple applications like gfxbox2 utilizing Gamp
+  - [ ] Enhance and test primitives, porting some gfxbox2 demos/games
 - [ ] `OpenAL` Support
   - Add OO abstraction to simplify usage
-- [ ] `GraphUI` Support
-  - [ ] Basic Graph
+- [x] `GraphUI` Support
+  - [x] Basic Graph
   - [ ] `TTF` Font
   - [ ] `FFMpeg` video playback
   - [ ] `GraphUI` Scenegraph
@@ -82,6 +92,7 @@ with [topics](https://jausoft.com/projects/gamp/build/documentation/cpp/html/top
 
 * [Gamp](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp.html)
   * [Windowing Toolkit](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp__WT.html)
+  * [Graph](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp__Graph.html)
   * [GL Rendering](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp__GL.html)
   * [GL Data](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp__GLData.html)
   * [GL Shader](https://jausoft.com/projects/gamp/build/documentation/cpp/html/group__Gamp__GLSL.html)

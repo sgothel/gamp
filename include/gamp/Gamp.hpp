@@ -190,12 +190,21 @@ namespace gamp {
 /** \example GearsES2.cpp
  * This C++ example uses the simple Launcher01.hpp mainloop framework integration. It creates a window, provides
  * keyboard and pointer interaction including picking, rotate & drag. It
- * uses GearsES2 gamp::wt::RenderListener for rendering.
+ * uses GearsES2 gamp::wt::RenderListener for rendering and uses per-pixel-lighting.
  */
 
 /** \example GearsES2.hpp
  * This C++ demo showcases a simple gamp::wt::RenderListener exposing three shapes, implementing rendering using
  * gamp::render::gl::glsl::ShaderState setup with attributes, uniforms and gamp::render::gl::glsl::ShaderCode.
+ */
+
+/** \example Primitives02.cpp
+ * This C++ example demonstrates simple polylines using the the GLU tesselator and per-pixel-lighting.
+ */
+
+/** \example GraphShapes01.cpp
+ * This is the first C++ example demonstrating Graph resolution independent GPU curve rendering.
+ * Multiple complex shapes are rotated with front- and back-face as well as per-pixel-lighting.
  */
 
 #endif /*  JAU_GAMP_HPP_ */
