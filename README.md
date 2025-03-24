@@ -26,7 +26,7 @@ Ironically this will bring back *runs everywhere* including *the web*.
 
 Initial goal is to reimplement [Graph/GraphUI](https://jausoft.com/blog/tag/graph_type_rendering/)
 utilizing Rami Santina's *Resolution independent NURBS curves rendering using programmable graphics pipeline*
-2011 ([paper](https://jausoft.com/cgit/gamp.git/doc/gpunurbs2011/p70-santina.pdf) [slides](https://jausoft.com/cgit/gamp.git/doc/gpunurbs2011/p70-santina.pdf)).
+2011 ([paper](https://jausoft.com/cgit/gamp.git/plain/doc/gpunurbs2011/p70-santina.pdf), [slides](https://jausoft.com/cgit/gamp.git/plain/doc/gpunurbs2011/graphicon2011-slides.pdf)).
 
 *Gamp* uses [jaulib](https://jausoft.com/cgit/jaulib.git/about/) for general purpose
 functionality including linear algebra and geometry.
