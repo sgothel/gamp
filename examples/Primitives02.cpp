@@ -11,6 +11,8 @@
 
 #include <cstdio>
 #include <cmath>
+#include <gamp/graph/PrimTypes.hpp>
+#include <gamp/render/gl/data/GLBuffers.hpp>
 #include <memory>
 #include <vector>
 
@@ -34,7 +36,6 @@
 #include <gamp/render/gl/data/GLUniformData.hpp>
 #include <gamp/render/gl/glsl/ShaderState.hpp>
 
-#include <gamp/graph/OutlineShape.hpp>
 #include <gamp/graph/tess/gl/GLUTesselator.hpp>
 
 #include "../demos/GLLauncher01.hpp"
@@ -62,6 +63,9 @@ struct PMVMat4fUniform {
     {}
 };
 
+class Shape;
+typedef std::shared_ptr<Shape> ShapeRef;
+
 class Shape {
   private:
     ShaderState& m_st;
@@ -74,6 +78,7 @@ class Shape {
     Vec3f m_rotPivot;
     Vec3f m_scale = Vec3f(1, 1, 1);
     float m_zOffset;
+    GLFloatArrayDataServerRef m_array;
     GLUniformVec4fRef m_uColor;
 
     Mat4f iMat;
@@ -81,12 +86,23 @@ class Shape {
     bool iMatIdent = true;
     bool iMatDirty = false;
 
+    struct Private{ explicit Private() = default; };
+
   public:
-    Shape(ShaderState &st, PMVMat4fUniform& pmvMatU)
-    : m_st(st), m_pmvMat(pmvMatU), m_oshape(3, 16)
+    Shape(Private, ShaderState &st, PMVMat4fUniform& pmvMatU)
+    : m_st(st), m_pmvMat(pmvMatU), m_oshape(3, 16),
+      m_array(GLFloatArrayDataServer::createGLSLInterleaved(2*3, false, 256, GL_STATIC_DRAW))
     {
+        m_array->addGLSLSubArray("mgl_Vertex", 3, GL_ARRAY_BUFFER);
+        m_array->addGLSLSubArray("mgl_Normal", 3, GL_ARRAY_BUFFER);
+        m_st.ownAttribute(m_array, true);
+
         m_uColor = GLUniformVec4f::create("mgl_StaticColor", Vec4f(0, 0, 0, 1));
         m_st.ownUniform(m_uColor, true);
+    }
+
+    static ShapeRef create(ShaderState &st, PMVMat4fUniform& pmvMatU) {
+        return std::make_shared<Shape>(Private(), st, pmvMatU);
     }
 
     constexpr const Vec3f& position() const noexcept { return m_position; }
@@ -110,21 +126,23 @@ class Shape {
     const Vec4f& color() const noexcept { return m_uColor->vec4f(); }
     void setColor(const Vec4f& c) noexcept { m_uColor->vec4f()=c; }
 
-    void update(const GLFloatArrayDataServerRef& array) {
-        m_segments = GLUtilTesselator(GLUtilTesselator::FLAG_VERBOSE | GLUtilTesselator::FLAG_NORMAL, *array).tesselate(m_oshape);
+    void update(GL& gl) {
+        m_segments = GLUtilTesselator::tesselate(GLUtilTesselator::FLAG_VERBOSE | GLUtilTesselator::FLAG_NORMAL, *m_array, m_oshape);
         jau::INFO_PRINT("\n%s", GLUtilTesselator::Segment::toString("- ", m_segments).c_str() );
+        m_array->seal(gl, true);
     }
+
     void draw(GL &gl) {
         m_pmvMat.m.pushMv();
         applyMatToMv(m_pmvMat.m);
         m_st.pushUniform(gl, m_pmvMat.u); // automatic sync + update of Mvi + Mvit
 
         m_st.pushUniform(gl, m_uColor);
-
+        m_array->enableBuffer(gl, true);
         for(const GLUtilTesselator::Segment& s : m_segments ) {
             ::glDrawArrays(s.type, s.first, s.count);
         }
-
+        m_array->enableBuffer(gl, false);
         m_pmvMat.m.popMv();
     }
 
@@ -200,7 +218,6 @@ class Shape {
         iMatDirty = false;
     }
 };
-typedef std::shared_ptr<Shape> ShapeRef;
 
 class Primitives02 : public RenderListener {
   private:
@@ -215,19 +232,13 @@ class Primitives02 : public RenderListener {
     bool m_oneframe = false;
     jau::fraction_timespec m_tlast;
     PMVMat4fUniform  m_pmvMat;
-    Vec4f mgl_ColorStatic = Vec4f(0, 0, 0, 1);
-    GLFloatArrayDataServerRef m_array;
     std::vector<ShapeRef> m_shapes;
 
   public:
     Primitives02()
     : RenderListener(RenderListener::Private()),
-      m_initialized(false),
-      m_array(GLFloatArrayDataServer::createGLSLInterleaved(2*3, false, 256, GL_STATIC_DRAW))
+      m_initialized(false)
     {
-        m_array->addGLSLSubArray("mgl_Vertex", 3, GL_ARRAY_BUFFER);
-        m_array->addGLSLSubArray("mgl_Normal", 3, GL_ARRAY_BUFFER);
-        m_st.ownAttribute(m_array, true);
     }
 
     Recti& viewport() noexcept { return m_viewport; }
@@ -291,7 +302,7 @@ class Primitives02 : public RenderListener {
             const float x2 =  x1 + width;
             const float y2 =  y1 + height;
             float z = dz;
-            ShapeRef frontShape = std::make_shared<Shape>(m_st, m_pmvMat);
+            ShapeRef frontShape = Shape::create(m_st, m_pmvMat);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
             {
@@ -314,14 +325,14 @@ class Primitives02 : public RenderListener {
                 oshape.lineTo(x1+dxy, y1+dxy, z);
                 oshape.closePath();
             }
-            frontShape->update(m_array);
+            frontShape->update(gl);
             frontShape->setColor(Vec4f(0.05f, 0.05f, 0.5f, 1));
             frontShape->position().x =  1.5f;
 
-            ShapeRef backShape = std::make_shared<Shape>(m_st, m_pmvMat);
+            ShapeRef backShape = Shape::create(m_st, m_pmvMat);
             m_shapes.push_back(backShape);
             backShape->outlines() = oshape.flipFace();
-            backShape->update(m_array);
+            backShape->update(gl);
             backShape->setColor(Vec4f(0.4f, 0.4f, 0.1f, 1));
             backShape->position().x =  1.5f;
         }
@@ -336,7 +347,7 @@ class Primitives02 : public RenderListener {
             float thh = height/2.0f;
 
             float ctrX = 0, ctrY = 0, ctrZ = dz;
-            ShapeRef frontShape = std::make_shared<Shape>(m_st, m_pmvMat);
+            ShapeRef frontShape = Shape::create(m_st, m_pmvMat);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
             // CCW
@@ -355,18 +366,17 @@ class Primitives02 : public RenderListener {
             oshape.lineTo(ctrX-lwh, ctrY+thh, ctrZ); // vert: left-top
             oshape.closePath();
             // shape1->seal(gl, true);
-            frontShape->update(m_array);
+            frontShape->update(gl);
             frontShape->setColor(Vec4f(0.5f, 0.05f, 0.05f, 1));
             frontShape->position().x = -1.5f;
 
-            ShapeRef backShape = std::make_shared<Shape>(m_st, m_pmvMat);
+            ShapeRef backShape = Shape::create(m_st, m_pmvMat);
             m_shapes.push_back(backShape);
             backShape->outlines() = oshape.flipFace();
-            backShape->update(m_array);
+            backShape->update(gl);
             backShape->setColor(Vec4f(0.2f, 0.2f, 0.2f, 1));
             backShape->position().x = -1.5f;
         }
-        m_array->seal(gl, true);
 
         ::glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
         ::glEnable(GL_DEPTH_TEST);
@@ -399,7 +409,7 @@ class Primitives02 : public RenderListener {
         m_pmvMat.m.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
         m_st.useProgram(gl, true);
         m_st.pushUniform(gl, m_pmvMat.u); // automatic sync + update of Mvi + Mvit
-        m_st.useProgram(gl, true);
+        // m_st.useProgram(gl, false);
     }
 
     void display(const WindowRef& win, const jau::fraction_timespec& when) override {
@@ -414,7 +424,6 @@ class Primitives02 : public RenderListener {
         m_pmvMat.m.getMv().loadIdentity();
         m_pmvMat.m.translateMv(0, 0, -5);
 
-        m_array->enableBuffer(gl, true);
         for(const ShapeRef& s : m_shapes) {
             if( animating() || m_oneframe ) {
                 constexpr double angle_per_sec = 30;
@@ -424,8 +433,7 @@ class Primitives02 : public RenderListener {
             s->draw(gl);
         }
         m_oneframe = false;
-        m_array->enableBuffer(gl, false);
-        m_st.useProgram(gl, false);
+        // m_st.useProgram(gl, false);
 
         m_tlast = when;
     }
