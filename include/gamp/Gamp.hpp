@@ -158,6 +158,14 @@ namespace gamp {
              */
             const bool DEBUG_RENDER_GL_GLSL_STATE;
 
+            /**
+             * Debug Graph Renderer
+             *
+             * Environment variable is 'gamp.debug.graph.render'.
+             *
+             */
+            const bool DEBUG_GRAPH_RENDER;
+
         public:
             static GampEnv& get() noexcept {
                 static GampEnv e;

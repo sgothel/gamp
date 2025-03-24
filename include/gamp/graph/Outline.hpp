@@ -27,8 +27,7 @@ namespace gamp::graph {
     using jau::math::geom::AABBox3f;
     using jau::math::geom::plane::AffineTransform;
 
-    /** @defgroup Gamp_Graph Gamp Graph
-     *  Basic Graph Framework
+    /** \addtogroup Gamp_Graph
      *
      *  @{
      */

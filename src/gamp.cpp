@@ -20,6 +20,7 @@
 #include <gamp/render/RenderContext.hpp>
 #include <gamp/render/gl/glsl/ShaderCode.hpp>
 #include <gamp/render/gl/glsl/ShaderState.hpp>
+#include <gamp/graph/Graph.hpp>
 
 static std::string m_asset_dir;
 
@@ -51,7 +52,8 @@ gamp::GampEnv::GampEnv() noexcept
   exploding( true ), // jau::environment::getExplodingProperties("gamp_debug") ),
   DEBUG_WT_EVENT( jau::environment::getBooleanProperty("gamp.debug.wt.event", false) ),
   DEBUG_RENDER_GL_GLSL_CODE( jau::environment::getBooleanProperty("gamp.debug.render.gl.glsl.code", false) ),
-  DEBUG_RENDER_GL_GLSL_STATE( jau::environment::getBooleanProperty("gamp.debug.render.gl.glsl.state", false) )
+  DEBUG_RENDER_GL_GLSL_STATE( jau::environment::getBooleanProperty("gamp.debug.render.gl.glsl.state", false) ),
+  DEBUG_GRAPH_RENDER( jau::environment::getBooleanProperty("gamp.debug.graph.render", false) )
 {
     jau::INFO_PRINT("GampEnv: Debug[global %d, wt.event %d, render.gl.glsl[code %d, state %d]]",
         DEBUG_GLOBAL, DEBUG_WT_EVENT, DEBUG_RENDER_GL_GLSL_CODE, DEBUG_RENDER_GL_GLSL_STATE);
@@ -68,5 +70,4 @@ std::string gamp::render::RenderContext::toString() const {
 
 bool gamp::render::gl::glsl::ShaderCode::DEBUG_CODE = GampEnv::get().DEBUG_RENDER_GL_GLSL_CODE;
 bool gamp::render::gl::glsl::ShaderState::DEBUG_STATE = GampEnv::get().DEBUG_RENDER_GL_GLSL_STATE;
-
-
+bool gamp::graph::Graph::DEBUG_MODE = GampEnv::get().DEBUG_GRAPH_RENDER;
