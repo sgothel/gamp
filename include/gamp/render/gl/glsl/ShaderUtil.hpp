@@ -29,6 +29,7 @@ namespace gamp::render::gl::glsl {
     typedef std::vector<GLfloat> float_list_t;
     typedef std::string string_t;
     typedef std::string_view stringview_t;
+    typedef std::vector<stringview_t> stringview_list_t;
     typedef std::vector<string_t> string_list_t;
     typedef std::vector<string_list_t> source_list_t;
     typedef std::vector<uint8_t> bytes_t;

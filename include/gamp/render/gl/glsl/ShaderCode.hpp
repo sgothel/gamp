@@ -448,8 +448,8 @@ namespace gamp::render::gl::glsl {
          * @since 2.3.2
          */
         static ShaderCodeRef create(GL& gl, GLenum type, size_t count,
-                                    const string_t& srcRoot, const string_list_t& srcBasenames, const string_t& srcSuffixOpt,
-                                    const string_t& binRoot, const string_t& binBasename, const string_t& binSuffixOpt) noexcept {
+                                    stringview_t srcRoot, const string_list_t& srcBasenames, stringview_t srcSuffixOpt,
+                                    stringview_t binRoot, stringview_t binBasename, stringview_t binSuffixOpt) noexcept {
             ShaderCodeRef res;
             string_t srcPathsString;
             string_t binFileName;
@@ -457,7 +457,7 @@ namespace gamp::render::gl::glsl {
             if( !srcBasenames.empty() && ShaderUtil::isShaderCompilerAvailable(gl) ) {
                 string_list_t srcPaths;
                 srcPaths.resize(srcBasenames.size());
-                string_t srcSuffix = !srcSuffixOpt.empty() ? srcSuffixOpt : string_t(getFileSuffix(false, type));
+                stringview_t srcSuffix = !srcSuffixOpt.empty() ? srcSuffixOpt : getFileSuffix(false, type);
                 if( !srcRoot.empty() ) {
                     for(size_t i=0; i<srcPaths.size(); ++i) {
                         srcPaths[i] = string_t(srcRoot).append("/").append(srcBasenames[i]).append(".").append(srcSuffix);
@@ -480,7 +480,7 @@ namespace gamp::render::gl::glsl {
             }
             if( !binBasename.empty() ) {
                 name_list_t binFmts = ShaderUtil::getShaderBinaryFormats(gl);
-                string_t binSuffix = !binSuffixOpt.empty() ? binSuffixOpt : string_t(getFileSuffix(true, type));
+                stringview_t binSuffix = !binSuffixOpt.empty() ? binSuffixOpt : getFileSuffix(true, type);
                 for(GLenum bFmt : binFmts) {
                     string_t bFmtPath = string_t(getBinarySubPath(bFmt));
                     if(bFmtPath.empty()) continue;
@@ -568,8 +568,8 @@ namespace gamp::render::gl::glsl {
          * @see #getBinarySubPath(int)
          */
         static ShaderCodeRef create(GL& gl, GLenum type, size_t count,
-                                    const string_t& srcRoot, const string_list_t& srcBasenames,
-                                    const string_t& binRoot, const string_t& binBasename) noexcept {
+                                    stringview_t srcRoot, const string_list_t& srcBasenames,
+                                    stringview_t binRoot, stringview_t binBasename) noexcept {
                 return create(gl, type, count, srcRoot, srcBasenames, "", binRoot, binBasename, "");
         }
 
@@ -626,9 +626,9 @@ namespace gamp::render::gl::glsl {
          * @see #create(GL2ES2, int, int, Class, String, String[], String, String, String, String, boolean)
          * @since 2.3.2
          */
-        static ShaderCodeRef create(GL& gl, GLenum type, const string_t& srcRoot, const string_t& binRoot,
-                                    const string_t& basename, const string_t& srcSuffixOpt, const string_t& binSuffixOpt) noexcept {
-            string_list_t srcBasenames = { basename };
+        static ShaderCodeRef create(GL& gl, GLenum type, stringview_t srcRoot, stringview_t binRoot,
+                                    stringview_t basename, stringview_t srcSuffixOpt, stringview_t binSuffixOpt) noexcept {
+            string_list_t srcBasenames = { string_t(basename) };
             return create(gl, type, 1, srcRoot, srcBasenames, srcSuffixOpt, binRoot, basename, binSuffixOpt);
         }
 
@@ -679,7 +679,7 @@ namespace gamp::render::gl::glsl {
          * @return successfully created valid ShaderCodeRef or nullptr on failure
          */
         static ShaderCodeRef create(GL& gl, GLenum type,
-                                    const string_t& srcRoot, const string_t& binRoot, const string_t& basename) noexcept {
+                                    stringview_t srcRoot, stringview_t binRoot, stringview_t basename) noexcept {
             return create(gl, type, srcRoot, binRoot, basename, "", "");
         }
 
@@ -806,7 +806,7 @@ namespace gamp::render::gl::glsl {
          * @param data the text to be inserted. Shall end with an EOL '\n' character.
          * @return index after the inserted <code>data</code> or std::string::npos if tag wasn't found or on error
          */
-        size_t insertShaderSource(size_t shaderIdx, const string_t& tag, size_t fromIndex, const string_t& data) noexcept {
+        size_t insertShaderSource(size_t shaderIdx, stringview_t tag, size_t fromIndex, stringview_t data) noexcept {
             if(m_shaderSource.empty()) {
                 ERR_PRINT("no shader source");
                 return string_t::npos;
@@ -859,7 +859,7 @@ namespace gamp::render::gl::glsl {
          * @param data the text to be inserted. Shall end with an EOL '\n' character
          * @return index after the inserted `data` or std::string::npos on error
          */
-        size_t insertShaderSource(size_t shaderIdx, size_t position, const string_t& data) noexcept {
+        size_t insertShaderSource(size_t shaderIdx, size_t position, stringview_t data) noexcept {
             if(m_shaderSource.empty()) {
                 ERR_PRINT("no shader source");
                 return string_t::npos;
@@ -896,19 +896,13 @@ namespace gamp::render::gl::glsl {
 
         /**
          * Adds shader source located in <code>path</code>,
-         * either relative to the <code>context</code> class or absolute <i>as-is</i>
+         * either relative to the <code>location</code> or absolute <i>as-is</i>
          * at <code>position</code> in shader source for shader <code>shaderIdx</code>.
-         * <p>
-         * Final location lookup is performed via {@link ClassLoader#getResource(String)} and {@link ClassLoader#getSystemResource(String)},
-         * see {@link IOUtil#getResource(Class, String)}.
-         * </p>
          *
          * @param shaderIdx the shader index to be used.
          * @param position in shader source segments of shader <code>shaderIdx</code>, -1 will append data
-         * @param context class used to help resolve the source location
          * @param path location of shader source
          * @return index after the inserted code or std::string::npos on error
-         * @see IOUtil#getResource(Class, String)
          */
         size_t insertShaderSourceFile(size_t shaderIdx, size_t position, const string_t& path) noexcept {
             string_t data;
@@ -1011,7 +1005,8 @@ namespace gamp::render::gl::glsl {
          * @param result storage to appends the source code
          * @return true if successful, otherwise false
          */
-        static bool readShaderSource(const string_t& path, string_t& result) noexcept {
+        static bool readShaderSource(stringview_t path0, string_t& result) noexcept {
+            const string_t path(path0);
             const string_t conn = gamp::resolve_asset(path);
             if( DEBUG_CODE ) {
                 jau::PLAIN_PRINT(true, "readShaderSource: %s -> %s", path.c_str(), conn.c_str());
@@ -1032,7 +1027,7 @@ namespace gamp::render::gl::glsl {
          * @return a non empty string containing the source code if successful, otherwise an empty string
          * @see gamp::resolve_asset
          */
-        static string_t readShaderSource(const string_t& path) noexcept {
+        static string_t readShaderSource(stringview_t path) noexcept {
             string_t result;
             if( !readShaderSource(path, result) ) {
                 result.clear();
