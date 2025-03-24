@@ -94,19 +94,19 @@ namespace gamp::graph::tess {
 
       private:
         GLFloatArrayDataServer& m_array;
-        GLIntArrayDataServer* m_indices;
+        GLUIntArrayDataServer* m_indices;
         SegmentList m_segments;
         std::vector<std::shared_ptr<Vertex>> m_vcache;
         Vec3f m_normal;
-        int m_nextIndex = 0;
-        int m_curIndex = 0;
+        uint32_t m_nextIndex = 0;
+        uint32_t m_curIndex = 0;
         int m_flags;
 
       public:
         GLUtilTesselator(int flags, GLFloatArrayDataServer& array) noexcept
         : GLUtilTesselator(flags, array, nullptr) {}
 
-        GLUtilTesselator(int flags, GLFloatArrayDataServer& array, GLIntArrayDataServer* indices) noexcept
+        GLUtilTesselator(int flags, GLFloatArrayDataServer& array, GLUIntArrayDataServer* indices) noexcept
         : m_array(array), m_indices(indices),
           m_flags(flags)
         {
@@ -144,7 +144,7 @@ namespace gamp::graph::tess {
             Segment s{.type=type, .first=castOrThrow<size_t, GLint>(os->m_array.elemCount()), .count=0 };
             os->m_segments.push_back(s);
             if( os->m_indices ) {
-                os->m_indices->puti(os->m_curIndex);
+                os->m_indices->putu32(os->m_curIndex);
             }
             if( os->verbose() ) {
                 jau::INFO_PRINT("GLUtess begin %02d, type 0x%X, %s", os->m_curIndex, type, s.toString().c_str());
@@ -190,7 +190,7 @@ namespace gamp::graph::tess {
                 Vertex* s = (Vertex*) data[i];
                 if( !s ) { break; }
                 for (int j = 0; j < 3; ++j) {
-                    v->color()[j]    += (float)( weight[i] * s->color()[j] );
+                    // v->color()[j]    += (float)( weight[i] * s->color()[j] );
                     v->texCoord()[j] += (float)( weight[i] * s->texCoord()[j] );
                 }
             }
@@ -198,6 +198,14 @@ namespace gamp::graph::tess {
         }
 
       public:
+        static SegmentList tesselate(int flags, GLFloatArrayDataServer& array, OutlineShape& outlines) {
+            GLUtilTesselator glutess(flags, array);
+            return glutess.tesselate(outlines);
+        }
+        static SegmentList tesselate(int flags, GLFloatArrayDataServer& array, GLUIntArrayDataServer* indices, OutlineShape& outlines) {
+            GLUtilTesselator glutess(flags, array, indices);
+            return glutess.tesselate(outlines);
+        }
         const SegmentList& tesselate(OutlineShape& outlines) {
             const bool odirty = outlines.verticesDirty() || outlines.trianglesDirty();
             size_t outlineCount = 0;
@@ -238,7 +246,7 @@ namespace gamp::graph::tess {
                     gluTessEndPolygon(tess);
                 }
                 gluDeleteTess(tess);
-                outlines.markClean(OutlineShape::DIRTY_VERTICES | OutlineShape::DIRTY_TRIANGLES);
+                // FIXME outlines.markClean(OutlineShape::DirtyBits::vertices | OutlineShape::DirtyBits::triangles);
             }
             if( verbose() ) {
                 jau::INFO_PRINT("GLUtess: outlines: %zu", outlineCount);
