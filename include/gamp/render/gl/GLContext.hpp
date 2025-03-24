@@ -162,7 +162,16 @@ namespace gamp::render::gl {
           m_glslVersion(getGLSLVersionNumber(RenderProfile::version(), m_profileMask))
         {}
 
-        const jau::type_info& signature() const noexcept override { return jau::static_ctti<GLProfile>(); }
+        static const jau::type_info& GLSignature() noexcept { return jau::static_ctti<GLProfile>(); }
+        const jau::type_info& signature() const noexcept override { return GLSignature(); }
+
+        /// Downcast dereferenced given `const RenderProfile&` to `const GLProfile&`, throws exception if signature doesn't match GLSignature()
+        static const GLProfile& downcast(const RenderProfile& rp) {
+            if( rp.signature() == GLSignature() ) {
+                return static_cast<const GLProfile&>(rp);
+            }
+            throw jau::IllegalArgumentError("Not a GLProfile: "+rp.toString(), E_FILE_LINE);
+        }
 
         constexpr const jau::util::VersionNumber& glslVersion() const noexcept { return m_glslVersion; }
         constexpr GLProfileMask profileMask() const noexcept { return m_profileMask; }

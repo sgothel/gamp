@@ -95,7 +95,7 @@ gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceRef& surf
             (void*)shareWith, profile.toString().c_str(), to_string(contextFlags).c_str(), surface->toString().c_str());
     }
     SDL_Window* sdl_win = reinterpret_cast<SDL_Window*>(surface->surfaceHandle()); // NOLINT
-    // Create OpenGL ES 3 or ES 2 context on SDL window
+    // Create OpenGL context on SDL window
     surface->setSwapIntervalImpl( surface->swapInterval() );
     {
         int ctxFlags = 0;
@@ -114,13 +114,32 @@ gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceRef& surf
     if( verbose ) {
         printf("Surface::createContext.1: surface %s\n", surface->toString().c_str());
     }
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+
+    GLProfile glp_in;
+    bool use_glp_core = false;
+    if( profile.signature() == GLProfile::GLSignature() ) {
+        glp_in = GLProfile::downcast(profile);
+        if( !glp_in.isGLES() ) {
+            use_glp_core = true;
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+            if( glp_in.version().major() >= 4 ) {
+                SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+            } else if( glp_in.version().major() >= 3 ) {
+                SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+            }
+        }
+    }
+    if( !use_glp_core ) {
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    }
     SDL_GLContext sdl_glc = SDL_GL_CreateContext(sdl_win);
     if (nullptr == sdl_glc) {
+        if( use_glp_core ) {
+            printf("SDL: Error creating %s context: %s\n", glp_in.toString().c_str(), SDL_GetError());
+            return nullptr;
+        }
         printf("SDL: Error creating GL ES 3 context: %s\n", SDL_GetError());
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -172,8 +191,14 @@ gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceRef& surf
     if( 0 != ( nContextFlags & SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG ) ) {
         ctxFlags |= gamp::render::RenderContextFlags::robust;
     }
-    render::gl::GLProfile glp(jau::util::VersionNumber(major, minor, 0), profileMask);
-    return render::gl::GLContext::create(surface, (handle_t)sdl_glc, std::move(glp), ctxFlags, gl_version_cstr); // current!
+    GLVersionNumber glv = GLVersionNumber::create(gl_version_cstr);
+    render::gl::GLProfile glp_out(glv, profileMask);
+    if( verbose ) {
+        render::gl::GLProfile glp_out0(jau::util::VersionNumber(major, minor, 0), profileMask);
+        printf("Surface::createContext.2: GLProfile (query)   %s\n", glp_out0.toString().c_str());
+        printf("Surface::createContext.2: GLProfile (version) %s\n", glp_out.toString().c_str());
+    }
+    return render::gl::GLContext::create(surface, (handle_t)sdl_glc, std::move(glp_out), ctxFlags, gl_version_cstr); // current!
 }
 
 
