@@ -53,8 +53,7 @@ namespace gamp::wt::event {
         bool setPressed(VKeyCode keyCode, bool pressed) {
             const size_t v = 0xFFFFU & *keyCode;
             if( v < m_keybuffer.bit_size ) {
-                m_keybuffer.put(v, pressed);
-                return true;
+                return m_keybuffer.put(v, pressed);
             }
             return false;
         }

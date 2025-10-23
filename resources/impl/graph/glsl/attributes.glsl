@@ -16,17 +16,17 @@ attribute vec4    gca_Vertex;
  *     0.5 == gca_CurveParam.x : vertex-1 of triangle
  *     1   == gca_CurveParam.x : vertex-2 of triangle
  */
-attribute vec3    gca_CurveParam;
+attribute vec3 gca_CurveParam;
 
-attribute vec4    gca_FboVertex;
-attribute vec2    gca_FboTexCoord;
+attribute vec4 gca_FboVertex;
+attribute vec2 gca_FboTexCoord;
 
 #ifdef USE_COLOR_CHANNEL
-    attribute vec4    gca_Color;
+    attribute vec4 gca_Color;
 #endif
 
 #ifdef USE_NORMAL_CHANNEL
-    attribute vec4    gca_Normal;
+    attribute vec3 gca_Normal;
 #endif
 
 #endif // attributes_glsl

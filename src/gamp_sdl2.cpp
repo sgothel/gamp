@@ -171,7 +171,7 @@ bool gamp::init_gfx_subsystem(const char* exe_path) {
         // printf("SDL Timer-Sync: jau_t1: %s\n", jau_t1.to_string().c_str());
         // printf("SDL Timer-Sync: sdl_t1: %s\n", sdl_t1.to_string().c_str());
         const jau::fraction_timespec td = jau_t1 - sdl_t1;
-        printf("SDL Timer-Sync:     td: %s\n", td.to_string().c_str());
+        printf("SDL Timer-Sync:     td: %s\n", td.toString().c_str());
     }
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {  // SDL_INIT_EVERYTHING
         printf("SDL: Error initializing VIDEO/EVENTS: %s\n", SDL_GetError());

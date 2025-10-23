@@ -43,7 +43,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                         break;
                     default:
                         if(throwException) {
-                            throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::to_hexstring(type), E_FILE_LINE);
+                            throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::toHexString(type), E_FILE_LINE);
                         }
                         return false;
                 }
@@ -69,7 +69,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                         break;
                     default:
                         if(throwException) {
-                            throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::to_hexstring(type), E_FILE_LINE);
+                            throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::toHexString(type), E_FILE_LINE);
                         }
                         return false;
                 }
@@ -92,7 +92,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                         break;
                     default:
                         if(throwException) {
-                            throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::to_hexstring(type), E_FILE_LINE);
+                            throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GLES1: "+jau::toHexString(type), E_FILE_LINE);
                         }
                         return false;
                 }
@@ -127,7 +127,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                 break;
             default:
                 if(throwException) {
-                    throw RenderException("Illegal data type on profile GLES3: "+jau::to_hexstring(type), E_FILE_LINE);
+                    throw RenderException("Illegal data type on profile GLES3: "+jau::toHexString(type), E_FILE_LINE);
                 }
                 return false;
         }
@@ -157,7 +157,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                 break;
             default:
                 if(throwException) {
-                    throw RenderException("Illegal data type on profile GLES2: "+jau::to_hexstring(type), E_FILE_LINE);
+                    throw RenderException("Illegal data type on profile GLES2: "+jau::toHexString(type), E_FILE_LINE);
                 }
                 return false;
         }
@@ -194,7 +194,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                     break;
                 default:
                     if(throwException) {
-                        throw RenderException("Illegal data type on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
+                        throw RenderException("Illegal data type on profile GL2: "+jau::toHexString(type), E_FILE_LINE);
                     }
                     return false;
             }
@@ -222,7 +222,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
+                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::toHexString(type), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -249,7 +249,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
+                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::toHexString(type), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -277,7 +277,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
+                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::toHexString(type), E_FILE_LINE);
                             }
                             return false;
                     }
@@ -302,7 +302,7 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
                             break;
                         default:
                             if(throwException) {
-                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::to_hexstring(type), E_FILE_LINE);
+                                throw RenderException("Illegal data type for "+std::string(getGLArrayName(index))+" on profile GL2: "+jau::toHexString(type), E_FILE_LINE);
                             }
                             return false;
                     }

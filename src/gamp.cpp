@@ -14,8 +14,8 @@
 #include <ctime>
 #include <jau/debug.hpp>
 #include <jau/environment.hpp>
-#include <jau/file_util.hpp>
 #include <jau/string_util.hpp>
+#include <jau/io/file_util.hpp>
 
 #include <gamp/render/RenderContext.hpp>
 #include <gamp/render/gl/glsl/ShaderCode.hpp>
@@ -29,18 +29,18 @@ static std::string m_asset_dir;
 //
 
 std::string gamp::lookup_and_register_asset_dir(const char* exe_path, const char* asset_file, const char* asset_install_subdir) noexcept {
-    m_asset_dir = jau::fs::lookup_asset_dir(exe_path, asset_file, asset_install_subdir);
+    m_asset_dir = jau::io::fs::lookup_asset_dir(exe_path, asset_file, asset_install_subdir);
     return m_asset_dir;
 }
 std::string gamp::asset_dir() noexcept { return m_asset_dir; }
 
 std::string gamp::resolve_asset(const std::string &asset_file, bool lookup_direct) noexcept {
-    if( lookup_direct && jau::fs::exists(asset_file) ) {
+    if( lookup_direct && jau::io::fs::exists(asset_file) ) {
         return asset_file;
     }
     if( m_asset_dir.size() ) {
         std::string fname1 = m_asset_dir+"/"+asset_file;
-        if( jau::fs::exists(fname1) ) {
+        if( jau::io::fs::exists(fname1) ) {
             return fname1;
         }
     }
@@ -62,10 +62,10 @@ gamp::GampEnv::GampEnv() noexcept
 std::string gamp::render::RenderContext::toString() const {
     return std::string("RC[")
        .append(signature().name()).append(", ")
-       .append(jau::to_hexstring(m_context)).append(", ")
+       .append(jau::toHexString(m_context)).append(", ")
        .append(to_string(contextFlags())).append(", ")
        .append(version().toString()).append(" -> surface ")
-       .append(m_surface?jau::to_hexstring(m_surface->surfaceHandle()):"nil").append("]");
+       .append(m_surface?jau::toHexString(m_surface->surfaceHandle()):"nil").append("]");
 }
 
 bool gamp::render::gl::glsl::ShaderCode::DEBUG_CODE = GampEnv::get().DEBUG_RENDER_GL_GLSL_CODE;

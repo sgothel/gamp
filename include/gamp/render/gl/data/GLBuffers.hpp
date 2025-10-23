@@ -565,7 +565,7 @@ namespace gamp::render::gl::data {
                   if (GL_COLOR_INDEX == format || GL_STENCIL_INDEX == format) {
                       compSize = 1;
                   } else {
-                      throw RenderException("BITMAP type only supported for format COLOR_INDEX and STENCIL_INDEX, not "+jau::to_hexstring(format), E_FILE_LINE);
+                      throw RenderException("BITMAP type only supported for format COLOR_INDEX and STENCIL_INDEX, not "+jau::toHexString(format), E_FILE_LINE);
                   }
                   break;
                 case GL_BYTE:
@@ -625,7 +625,7 @@ namespace gamp::render::gl::data {
                   break;
 
                 default:
-                  throw RenderException("type "+jau::to_hexstring(type)+"/"+"format "+jau::to_hexstring(format)+" not supported [yet], pls notify the maintainer in case this is our bug.", E_FILE_LINE);
+                  throw RenderException("type "+jau::toHexString(type)+"/"+"format "+jau::toHexString(format)+" not supported [yet], pls notify the maintainer in case this is our bug.", E_FILE_LINE);
             }
             return compCount * compSize;
         }
@@ -707,7 +707,7 @@ namespace gamp::render::gl::data {
                   elements = 2;
                   break; */
                 default:
-                  throw RenderException("format "+jau::to_hexstring(format)+" not supported [yet], pls notify the maintainer in case this is our bug.", E_FILE_LINE);
+                  throw RenderException("format "+jau::toHexString(format)+" not supported [yet], pls notify the maintainer in case this is our bug.", E_FILE_LINE);
             }
             return compCount;
         }

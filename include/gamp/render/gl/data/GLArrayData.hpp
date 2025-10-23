@@ -99,7 +99,7 @@ namespace gamp::render::gl::data {
          * @see setLocation(int)
          * @see setLocation(GL2ES2, int)
          */
-        void setName(const std::string& newName) noexcept {
+        void setName(std::string_view newName) noexcept {
             m_location = -1;
             m_name = newName;
         }
@@ -337,13 +337,13 @@ namespace gamp::render::gl::data {
             r.append("[").append(m_name)
              .append(", location ").append(std::to_string(m_location))
              .append(", isVertexAttribute ").append(std::to_string(m_isVertexAttr))
-             .append(", dataType ").append(jau::to_hexstring(m_compType))
+             .append(", dataType ").append(jau::toHexString(m_compType))
              .append(", compsPerElem ").append(std::to_string(m_compsPerElement))
              .append(", stride ").append(std::to_string(m_strideB)).append("b ").append(std::to_string(m_strideL)).append("c")
              .append(", vboEnabled ").append(std::to_string(m_vboEnabled))
              .append(", vboName ").append(std::to_string(m_vboName))
-             .append(", vboUsage ").append(jau::to_hexstring(m_vboUsage))
-             .append(", vboTarget ").append(jau::to_hexstring(m_vboTarget))
+             .append(", vboUsage ").append(jau::toHexString(m_vboUsage))
+             .append(", vboTarget ").append(jau::toHexString(m_vboTarget))
              .append(", vboOffset ").append(std::to_string(m_vboOffset))
              .append(", alive ").append(std::to_string(m_alive)).append("]");
             return r;
@@ -394,12 +394,13 @@ namespace gamp::render::gl::data {
       public:
         /** Private ctor for shared_ptr. */
         GLArrayData(Private,
-                    const std::string& name, GLsizei componentsPerElement, GLenum componentType, jau::type_info compTypeSignature,
+                    std::string_view name, GLsizei componentsPerElement, GLenum componentType, jau::type_info compTypeSignature,
                     bool normalized, GLsizei stride, GLsizei mappedElementCount,
                     bool isVertexAttribute, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget)
         {
             if( GL_ELEMENT_ARRAY_BUFFER == vboTarget ) {
                 // OK ..
+                m_name = "array_buffer";
             } else if( (0 == vboUsage && 0 == vboTarget) || GL_ARRAY_BUFFER == vboTarget ) {
                 // Set/Check name .. - Required for GLSL case. Validation and debug-name for FFP.
                 m_name = name;
@@ -407,7 +408,7 @@ namespace gamp::render::gl::data {
                     throw RenderException("Missing attribute name:\n\t" + toStringImpl(), E_FILE_LINE);
                 }
             } else if( 0 < vboTarget ) {
-                throw RenderException("Invalid GPUBuffer target: " + jau::to_hexstring(vboTarget)
+                throw RenderException("Invalid GPUBuffer target: " + jau::toHexString(vboTarget)
                     + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
 
@@ -416,7 +417,7 @@ namespace gamp::render::gl::data {
             m_compTypeSignature = compTypeSignature;
             m_bytesPerComp  = GLBuffers::sizeOfGLType(componentType);
             if( 0 == m_bytesPerComp ) {
-                throw RenderException("Given componentType not supported: " + jau::to_hexstring(componentType) + ":\n\t" + toStringImpl(), E_FILE_LINE);
+                throw RenderException("Given componentType not supported: " + jau::toHexString(componentType) + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
             if( 0 >= componentsPerElement ) {
                 throw RenderException("Invalid number of components: " + std::to_string(componentsPerElement) + ":\n\t" + toStringImpl(), E_FILE_LINE);
@@ -456,7 +457,7 @@ namespace gamp::render::gl::data {
                 case GL_STREAM_DRAW: // GL2ES2
                     break;
                 default:
-                    throw RenderException("invalid gpuBufferUsage: " + jau::to_hexstring(vboUsage) + ":\n\t" + toStringImpl(), E_FILE_LINE);
+                    throw RenderException("invalid gpuBufferUsage: " + jau::toHexString(vboUsage) + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
             switch( vboTarget ) {
                 case 0:  // nop
@@ -464,7 +465,7 @@ namespace gamp::render::gl::data {
                 case GL_ELEMENT_ARRAY_BUFFER: // GL
                     break;
                 default:
-                    throw RenderException("invalid gpuBufferTarget: " + jau::to_hexstring(vboTarget) + ":\n\t" + toStringImpl(), E_FILE_LINE);
+                    throw RenderException("invalid gpuBufferTarget: " + jau::toHexString(vboTarget) + ":\n\t" + toStringImpl(), E_FILE_LINE);
             }
             m_vboUsage  = vboUsage;
             m_vboTarget = vboTarget;

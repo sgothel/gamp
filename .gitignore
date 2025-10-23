@@ -1,6 +1,10 @@
 /.cache/
 build*/
+convert/
+convert02/
 dist*/
+media/
+renderdoc/
 snaps/
 scripts-jau/
 /compile_commands.json

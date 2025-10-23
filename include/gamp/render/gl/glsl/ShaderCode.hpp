@@ -16,8 +16,8 @@
 
 #include <jau/basic_types.hpp>
 #include <jau/debug.hpp>
-#include <jau/file_util.hpp>
-#include <jau/io_util.hpp>
+#include <jau/io/file_util.hpp>
+#include <jau/io/io_util.hpp>
 #include <jau/string_util.hpp>
 
 #include <gamp/Gamp.hpp>
@@ -976,10 +976,10 @@ namespace gamp::render::gl::glsl {
                     }
                     string_t nextConn = gamp::resolve_asset(includeFile);
 
-                    if( nextConn.empty() && !jau::fs::isAbsolute(includeFile) ) {
+                    if( nextConn.empty() && !jau::io::fs::isAbsolute(includeFile) ) {
                         // Try relative of current shader location
-                        includeFile = jau::fs::dirname(conn).append("/").append(includeFile);
-                        if( jau::fs::exists(includeFile) ) {
+                        includeFile = jau::io::fs::dirname(conn).append("/").append(includeFile);
+                        if( jau::io::fs::exists(includeFile) ) {
                             nextConn = includeFile;
                         }
                     }

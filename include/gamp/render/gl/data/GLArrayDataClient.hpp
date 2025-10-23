@@ -71,7 +71,7 @@ namespace gamp::render::gl::data {
          * @param normalized Whether the data shall be normalized
          * @param initialElementCount
          */
-        static client_ref createGLSL(const std::string& name, GLsizei compsPerElement,
+        static client_ref createGLSL(std::string_view name, GLsizei compsPerElement,
                                      bool normalized, size_t initialElementCount)
         {
             client_ref r = std::make_shared<GLArrayDataClient>(Private(),
@@ -94,7 +94,7 @@ namespace gamp::render::gl::data {
          * @param stride
          * @param buffer the user define data, taking ownership
          */
-        static client_ref createGLSL(const std::string& name, GLsizei compsPerElement,
+        static client_ref createGLSL(std::string_view name, GLsizei compsPerElement,
                                      bool normalized, GLsizei stride, buffer_t&& buffer)
         {
             client_ref r = std::make_shared<GLArrayDataClient>(Private(),
@@ -152,7 +152,7 @@ namespace gamp::render::gl::data {
          * i.e. turns-off the GL& buffer and then clearing it.
          * </p>
          * <p>
-         * The position is set to zero, the limit is set to the capacity, and the mark is discarded.
+         * The position is set to zero and the limit is set to the capacity.
          * </p>
          * <p>
          * Invoke this method before using a sequence of get or put operations to fill this buffer.
@@ -259,7 +259,7 @@ namespace gamp::render::gl::data {
         /**
          * Clears this buffer and resets states accordingly.
          * <p>
-         * The position is set to zero, the limit is set to the capacity, and the mark is discarded.
+         * The position is set to zero and the limit is set to the capacity.
          * </p>
          * <p>
          * Invoke this method before using a sequence of get or put operations to fill this buffer.
@@ -302,10 +302,11 @@ namespace gamp::render::gl::data {
         }
 
         /**
-         * Rewinds this buffer. The position is set to zero and the mark is discarded.
-         * <p>
+         * Rewinds this buffer.
+         *
+         * The position is set to zero and the limit is set to the capacity.
+         *
          * Invoke this method before a sequence of put or get operations.
-         * </p>
          */
         void rewind() {
             m_buffer.rewind();
@@ -375,7 +376,7 @@ namespace gamp::render::gl::data {
              .append(", location ").append(std::to_string(proxy_t::m_location))
              .append(", isVertexAttribute ").append(std::to_string(proxy_t::m_isVertexAttr))
              .append(", usesShaderState ").append(std::to_string(nullptr!=m_shaderState))
-             .append(", dataType ").append(jau::to_hexstring(proxy_t::m_compType))
+             .append(", dataType ").append(jau::toHexString(proxy_t::m_compType))
              .append(", compsPerElem ").append(std::to_string(proxy_t::compsPerElem()))
              .append(", stride ").append(std::to_string(proxy_t::m_strideB)).append("b ").append(std::to_string(proxy_t::m_strideL)).append("c")
              .append(", mappedElements ").append(std::to_string(proxy_t::m_mappedElemCount))
@@ -486,7 +487,7 @@ namespace gamp::render::gl::data {
         struct Private{ explicit Private() = default; };
 
         /** Private client-mem ctor w/ passing custom buffer */
-        GLArrayDataClient(Private, const std::string& name, GLsizei componentsPerElement,
+        GLArrayDataClient(Private, std::string_view name, GLsizei componentsPerElement,
                           bool normalized, GLsizei stride, buffer_t&& data, float growthFactor,
                           bool isVertexAttribute, impl::GLArrayHandlerPtr<value_type>&& glArrayHandler,
                           GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget)
@@ -504,7 +505,7 @@ namespace gamp::render::gl::data {
         }
 
         /** Private client-mem ctor w/o passing custom buffer */
-        GLArrayDataClient(Private, const std::string& name, GLsizei componentsPerElement,
+        GLArrayDataClient(Private, std::string_view name, GLsizei componentsPerElement,
                           bool normalized, GLsizei stride, GLsizei initialElementCount, float growthFactor,
                           bool isVertexAttribute, impl::GLArrayHandlerPtr<value_type>&& glArrayHandler,
                           GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget)
@@ -523,7 +524,7 @@ namespace gamp::render::gl::data {
 
         /// using memory mapped elements
         GLArrayDataClient(Private,
-                          const std::string& name, GLsizei componentsPerElement,
+                          std::string_view name, GLsizei componentsPerElement,
                           bool normalized, GLsizei stride, GLsizei mappedElementCount,
                           bool isVertexAttribute, impl::GLArrayHandlerPtr<value_type>&& glArrayHandler,
                           GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget)

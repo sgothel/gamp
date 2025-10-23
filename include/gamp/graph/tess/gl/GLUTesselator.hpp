@@ -51,8 +51,7 @@ namespace gamp::graph::tess {
         static constexpr int FLAG_NORMAL  = 1 << 0;
         static constexpr int FLAG_COLOR   = 1 << 1;
         static constexpr int FLAG_TEXTURE = 1 << 2;
-        static constexpr int FLAG_INDICES = 1 << 3;
-        static constexpr int FLAG_VERBOSE = 1 << 4;
+        static constexpr int FLAG_VERBOSE = 1 << 3;
 
         struct Segment;
         typedef std::vector<Segment> SegmentList;
@@ -69,7 +68,7 @@ namespace gamp::graph::tess {
                 size_t i=0;
                 std::string r;
                 for(const Segment& s : segments ) {
-                    r.append( jau::format_string_v(256, "%sSegment[%zu]: %s\n", pre.c_str(), i++, s.toString().c_str()) );
+                    r.append( jau::format_string_n(256, "%sSegment[%zu]: %s\n", pre.c_str(), i++, s.toString().c_str()) );
                 }
                 return r;
             }
@@ -94,38 +93,29 @@ namespace gamp::graph::tess {
 
       private:
         GLFloatArrayDataServer& m_array;
-        GLUIntArrayDataServer* m_indices;
         SegmentList m_segments;
         std::vector<std::shared_ptr<Vertex>> m_vcache;
         Vec3f m_normal;
-        uint32_t m_nextIndex = 0;
-        uint32_t m_curIndex = 0;
+        uint32_t m_nextSegment = 0;
+        uint32_t m_curSegment = 0;
         int m_flags;
 
       public:
         GLUtilTesselator(int flags, GLFloatArrayDataServer& array) noexcept
-        : GLUtilTesselator(flags, array, nullptr) {}
-
-        GLUtilTesselator(int flags, GLFloatArrayDataServer& array, GLUIntArrayDataServer* indices) noexcept
-        : m_array(array), m_indices(indices),
-          m_flags(flags)
+        : m_array(array), m_flags(flags)
         {
-            if( !m_indices ) {
-                m_flags &= ~FLAG_INDICES;
-            }
         }
 
         constexpr bool useNormal() const noexcept { return 0 != ( m_flags & FLAG_NORMAL ); }
         constexpr bool useColor() const noexcept { return 0 != ( m_flags & FLAG_COLOR ); }
         constexpr bool useTexture() const noexcept { return 0 != ( m_flags & FLAG_TEXTURE ); }
-        constexpr bool useIndices() const noexcept { return 0 != ( m_flags & FLAG_INDICES ); }
         constexpr bool verbose() const noexcept { return 0 != ( m_flags & FLAG_VERBOSE ); }
 
         /** Clears all internal data, not passed array or indices. */
         void clear() {
             m_segments.clear();
-            m_nextIndex = 0;
-            m_curIndex = 0;
+            m_nextSegment = 0;
+            m_curSegment = 0;
             m_vcache.clear();
         }
 
@@ -140,21 +130,18 @@ namespace gamp::graph::tess {
 
         static void cbBeginData( GLenum type, void *polygonData ) {
             GLUtilTesselator* os = reinterpret_cast<GLUtilTesselator*>(polygonData);
-            os->m_curIndex = os->m_nextIndex++;
+            os->m_curSegment = os->m_nextSegment++;
             Segment s{.type=type, .first=castOrThrow<size_t, GLint>(os->m_array.elemCount()), .count=0 };
             os->m_segments.push_back(s);
-            if( os->m_indices ) {
-                os->m_indices->putu32(os->m_curIndex);
-            }
             if( os->verbose() ) {
-                jau::INFO_PRINT("GLUtess begin %02d, type 0x%X, %s", os->m_curIndex, type, s.toString().c_str());
+                jau::INFO_PRINT("GLUtess begin %02d, type 0x%X, %s", os->m_curSegment, type, s.toString().c_str());
             }
         }
         static void cbVertexData( void *data, void *polygonData ) {
             GLUtilTesselator* os = reinterpret_cast<GLUtilTesselator*>(polygonData);
             Vertex* v = reinterpret_cast<Vertex*>(data);
             if( os->verbose() ) {
-                jau::INFO_PRINT("GLUtess vertex %02d, %s", os->m_curIndex, v->coord().toString().c_str());
+                jau::INFO_PRINT("GLUtess vertex %02d, %s", os->m_curSegment, v->coord().toString().c_str());
             }
             os->m_array.put3f(v->coord());
             if( os->useNormal() ) {
@@ -166,14 +153,14 @@ namespace gamp::graph::tess {
             Segment& s = os->m_segments.at(os->m_segments.size()-1);
             s.count = castOrThrow<size_t, GLsizei>(os->m_array.elemCount() - s.first);
             if( os->verbose() ) {
-                jau::INFO_PRINT("GLUtess end %02d, %s", os->m_curIndex, s.toString().c_str());
+                jau::INFO_PRINT("GLUtess end %02d, %s", os->m_curSegment, s.toString().c_str());
             }
         }
         static void cbErrorData( GLenum errnum, void *polygonData ) {
             GLUtilTesselator* os = reinterpret_cast<GLUtilTesselator*>(polygonData);
             if( os->verbose() ) {
                 // jau::INFO_PRINT("GLUtess error %02d, errnum 0x%X, %s", os->m_curIndex, errnum, gluErrorString(errnum));
-                jau::INFO_PRINT("GLUtess error %02d, errnum 0x%X", os->m_curIndex, errnum);
+                jau::INFO_PRINT("GLUtess error %02d, errnum 0x%X", os->m_curSegment, errnum);
             }
         }
         static void cbCombineData( GLUTessFloat coords[3], void *data[4],
@@ -181,7 +168,7 @@ namespace gamp::graph::tess {
                                    void *polygonData ) {
             GLUtilTesselator* os = reinterpret_cast<GLUtilTesselator*>(polygonData);
             if( os->verbose() ) {
-                jau::INFO_PRINT("GLUtess combine %02d, %f, %f, %f", os->m_curIndex, coords[0], coords[1], coords[2]);
+                jau::INFO_PRINT("GLUtess combine %02d, %f, %f, %f", os->m_curSegment, coords[0], coords[1], coords[2]);
                 // jau::INFO_PRINT("GLUtess combine %p, %p, %p, %p", data[0], data[1], data[2], data[3]);
             }
             std::shared_ptr<Vertex> v = std::make_shared<Vertex>((float)coords[0], (float)coords[1], (float)coords[2], true);
@@ -200,10 +187,6 @@ namespace gamp::graph::tess {
       public:
         static SegmentList tesselate(int flags, GLFloatArrayDataServer& array, OutlineShape& outlines) {
             GLUtilTesselator glutess(flags, array);
-            return glutess.tesselate(outlines);
-        }
-        static SegmentList tesselate(int flags, GLFloatArrayDataServer& array, GLUIntArrayDataServer* indices, OutlineShape& outlines) {
-            GLUtilTesselator glutess(flags, array, indices);
             return glutess.tesselate(outlines);
         }
         const SegmentList& tesselate(OutlineShape& outlines) {
@@ -253,12 +236,9 @@ namespace gamp::graph::tess {
                 jau::INFO_PRINT("GLUtess: segments: %zu", m_segments.size());
                 jau::INFO_PRINT("\n%s", Segment::toString("- ", m_segments).c_str() );
                 jau::INFO_PRINT("GLUtess: outline dirty: %d", odirty);
-                jau::INFO_PRINT("GLUtess: index next: %d", m_nextIndex);
+                jau::INFO_PRINT("GLUtess: index next: %d", m_nextSegment);
                 jau::INFO_PRINT("GLUtess: vcache: %zu", m_vcache.size());
                 jau::INFO_PRINT("GLUtess: vertices: %s", m_array.toString().c_str());
-                if( m_indices ) {
-                    jau::INFO_PRINT("GLUtess: indices: %s", m_indices->toString().c_str());
-                }
             }
             return m_segments;
         }

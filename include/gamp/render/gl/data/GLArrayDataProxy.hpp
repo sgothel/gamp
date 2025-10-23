@@ -69,7 +69,7 @@ namespace gamp::render::gl::data {
          * @return the new create instance
          * @throws GLException
          */
-        static proxy_ref createGLSL(const std::string& name, GLsizei componentsPerElement, bool normalized, GLsizei stride,
+        static proxy_ref createGLSL(std::string_view name, GLsizei componentsPerElement, bool normalized, GLsizei stride,
                                     buffer_t& buffer, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget) {
             return std::make_shared<GLArrayDataProxy>(Private(),
                 name, componentsPerElement, normalized, stride, buffer,
@@ -95,7 +95,7 @@ namespace gamp::render::gl::data {
          * @return the new create instance
          * @throws GLException
          */
-        static proxy_ref createGLSL(const std::string& name, GLsizei componentsPerElement, bool normalized, GLsizei stride,
+        static proxy_ref createGLSL(std::string_view name, GLsizei componentsPerElement, bool normalized, GLsizei stride,
                                     GLsizei mappedElementCount, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget) {
             return std::make_shared<GLArrayDataProxy>(Private(),
                 name, componentsPerElement, normalized, stride, mappedElementCount,
@@ -152,13 +152,18 @@ namespace gamp::render::gl::data {
 
         std::string elemStatsToString() const noexcept override {
             const size_t elem_limit = ( (usesClientMem() ? m_bufferptr->limit() : 0) * m_bytesPerComp ) / m_strideB;
-            return jau::format_string("sealed %d, elements %s cnt, [%s pos .. %s rem .. %s lim .. %s cap]",
-                                 sealed(),
-                                 jau::to_decstring(elemCount()).c_str(),
-                                 jau::to_decstring(elemPosition()).c_str(),
-                                 jau::to_decstring(remainingElems()).c_str(),
-                                 jau::to_decstring(elem_limit).c_str(),
-                                 jau::to_decstring(elemCapacity()).c_str());
+            try {
+                return jau::format_string("sealed %d, elements %s cnt, [%s pos .. %s rem .. %s lim .. %s cap]",
+                                     sealed(),
+                                     jau::to_decstring(elemCount()).c_str(),
+                                     jau::to_decstring(elemPosition()).c_str(),
+                                     jau::to_decstring(remainingElems()).c_str(),
+                                     jau::to_decstring(elem_limit).c_str(),
+                                     jau::to_decstring(elemCapacity()).c_str());
+            } catch (const std::exception &e) {
+               ERR_PRINT2("Caught exception %s", e.what());
+               return "";
+            }
         }
 
         void destroy(GL& gl) override {
@@ -174,7 +179,7 @@ namespace gamp::render::gl::data {
             r.append("[").append(m_name)
              .append(", location ").append(std::to_string(m_location))
              .append(", isVertexAttribute ").append(std::to_string(m_isVertexAttr))
-             .append(", dataType ").append(jau::to_hexstring(m_compType))
+             .append(", dataType ").append(jau::toHexString(m_compType))
              .append(", compsPerElem ").append(std::to_string(m_compsPerElement))
              .append(", stride ").append(std::to_string(m_strideB)).append("b ").append(std::to_string(m_strideL)).append("c")
              .append(", mappedElemCount ").append(std::to_string(m_mappedElemCount))
@@ -184,8 +189,8 @@ namespace gamp::render::gl::data {
             }
             r.append(", vboEnabled ").append(std::to_string(m_vboEnabled))
              .append(", vboName ").append(std::to_string(m_vboName))
-             .append(", vboUsage ").append(jau::to_hexstring(m_vboUsage))
-             .append(", vboTarget ").append(jau::to_hexstring(m_vboTarget))
+             .append(", vboUsage ").append(jau::toHexString(m_vboUsage))
+             .append(", vboTarget ").append(jau::toHexString(m_vboTarget))
              .append(", vboOffset ").append(std::to_string(m_vboOffset))
              .append(", alive ").append(std::to_string(m_alive)).append("]");
             return r;
@@ -313,7 +318,7 @@ namespace gamp::render::gl::data {
       public:
         // using passing through client buffer_t
         GLArrayDataProxy(Private,
-                          const std::string& name, GLsizei componentsPerElement,
+                          std::string_view name, GLsizei componentsPerElement,
                           bool normalized, GLsizei stride, buffer_t& buffer,
                           bool isVertexAttribute, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget)
         : GLArrayData(GLArrayData::Private(), name, componentsPerElement, glType<value_type>(), jau::make_ctti<value_type>(),
@@ -323,7 +328,7 @@ namespace gamp::render::gl::data {
 
         // using memory mapped elements
         GLArrayDataProxy(Private,
-                         const std::string& name, GLsizei componentsPerElement,
+                         std::string_view name, GLsizei componentsPerElement,
                          bool normalized, GLsizei stride, GLsizei mappedElementCount,
                          bool isVertexAttribute, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget)
         : GLArrayData(GLArrayData::Private(), name, componentsPerElement, glType<value_type>(), jau::make_ctti<value_type>(),

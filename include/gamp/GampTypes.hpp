@@ -28,7 +28,7 @@
 #include <jau/math/vec4f.hpp>
 #include <jau/math/mat4f.hpp>
 #include <jau/math/recti.hpp>
-#include <jau/math/util/pmvmat4f.hpp>
+#include <jau/math/util/pmvmat4.hpp>
 #include <jau/math/util/float_util.hpp>
 
 #if defined(__EMSCRIPTEN__)
@@ -75,7 +75,11 @@ namespace gamp {
     }
 
     /** An attachable object */
-    struct Attachable {};
+    class Attachable {
+      public:
+        virtual ~Attachable() noexcept = default;
+        virtual const jau::type_info& signature() const noexcept { return jau::static_ctti<Attachable>(); }
+    };
     typedef std::shared_ptr<Attachable> AttachableRef;
 
     template<typename K, typename V>

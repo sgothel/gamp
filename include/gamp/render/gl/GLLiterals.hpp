@@ -12,11 +12,11 @@
 #ifndef GAMP_RENDER_GL_GLLITERALS_HPP_
 #define GAMP_RENDER_GL_GLLITERALS_HPP_
 
-#include <gamp/render/gl/GLHeader.hpp>
-#include <gamp/render/gl/GLVersionNum.hpp>
-
 #include <jau/cpp_lang_util.hpp>
 #include <jau/enum_util.hpp>
+
+#include <gamp/render/gl/GLHeader.hpp>
+#include <gamp/render/gl/GLVersionNum.hpp>
 
 namespace gamp::render::gl {
     using namespace jau::enums;

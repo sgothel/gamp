@@ -11,19 +11,19 @@
 #ifndef JAU_GAMP_GRAPH_OUTLINE_HPP_
 #define JAU_GAMP_GRAPH_OUTLINE_HPP_
 
+#include <limits>
+
 #include <jau/basic_types.hpp>
 #include <jau/darray.hpp>
 #include <jau/int_math.hpp>
 #include <jau/int_types.hpp>
-#include <jau/math/geom/geom.hpp>
 #include <jau/math/vec3f.hpp>
+#include <jau/math/geom/geom.hpp>
 #include <jau/math/geom/geom3f.hpp>
 #include <jau/math/geom/aabbox3f.hpp>
 #include <jau/math/geom/plane/affine_transform.hpp>
 
 #include <gamp/graph/PrimTypes.hpp>
-#include <gamp/graph/VertexMath.hpp>
-#include <limits>
 
 namespace gamp::graph {
 
@@ -69,7 +69,7 @@ namespace gamp::graph {
 
       public:
         typedef uint32_t size_type;
-        /// byte-size int32_t limit: 536'870'911 (FIXME: Adjust to actual type, i.e. Vertex = 2x Vec3f?)
+        /// byte-size uint32_t limit: 1'073'741'823 (FIXME: Adjust to actual type, i.e. Vertex = 2x Vec3f?)
         constexpr static size_type max_elements = std::numeric_limits<uint32_t>::max() / sizeof(uint32_t);
 
         constexpr Outline() : Outline(3) {}
@@ -164,12 +164,16 @@ namespace gamp::graph {
             if( 3 > count ) {
                 m_winding = Winding::CCW;
             } else {
-                m_winding = gamp::graph::getWinding( m_vertices );
+                m_winding = computeWinding();
             }
             m_dirtyBits &= ~DirtyBits::winding;
             return m_winding;
         }
 
+      private:
+        Winding computeWinding() const noexcept;
+
+      public:
         /**
          * Sets Winding to this outline
          *
@@ -204,13 +208,15 @@ namespace gamp::graph {
             if( !is_set(m_dirtyBits, DirtyBits::complexShape) ) {
                 return m_complexShape;
             }
-            m_complexShape = !isConvex1(m_vertices, true);
+            m_complexShape = !computeIsComplex();
             // complexShape = isSelfIntersecting1(m_vertices);
             m_dirtyBits &= ~DirtyBits::complexShape;
             return m_complexShape;
         }
 
       private:
+        bool computeIsComplex() const noexcept;
+
         void validateBoundingBox() const noexcept {
             m_dirtyBits &= ~DirtyBits::bounds;
             m_bbox.reset();
@@ -311,7 +317,7 @@ namespace gamp::graph {
 
     };
     // typedef std::shared_ptr<Outline> OutlineRef;
-    typedef jau::darray<Outline, jau::nsize_t> OutlineList;
+    typedef jau::darray<Outline, uint32_t> OutlineList;
 
 
     /**@}*/

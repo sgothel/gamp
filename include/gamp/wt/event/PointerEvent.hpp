@@ -33,7 +33,7 @@
 #include <jau/enum_util.hpp>
 #include <jau/fraction_type.hpp>
 #include <jau/int_math_ct.hpp>
-#include <jau/io_util.hpp>
+#include <jau/io/io_util.hpp>
 #include <jau/math/vec2i.hpp>
 #include <jau/math/vec3f.hpp>
 #include <jau/string_util.hpp>

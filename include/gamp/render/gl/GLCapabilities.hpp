@@ -11,10 +11,10 @@
 #ifndef GAMP_RENDER_GL_GLCAPABILITIES_HPP_
 #define GAMP_RENDER_GL_GLCAPABILITIES_HPP_
 
+#include <jau/string_util.hpp>
+
 #include <gamp/GampTypes.hpp>
 #include <gamp/wt/Capabilities.hpp>
-
-#include <jau/string_util.hpp>
 
 namespace gamp::render::gl {
     /** \addtogroup Gamp_GL

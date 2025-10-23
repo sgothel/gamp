@@ -231,7 +231,7 @@ namespace gamp::wt {
              */
             lock_status_t lockSurface() {
                 if( !m_surface_lock.tryLock(TIMEOUT) ) {
-                    throw jau::RuntimeException("Waited "+TIMEOUT.to_string()+"s for: "+toString()+" - "+jau::threadName(std::this_thread::get_id()), E_FILE_LINE);
+                    throw jau::RuntimeException("Waited "+TIMEOUT.toString()+"s for: "+toString()+" - "+jau::threadName(std::this_thread::get_id()), E_FILE_LINE);
                 }
                 if (1 == m_surface_lock.holdCount()) {
                     const lock_status_t res = nativeSurfaceLock();
@@ -267,7 +267,7 @@ namespace gamp::wt {
 
             std::string toString() const noexcept {
                 std::string res = "Surface[";
-                res.append("handle ").append(jau::to_hexstring(m_surface_handle))
+                res.append("handle ").append(jau::toHexString(m_surface_handle))
                    .append(", ").append(m_renderContext ? m_renderContext->toString() : "nil-ctx")
                    .append(", size ").append(m_surface_size.toString())
                    .append(", ").append(m_capsptr?m_capsptr->toString():"nocaps")

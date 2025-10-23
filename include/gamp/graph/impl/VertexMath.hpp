@@ -8,32 +8,30 @@
  * If a copy of the MIT was not distributed with this file,
  * you can obtain one at https://opensource.org/license/mit/.
  */
-#ifndef JAU_GAMP_GRAPH_VERTEXMATH_HPP_
-#define JAU_GAMP_GRAPH_VERTEXMATH_HPP_
+#ifndef JAU_GAMP_GRAPH_IMPL_VERTEXMATH_HPP_
+#define JAU_GAMP_GRAPH_IMPL_VERTEXMATH_HPP_
 
 #include <sys/types.h>
 #include <cstring>
+#include <limits>
+
 #include <jau/darray.hpp>
 #include <jau/bitfield.hpp>
 #include <jau/math/geom/geom.hpp>
 #include <jau/math/vec3f.hpp>
 #include <jau/math/geom/geom3f.hpp>
 #include <jau/math/geom/geom3f2D.hpp>
-#include <jau/math/geom/aabbox3f.hpp>
 #include <jau/math/geom/plane/affine_transform.hpp>
 
 #include <gamp/GampTypes.hpp>
 #include <gamp/graph/PrimTypes.hpp>
-#include <limits>
 
-namespace gamp::graph {
+namespace gamp::graph::impl {
 
     using namespace jau::math;
     using jau::math::geom::Winding;
-    using jau::math::geom::AABBox3f;
-    using jau::math::geom::plane::AffineTransform;
 
-    /** \addtogroup Gamp_Graph
+    /** \addtogroup Gamp_GraphImpl
      *
      *  @{
      */
@@ -76,16 +74,6 @@ namespace gamp::graph {
         return area2D(vertices) >= 0 ? Winding::CCW : Winding::CW ;
     }
 
-    namespace impl {
-        static ssize_t cmod(ssize_t i, ssize_t count) noexcept {
-            if( i >= 0 ) {
-                return i % count;
-            } else {
-                return i + count;
-            }
-        }
-    }
-
     /**
      * Returns whether the given on-curve {@code polyline} points denotes a convex shape with O(n) complexity.
      * <p>
@@ -97,7 +85,14 @@ namespace gamp::graph {
      * @param polyline connected {@link Vert2fImmutable}, i.e. a poly-line
      * @param shortIsConvex return value if {@code vertices} have less than three elements, allows simplification
      */
-    static bool isConvex1(const VertexList& polyline, bool shortIsConvex) noexcept {
+    constexpr static bool isConvex1(const VertexList& polyline, bool shortIsConvex) noexcept {
+        auto cmod = [](ssize_t i, ssize_t count) noexcept -> ssize_t {
+            if( i >= 0 ) {
+                return i % count;
+            } else {
+                return i + count;
+            }
+        };
         const ssize_t polysz = static_cast<ssize_t>(polyline.size());
         if( polysz < 3 ) {
             return shortIsConvex;
@@ -119,14 +114,14 @@ namespace gamp::graph {
         {
             do {
                 ++offset; // -2
-                v0 = polyline[impl::cmod(offset, polysz)];   // current, polyline[-2] if on-curve
+                v0 = polyline[cmod(offset, polysz)];   // current, polyline[-2] if on-curve
             } while( !v0.onCurve() && offset < polysz );
             if( offset >= polysz ) {
                 return shortIsConvex;
             }
             do {
                 ++offset; // -1
-                v1 = polyline[impl::cmod(offset, polysz)];   //  next, polyline[-1] if both on-curve
+                v1 = polyline[cmod(offset, polysz)];   //  next, polyline[-1] if both on-curve
             } while( !v1.onCurve() && offset < polysz );
             if( offset >= polysz ) {
                 return shortIsConvex;
@@ -138,7 +133,7 @@ namespace gamp::graph {
             v0 = v1;                                      //  current on-curve vertex
             do {
                 ++offset; // 0, ...
-                v1 = polyline[impl::cmod(offset, polysz)];  //  next on-curve vertex
+                v1 = polyline[cmod(offset, polysz)];  //  next on-curve vertex
             } while( !v1.onCurve() && offset < polysz );
             if( offset >= polysz ) {
                 break;

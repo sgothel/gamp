@@ -21,8 +21,6 @@
 #include <gamp/graph/Graph.hpp>
 #include <gamp/graph/Outline.hpp>
 #include <gamp/graph/PrimTypes.hpp>
-#include <gamp/graph/tess/CDTriangulator2D.hpp>
-#include <gamp/graph/tess/impl/HEdge.hpp>
 
 namespace gamp::graph {
 
@@ -101,7 +99,7 @@ namespace gamp::graph {
       public:
         typedef uint32_t size_type;
 
-        /// byte-size int32_t limit: 536'870'911 (FIXME: Adjust to actual type, i.e. Vertex = 2x Vec3f?)
+        /// byte-size uint32_t limit: 1'073'741'823 (FIXME: Adjust to actual type, i.e. Vertex = 2x Vec3f?)
         constexpr static size_type max_elements = std::numeric_limits<uint32_t>::max() / sizeof(uint32_t);
 
         /** Initial sharpness() value, which can be modified via setSharpness(float). */
@@ -704,25 +702,7 @@ namespace gamp::graph {
         // prost-processing
         //
 
-        void subdivideTriangle(Outline& outline, const Vertex& a, Vertex& b, const Vertex& c, size_type index) {
-            Vec3f v1 = midpoint( a.coord(), b.coord() );
-            Vec3f v3 = midpoint( b.coord(), c.coord() );
-            Vec3f v2 = midpoint( v1, v3 );
-
-            // COLOR
-            // tmpC1.set(a.getColor()).add(b.getColor()).scale(0.5f);
-            // tmpC3.set(b.getColor()).add(b.getColor()).scale(0.5f);
-            // tmpC2.set(tmpC1).add(tmpC1).scale(0.5f);
-
-            //drop off-curve vertex to image on the curve
-            b.coord() = v2;
-            b.onCurve() = true;
-
-            outline.addVertex(index, Vertex(v1, false));
-            outline.addVertex(index+2, Vertex(v3, false));
-
-            m_addedVertexCount += 2;
-        }
+        void subdivideTriangle(Outline& outline, const Vertex& a, Vertex& b, const Vertex& c, size_type index);
 
         /**
          * Check overlaps between curved triangles
@@ -733,195 +713,18 @@ namespace gamp::graph {
          *
          * Loop until overlap array is empty. (check only in first pass)
          */
-        void checkOverlaps() {
-            VertexList overlaps(3);
-            const size_type count = outlineCount();
-            bool firstpass = true;
-            do {
-                for (size_type cc = 0; cc < count; ++cc) {
-                    Outline& ol = outline(cc);
-                    size_type vertexCount = ol.vertexCount();
-                    for(size_type i=0; i < ol.vertexCount(); ++i) {
-                        Vertex& currentVertex = ol.vertex(i);
-                        if ( !currentVertex.onCurve()) {
-                            const Vertex& nextV = ol.vertex((i+1)%vertexCount);
-                            const Vertex& prevV = ol.vertex((i+vertexCount-1)%vertexCount);
-                            Vertex* overlap;
-
-                            // check for overlap even if already set for subdivision
-                            // ensuring both triangular overlaps get divided
-                            // for pref. only check in first pass
-                            // second pass to clear the overlaps array(reduces precision errors)
-                            if( firstpass ) {
-                                overlap = checkTriOverlaps0(prevV, currentVertex, nextV);
-                            } else {
-                                overlap = nullptr;
-                            }
-                            if( overlap || jau::contains(overlaps, currentVertex) ) {
-                                jau::eraseFirst(overlaps, currentVertex);
-
-                                subdivideTriangle(ol, prevV, currentVertex, nextV, i);
-                                i+=3;
-                                vertexCount+=2;
-                                m_addedVertexCount+=2;
-
-                                if(overlap && !overlap->onCurve()) {
-                                    if(!jau::contains(overlaps, *overlap)) {
-                                        overlaps.push_back(*overlap);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                firstpass = false;
-            } while( !overlaps.empty() );
-        }
-
-        Vertex* checkTriOverlaps0(const Vertex& a, const Vertex& b, const Vertex& c) {
-            size_type count = outlineCount();
-            for (size_type cc = 0; cc < count; ++cc) {
-                Outline& ol = outline(cc);
-                size_type vertexCount = ol.vertexCount();
-                for(size_type i=0; i < vertexCount; ++i) {
-                    Vertex& currV = ol.vertex(i);
-                    if( !currV.onCurve() && currV != a && currV != b && currV != c) {
-                        Vertex& nextV = ol.vertex((i+1)%vertexCount);
-                        Vertex& prevV = ol.vertex((i+vertexCount-1)%vertexCount);
-
-                        //skip neighboring triangles
-                        if(prevV != c && nextV != a) {
-                            if( isInTriangle3(a.coord(), b.coord(), c.coord(),
-                                              currV.coord(), nextV.coord(), prevV.coord()) ) {
-                                return &currV;
-                            }
-                            if(testTri2SegIntersection2D(a, b, c, prevV, currV) ||
-                               testTri2SegIntersection2D(a, b, c, currV, nextV) ||
-                               testTri2SegIntersection2D(a, b, c, prevV, nextV) ) {
-                                return &currV;
-                            }
-                        }
-                    }
-                }
-            }
-            return nullptr;
-        }
-
-        void cleanupOutlines() {
-            const bool transformOutlines2Quadratic = VertexState::quadratic_nurbs != m_outlineState;
-            size_type count = outlineCount();
-            for (size_type cc = 0; cc < count; ++cc) {
-                Outline& ol = outline(cc);
-                size_type vertexCount = ol.vertexCount();
-
-                if( transformOutlines2Quadratic ) {
-                    for(size_type i=0; i < vertexCount; ++i) {
-                        Vertex& currentVertex = ol.vertex(i);
-                        size_type j = (i+1)%vertexCount;
-                        Vertex& nextVertex = ol.vertex(j);
-                        if ( !currentVertex.onCurve() && !nextVertex.onCurve() ) {
-                            Vec3f mp = midpoint(currentVertex.coord(), nextVertex.coord());
-                            // System.err.println("XXX: Cubic: "+i+": "+currentVertex+", "+j+": "+nextVertex);
-                            Vertex v(mp, true);
-                            // COLOR: tmpC1.set(currentVertex.getColor()).add(nextVertex.getColor()).scale(0.5f)
-                            ++i;
-                            ++vertexCount;
-                            ++m_addedVertexCount;
-                            ol.addVertex(i, v);
-                        }
-                    }
-                }
-                if( 0 == vertexCount ) {
-                    jau::eraseFirst(m_outlines, ol); // empty
-                    --cc;
-                    --count;
-                } else if( 0 < vertexCount &&
-                           ol.vertex(0).coord() == ol.lastVertex().coord() )
-                {
-                    ol.removeVertex(vertexCount-1); // closing vertex
-                }
-            }
-            m_outlineState = VertexState::quadratic_nurbs;
-            checkOverlaps();
-        }
-
-        uint32_t generateVertexIds() {
-            uint32_t maxVertexId = 0;
-            for(size_type i=0; i<m_outlines.size(); ++i) {
-                VertexList& vertices = outline(i).vertices();
-                for(auto & vertice : vertices) {
-                    vertice.id() = maxVertexId++;
-                }
-            }
-            return maxVertexId;
-        }
-
-      public:
-        /**
-         * Return list of concatenated vertices associated with all
-         * {@code Outline}s of this object.
-         * <p>
-         * Vertices are cached until marked dirty.
-         * </p>
-         * <p>
-         * Should always be called <i>after</i> {@link #getTriangles(VerticesState)},
-         * since the latter will mark all cached vertices dirty!
-         * </p>
-         */
-        const VertexList& getVertices() {
-            bool updated = false;
-            if( is_set(m_dirtyBits, DirtyBits::vertices ) ) {
-                m_vertices.clear();
-                for(const Outline& ol : m_outlines) {
-                    const VertexList& v = ol.vertices();
-                    m_vertices.push_back(v.begin(), v.end());
-                }
-                m_dirtyBits &= ~DirtyBits::vertices;
-                updated = true;
-            }
-            if(Graph::DEBUG_MODE) {
-                jau::PLAIN_PRINT(true, "OutlineShape.getVertices().X: %u, updated %d", m_vertices.size(), updated);
-                if( updated ) {
-                    size_type i=0;
-                    for(Vertex& v : m_vertices) {
-                        jau::PLAIN_PRINT(false, "- [%u]: %s", i++, v.toString().c_str());
-                    }
-                }
-            }
-            return m_vertices;
-        }
-
-      private:
-        struct SizeDescending {
-            bool operator()(Outline& a, Outline& b) const {
-                return a.compareTo(b) >= 1;
-            }
-        } sizeDescending;
+        void checkOverlaps();
+        Vertex* checkTriOverlaps0(const Vertex& a, const Vertex& b, const Vertex& c);
+        void cleanupOutlines();
+        uint32_t generateVertexIds();
 
         /**
-         * Sort the outlines from large
-         * to small depending on the AABox
+         * Sort the outlines in descending size from large
+         * to small depending on the AABBox
          */
-        void sortOutlines() {
-            std::sort(m_outlines.begin(), m_outlines.end(), sizeDescending);
-        }
+        void sortOutlines();
 
-        void triangulateImpl() {
-            if( 0 < m_outlines.size() ) {
-                sortOutlines();
-                generateVertexIds();
-
-                m_triangles.clear();
-                tess::CDTriangulator2D triangulator2d;
-                triangulator2d.setComplexShape( isComplex() );
-                for(Outline& ol : m_outlines) {
-                    triangulator2d.addCurve(m_triangles, ol, m_sharpness);
-                }
-                triangulator2d.generate(m_triangles);
-                m_addedVertexCount += triangulator2d.getAddedVerticeCount();
-                triangulator2d.reset();
-            }
-        }
+        void triangulateImpl();
 
       public:
         /**
@@ -930,36 +733,25 @@ namespace gamp::graph {
          *
          * Triangles are cached until marked dirty.
          *
+         * After generating a the triangles, getVertices() can be used for all vertices.
+         *
          * @return an arraylist of triangles representing the filled region
          * which is produced by the combination of the outlines
+         *
+         * @see getVertices()
          */
-        const TriangleRefList& getTriangles(VertexState destinationType = VertexState::quadratic_nurbs) {
-            bool updated = false;
-            if(destinationType != VertexState::quadratic_nurbs) {
-                throw jau::IllegalStateError("destinationType "+to_string(destinationType)+" not supported (currently "+to_string(m_outlineState)+")", E_FILE_LINE);
-            }
-            if( is_set(m_dirtyBits, DirtyBits::triangles ) ) {
-                cleanupOutlines();
-                triangulateImpl();
-                updated = true;
-                m_dirtyBits |= DirtyBits::vertices;
-                m_dirtyBits &= ~DirtyBits::triangles;
-            } else {
-                updated = false;
-            }
-            if(Graph::DEBUG_MODE) {
-                jau::PLAIN_PRINT(true, "OutlineShape.getTriangles().X: %u, updated %d", m_triangles.size(), updated);
-                if( updated ) {
-                    size_type i=0;
-                    for(TriangleRef& t : m_triangles) {
-                        jau::PLAIN_PRINT(false, "- [%u]: %s", i++, t->toString().c_str());
-                    }
-                }
-            }
-            return m_triangles;
-        }
+        const TriangleRefList& getTriangles(VertexState destinationType = VertexState::quadratic_nurbs);
 
-      public:
+        /**
+         * Return list of concatenated vertices associated with all
+         * {@code Outline}s of this object.
+         *
+         * Vertices are cached until marked dirty.
+         *
+         * Should always be called <i>after</i> getTriangles(VerticesState),
+         * since the latter will mark all cached vertices dirty!
+         */
+        const VertexList& getVertices();
 
         std::string toString() const noexcept {
             std::string r("OutlineShape[");

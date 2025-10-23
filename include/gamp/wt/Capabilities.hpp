@@ -356,22 +356,24 @@ namespace gamp::wt {
         constexpr static std::string_view CSEP = ", ";
 
         void toString(std::string& sink, bool withOnOffScreen) const {
-            sink.append("rgba ").append(std::to_string(m_redBits)).append(ESEP).append(std::to_string(m_greenBits)).append(ESEP).append(std::to_string(m_blueBits)).append(ESEP).append(std::to_string(m_alphaBits));
-            if( m_backgroundOpaque ) {
+            sink.append("rgba ").append(std::to_string(m_redBits)).append(ESEP).append(std::to_string(m_greenBits)).append(ESEP)
+                .append(std::to_string(m_blueBits)).append(ESEP).append(std::to_string(m_alphaBits));
+            if (m_backgroundOpaque) {
                 sink.append(", opaque");
             } else {
-                sink.append(", trans-rgba 0x").append(jau::to_hexstring(m_xparentValueRed)).append(ESEP).append(jau::to_hexstring(m_xparentValueGreen)).append(ESEP).append(jau::to_hexstring(jau::to_hexstring(m_xparentValueBlue))).append(ESEP).append(jau::to_hexstring(m_xparentValueAlpha));
+                sink.append(", trans-rgba 0x").append(jau::toHexString(m_xparentValueRed)).append(ESEP).append(jau::toHexString(m_xparentValueGreen))
+                    .append(ESEP).append(jau::toHexString(m_xparentValueBlue)).append(ESEP).append(jau::toHexString(m_xparentValueAlpha));
             }
-            if( withOnOffScreen ) {
+            if (withOnOffScreen) {
                 sink.append(CSEP);
-                if( m_onscreen ) {
+                if (m_onscreen) {
                     sink.append("on-scr");
                 } else {
                     sink.append("offscr[");
                 }
-                if( m_isBitmap ) {
+                if (m_isBitmap) {
                     sink.append("bitmap");
-                } else if( m_onscreen ) {
+                } else if (m_onscreen) {
                     sink.append(".");  // no additional off-screen modes besides on-screen
                 } else {
                     sink.append("auto-cfg");  // auto-config off-screen mode

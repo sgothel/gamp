@@ -17,16 +17,17 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <jau/basic_types.hpp>
 #include <jau/cpp_lang_util.hpp>
 #include <jau/darray.hpp>
 #include <jau/debug.hpp>
-#include <jau/file_util.hpp>
 #include <jau/float_math.hpp>
 #include <jau/float_types.hpp>
 #include <jau/fraction_type.hpp>
+#include <jau/io/file_util.hpp>
 #include <jau/math/geom/geom.hpp>
 #include <jau/math/vec3f.hpp>
 #include <jau/math/vec4f.hpp>
@@ -43,7 +44,6 @@
 #include <gamp/render/gl/glsl/ShaderState.hpp>
 
 #include <gamp/graph/OutlineShape.hpp>
-#include <gamp/graph/tess/gl/GLUTesselator.hpp>
 
 #include "../demos/graph/testshapes/Glyph05FreeSerifBoldItalic_ae.hpp"
 #include "../demos/graph/testshapes/Glyph03FreeMonoRegular_M.hpp"
@@ -59,19 +59,8 @@ using namespace gamp::wt;
 using namespace gamp::wt::event;
 
 using namespace gamp::graph;
-using namespace gamp::graph::tess;
 using namespace gamp::render::gl::glsl;
 using namespace gamp::render::gl::data;
-
-struct PMVMat4fUniform {
-    PMVMat4f         m;
-    GLUniformDataRef u;
-
-    PMVMat4fUniform()
-    : m( PMVMat4f::INVERSE_PROJECTION | PMVMat4f::INVERSE_MODELVIEW | PMVMat4f::INVERSE_TRANSPOSED_MODELVIEW ),
-      u( GLUniformSyncMatrices4f::create("gcu_PMVMatrix", m.getSyncPMvMviMvit()) )  // P, Mv, Mvi and Mvit
-    {}
-};
 
 class GraphRenderer {
   public:
@@ -401,9 +390,8 @@ typedef std::shared_ptr<Shape> ShapeRef;
 class Shape {
   private:
     ShaderState& m_st;
-    PMVMat4fUniform&  m_pmvMat;
+    GLUniformSyncPMVMat4fRef m_pmvMatUni;
     OutlineShape m_oshape;
-    GLUtilTesselator::SegmentList m_segments;
 
     Vec3f m_position;
     Quat4f m_rotation;
@@ -412,6 +400,7 @@ class Shape {
     float m_zOffset;
     GraphRenderer& m_renderer;
     GraphRegion m_region;
+    Vec4f m_color = Vec4f(0, 0, 0, 1);
     GLUniformVec4fRef m_uColor;
 
     Mat4f iMat;
@@ -422,16 +411,16 @@ class Shape {
     struct Private{ explicit Private() = default; };
 
   public:
-    Shape(Private, ShaderState &st, PMVMat4fUniform& pmvMatU, GraphRenderer& renderer)
-    : m_st(st), m_pmvMat(pmvMatU), m_oshape(3, 16),
+    Shape(Private, ShaderState &st, GLUniformSyncPMVMat4fRef pmvMatU, GraphRenderer& renderer)
+    : m_st(st), m_pmvMatUni(std::move(pmvMatU)), m_oshape(3, 16),
       m_renderer(renderer), m_region(m_renderer, m_st)
     {
-        m_uColor = GLUniformVec4f::create("gcu_StaticColor", Vec4f(0, 0, 0, 1));
+        m_uColor = GLUniformVec4f::create("gcu_StaticColor", m_color);
         m_st.ownUniform(m_uColor, true);
     }
 
-    static ShapeRef create(ShaderState &st, PMVMat4fUniform& pmvMatU, GraphRenderer& renderer) {
-        return std::make_shared<Shape>(Private(), st, pmvMatU, renderer);
+    static ShapeRef create(ShaderState &st, GLUniformSyncPMVMat4fRef pmvMatU, GraphRenderer& renderer) {
+        return std::make_shared<Shape>(Private(), st, std::move(pmvMatU), renderer);
     }
 
     constexpr const Vec3f& position() const noexcept { return m_position; }
@@ -461,13 +450,14 @@ class Shape {
     }
 
     void draw(GL &gl) {
-        m_pmvMat.m.pushMv();
-        applyMatToMv(m_pmvMat.m);
-        m_st.pushUniform(gl, m_pmvMat.u); // automatic sync + update of Mvi + Mvit
+        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        pmv.pushMv();
+        applyMatToMv(pmv);
+        m_st.pushUniform(gl, m_pmvMatUni); // automatic sync + update of Mvi + Mvit
 
         m_st.pushUniform(gl, m_uColor);
         m_region.draw(gl);
-        m_pmvMat.m.popMv();
+        pmv.popMv();
     }
 
   private:
@@ -545,9 +535,9 @@ class Shape {
 
 class GraphShapes01 : public RenderListener {
   private:
-    constexpr static jau::math::Vec3f lightPos = jau::math::Vec3f(0.0f, 5.0f, 10.0f);
     constexpr static float zNear=  1.0f;
     constexpr static float zFar =100.0f;
+    constexpr static PMVData mat_req = PMVData::inv_proj | PMVData::inv_mv | PMVData::inv_tps_mv;
 
     ShaderState m_st;
     Recti m_viewport;
@@ -555,22 +545,25 @@ class GraphShapes01 : public RenderListener {
     bool m_animating = true;
     bool m_oneframe = false;
     jau::fraction_timespec m_tlast;
-    PMVMat4fUniform  m_pmvMat;
+    GLUniformSyncPMVMat4fRef m_pmvMatUni;
     GraphRenderer m_renderer;
     std::vector<ShapeRef> m_shapes;
+    jau::math::Vec3f lightPos = jau::math::Vec3f(0.0f, 5.0f, 10.0f);
 
   public:
     GraphShapes01()
     : RenderListener(RenderListener::Private()),
-      m_initialized(false), m_renderer(m_st)
+      m_initialized(false),
+      m_pmvMatUni(GLUniformSyncPMVMat4f::create("gcu_PMVMatrix", mat_req)), // P, Mv, Mvi and Mvit
+      m_renderer(m_st)
     {
     }
 
     Recti& viewport() noexcept { return m_viewport; }
     const Recti& viewport() const noexcept { return m_viewport; }
 
-    PMVMat4f& pmv() noexcept { return m_pmvMat.m; }
-    const PMVMat4f& pmv() const noexcept { return m_pmvMat.m; }
+    PMVMat4f& pmv() noexcept { return m_pmvMatUni->pmv(); }
+    const PMVMat4f& pmv() const noexcept { return m_pmvMatUni->pmv(); }
     bool animating() const noexcept { return m_animating; }
     bool& animating() noexcept { return m_animating; }
     void setOneFrame() noexcept { m_animating=false; m_oneframe=true; }
@@ -582,9 +575,10 @@ class GraphShapes01 : public RenderListener {
         GL& gl = GL::downcast(win->renderContext());
 
         // setup mgl_PMVMatrix
-        m_pmvMat.m.getP().loadIdentity();
-        m_pmvMat.m.getMv().loadIdentity();
-        m_st.ownUniform(m_pmvMat.u, true);
+        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        pmv.getP().loadIdentity();
+        pmv.getMv().loadIdentity();
+        m_st.ownUniform(m_pmvMatUni, true);
 
         if( !m_renderer.init(gl, when) ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
@@ -609,7 +603,7 @@ class GraphShapes01 : public RenderListener {
             float thh = height/2.0f;
 
             float ctrX = 0, ctrY = 0, ctrZ = dz;
-            ShapeRef frontShape = Shape::create(m_st, m_pmvMat, m_renderer);
+            ShapeRef frontShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
             // CCW
@@ -632,7 +626,7 @@ class GraphShapes01 : public RenderListener {
             frontShape->setColor(Vec4f(0.5f, 0.05f, 0.05f, 1));
             frontShape->position().x = -2.0f;
 
-            ShapeRef backShape = Shape::create(m_st, m_pmvMat, m_renderer);
+            ShapeRef backShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
             m_shapes.push_back(backShape);
             backShape->outlines() = oshape.flipFace(); // -dz);
             backShape->outlines().clearCache();
@@ -641,7 +635,7 @@ class GraphShapes01 : public RenderListener {
             backShape->position().x = -2.0f;
         }
         if( true) {
-            ShapeRef frontShape = Shape::create(m_st, m_pmvMat, m_renderer);
+            ShapeRef frontShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
             oshape.moveTo(0.0f,-10.0f, 0);
@@ -660,7 +654,7 @@ class GraphShapes01 : public RenderListener {
             frontShape->scale().x *= 0.1f;
             frontShape->scale().y *= 0.1f;
 
-            ShapeRef backShape = Shape::create(m_st, m_pmvMat, m_renderer);
+            ShapeRef backShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
             m_shapes.push_back(backShape);
             backShape->outlines() = oshape.flipFace(-dz);
             backShape->outlines().clearCache();
@@ -671,7 +665,7 @@ class GraphShapes01 : public RenderListener {
             backShape->scale().y *= 0.1f;
         }
         if ( true ) {
-            ShapeRef frontShape = Shape::create(m_st, m_pmvMat, m_renderer);
+            ShapeRef frontShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
             Glyph05FreeSerifBoldItalic_ae::addShapeToRegion(oshape);
@@ -682,7 +676,7 @@ class GraphShapes01 : public RenderListener {
             frontShape->scale().x *= 2.0f;
             frontShape->scale().y *= 2.0f;
 
-            ShapeRef backShape = Shape::create(m_st, m_pmvMat, m_renderer);
+            ShapeRef backShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
             m_shapes.push_back(backShape);
             backShape->outlines() = oshape.flipFace(-dz);
             backShape->outlines().clearCache();
@@ -694,7 +688,7 @@ class GraphShapes01 : public RenderListener {
             backShape->scale().y *= 2.0f;
         }
         if ( true ) {
-            ShapeRef frontShape = Shape::create(m_st, m_pmvMat, m_renderer);
+            ShapeRef frontShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
             Glyph03FreeMonoRegular_M::addShapeToRegion(oshape);
@@ -705,7 +699,7 @@ class GraphShapes01 : public RenderListener {
             frontShape->scale().x *= 2.0f;
             frontShape->scale().y *= 2.0f;
 
-            ShapeRef backShape = Shape::create(m_st, m_pmvMat, m_renderer);
+            ShapeRef backShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
             m_shapes.push_back(backShape);
             backShape->outlines() = oshape.flipFace(-dz);
             backShape->outlines().clearCache();
@@ -742,13 +736,14 @@ class GraphShapes01 : public RenderListener {
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
 
-        m_pmvMat.m.getP().loadIdentity();
+        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        pmv.getP().loadIdentity();
         const float aspect = 1.0f;
         const float fovy_deg=45.0f;
         const float aspect2 = ( (float) m_viewport.width() / (float) m_viewport.height() ) / aspect;
-        m_pmvMat.m.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
+        pmv.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
         m_st.useProgram(gl, true);
-        m_st.pushUniform(gl, m_pmvMat.u); // automatic sync + update of Mvi + Mvit
+        m_st.pushUniform(gl, m_pmvMatUni); // automatic sync + update of Mvi + Mvit
         // m_st.useProgram(gl, false);
     }
 
@@ -761,8 +756,9 @@ class GraphShapes01 : public RenderListener {
         ::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_st.useProgram(gl, true);
-        m_pmvMat.m.getMv().loadIdentity();
-        m_pmvMat.m.translateMv(0, 0, -5);
+        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        pmv.getMv().loadIdentity();
+        pmv.translateMv(0, 0, -5);
 
         for(const ShapeRef& s : m_shapes) {
             if( animating() || m_oneframe ) {
@@ -791,7 +787,7 @@ class Example : public GraphShapes01 {
         MyKeyListener(GraphShapes01& p) : m_parent(p) {}
 
         void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
+            jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
             if( e.keySym() == VKeyCode::VK_ESCAPE ) {
                 WindowRef win = e.source().lock();
                 if( win ) {
@@ -807,7 +803,7 @@ class Example : public GraphShapes01 {
             }
         }
         void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
+            jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
         }
     };
     typedef std::shared_ptr<MyKeyListener> MyKeyListenerRef;
@@ -836,6 +832,7 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
     // ShaderCode::DEBUG_CODE = true;
 
     return launch("GraphShapes01.cpp",
-                  GLLaunchProps{GLProfile(GLProfile::GLES2), gamp::render::RenderContextFlags::verbose}, // | gamp::render::RenderContextFlags::debug},
+                  GLLaunchProps{.profile=GLProfile(GLProfile::GLES2),
+                                .contextFlags=gamp::render::RenderContextFlags::verbose}, // | gamp::render::RenderContextFlags::debug},
                   std::make_shared<Example>(), argc, argv);
 }

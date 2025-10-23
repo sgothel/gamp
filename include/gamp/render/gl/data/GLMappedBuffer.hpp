@@ -163,7 +163,7 @@ namespace gamp::render::gl::data {
             if(skipMappedBuffer) {
                 return s0.append("]");
             } else {
-                return s0.append(", mapped ").append(jau::to_hexstring(m_mappedBuffer)).append("]");
+                return s0.append(", mapped ").append(jau::toHexString(m_mappedBuffer)).append("]");
             }
         }
     };

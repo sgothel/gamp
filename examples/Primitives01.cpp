@@ -15,10 +15,10 @@
 
 #include <jau/basic_types.hpp>
 #include <jau/darray.hpp>
-#include <jau/file_util.hpp>
 #include <jau/float_math.hpp>
 #include <jau/float_types.hpp>
 #include <jau/fraction_type.hpp>
+#include <jau/io/file_util.hpp>
 #include <jau/math/geom/aabbox3f.hpp>
 #include <jau/math/geom/geom3f.hpp>
 #include <jau/math/vec3f.hpp>
@@ -49,8 +49,8 @@ struct PMVMat4fUniform {
     GLUniformDataRef u;
 
     PMVMat4fUniform()
-    : m( PMVMat4f::INVERSE_PROJECTION | PMVMat4f::INVERSE_MODELVIEW | PMVMat4f::INVERSE_TRANSPOSED_MODELVIEW ),
-      u( GLUniformSyncMatrices4f::create("mgl_PMVMatrix", m.getSyncPMvMviMvit()) )  // P, Mv, Mvi and Mvit
+    : m( PMVData::inv_proj | PMVData::inv_mv | PMVData::inv_tps_mv ),
+      u( GLUniformSyncMatrices4f::create("mgl_PMVMatrix", m.makeSyncPMvMviMvit()) )  // P, Mv, Mvi and Mvit
     {}
 };
 
@@ -58,16 +58,17 @@ class Shape {
   private:
     GLenum m_type;
     ShaderState& m_st;
-    PMVMat4fUniform&  m_pmvMat;
+    PMVMat4fUniform&  m_pmvMatUni;
     GLFloatArrayDataServerRef m_array;
 
     Vec3f m_position;
     Quat4f m_rotation;
+    Vec4f m_color = Vec4f(1, 0, 0, 1);
     GLUniformVec4fRef m_uColor;
 
   public:
     Shape(GLenum type, ShaderState &st, PMVMat4fUniform& pmvMatU)
-    : m_type(type), m_st(st), m_pmvMat(pmvMatU), m_array( GLFloatArrayDataServer::createGLSLInterleaved(2*3, false, 4, GL_STATIC_DRAW) )
+    : m_type(type), m_st(st), m_pmvMatUni(pmvMatU), m_array( GLFloatArrayDataServer::createGLSLInterleaved(2*3, false, 4, GL_STATIC_DRAW) )
     {
         m_array->addGLSLSubArray("mgl_Vertex", 3, GL_ARRAY_BUFFER);
         m_array->addGLSLSubArray("mgl_Normal", 3, GL_ARRAY_BUFFER);
@@ -93,18 +94,18 @@ class Shape {
         m_array->seal(gl, seal);
     }
     void draw(GL &gl) {
-        m_pmvMat.m.pushMv();
-        m_pmvMat.m.translateMv(m_position); // identity + translate, scaled
+        m_pmvMatUni.m.pushMv();
+        m_pmvMatUni.m.translateMv(m_position); // identity + translate, scaled
         // Rotate shape around its scaled center
-        m_pmvMat.m.rotateMv(m_rotation);
-        m_st.pushUniform(gl, m_pmvMat.u); // automatic sync + update of Mvi + Mvit
+        m_pmvMatUni.m.rotateMv(m_rotation);
+        m_st.pushUniform(gl, m_pmvMatUni.u); // automatic sync + update of Mvi + Mvit
 
         m_st.pushUniform(gl, m_uColor);
 
         m_array->enableBuffer(gl, true);
         ::glDrawArrays(m_type, 0, m_array->elemCount());
         m_array->enableBuffer(gl, false);
-        m_pmvMat.m.popMv();
+        m_pmvMatUni.m.popMv();
     }
 
 };
@@ -304,7 +305,7 @@ class Example : public Primitives01 {
         MyKeyListener(Primitives01& p) : m_parent(p) {}
 
         void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
+            jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
             if( e.keySym() == VKeyCode::VK_ESCAPE ) {
                 WindowRef win = e.source().lock();
                 if( win ) {
@@ -318,7 +319,7 @@ class Example : public Primitives01 {
             }
         }
         void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
+            jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
         }
     };
     typedef std::shared_ptr<MyKeyListener> MyKeyListenerRef;
@@ -347,6 +348,6 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
     ShaderCode::DEBUG_CODE = true;
 
     return launch("Primitives01.cpp",
-                  GLLaunchProps{GLProfile(GLProfile::GLES2), gamp::render::RenderContextFlags::verbose},
+                  GLLaunchProps{.profile=GLProfile(GLProfile::GLES2), .contextFlags=gamp::render::RenderContextFlags::verbose},
                   std::make_shared<Example>(), argc, argv);
 }

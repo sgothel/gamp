@@ -16,8 +16,8 @@
 
 #include <jau/basic_types.hpp>
 #include <jau/debug.hpp>
-#include <jau/file_util.hpp>
-#include <jau/io_util.hpp>
+#include <jau/io/file_util.hpp>
+#include <jau/io/io_util.hpp>
 #include <jau/string_util.hpp>
 
 #include <gamp/Gamp.hpp>

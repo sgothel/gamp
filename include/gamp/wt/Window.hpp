@@ -112,7 +112,7 @@ namespace gamp::wt {
         std::string toString() const noexcept {
             std::string res = "RenderListener[";
             res.append("pending ").append(to_string(m_pending_actions))
-               .append(", this ").append(jau::to_hexstring(this))
+               .append(", this ").append(jau::toHexString(this))
                .append(", ").append(toStringImpl())
                .append("]");
             return res;

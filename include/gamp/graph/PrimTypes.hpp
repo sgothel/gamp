@@ -130,7 +130,7 @@ namespace gamp::graph {
     class Triangle {
       public:
         typedef std::array<Vertex, 3> trivert_t;
-        typedef jau::bitfield<3> tribit_t;
+        typedef jau::bitfield_t<uint8_t, 3> tribit_t;
 
       private:
         uint32_t m_id;

@@ -16,9 +16,9 @@
 #include <memory>
 
 #include <jau/basic_types.hpp>
-#include <jau/file_util.hpp>
 #include <jau/float_types.hpp>
 #include <jau/fraction_type.hpp>
+#include <jau/io/file_util.hpp>
 
 #include <gamp/Gamp.hpp>
 #include <gamp/render/RenderContext.hpp>
@@ -41,7 +41,7 @@ class Example : public RedSquareES2 {
         MyKeyListener(RedSquareES2& p) : m_parent(p) {}
 
         void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
+            jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
             if( e.keySym() == VKeyCode::VK_ESCAPE ) {
                 WindowRef win = e.source().lock();
                 if( win ) {
@@ -55,7 +55,7 @@ class Example : public RedSquareES2 {
             }
         }
         void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
+            jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
         }
     };
     typedef std::shared_ptr<MyKeyListener> MyKeyListenerRef;
@@ -82,6 +82,6 @@ class Example : public RedSquareES2 {
 int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
     return launch("RedSquareES2.hpp",
-                  GLLaunchProps{GLProfile(GLProfile::GLES2), gamp::render::RenderContextFlags::verbose},
+                  GLLaunchProps{.profile=GLProfile(GLProfile::GLES2), .contextFlags=gamp::render::RenderContextFlags::verbose},
                   std::make_shared<Example>(), argc, argv);
 }

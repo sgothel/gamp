@@ -61,7 +61,7 @@ namespace gamp::graph::tess::impl {
          * @param ol the source {@link Outline}
          */
         GraphOutline(Outline& ol)
-        : m_outline(const_cast<Outline*>(&ol), jau::OptDeleter<Outline>(false))
+        : m_outline(&ol, jau::OptDeleter<Outline>(false))
         {
             VertexList& vs = ol.vertices();
             m_controlpoints.reserve(vs.size());

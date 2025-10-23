@@ -14,8 +14,8 @@
 
 #include <jau/basic_types.hpp>
 #include <jau/debug.hpp>
-#include <jau/file_util.hpp>
-#include <jau/io_util.hpp>
+#include <jau/io/file_util.hpp>
+#include <jau/io/io_util.hpp>
 #include <jau/string_util.hpp>
 
 #include <algorithm>
@@ -309,7 +309,7 @@ namespace gamp::render::gl::glsl {
         }
 
         bool ownsAttribute(const GLArrayDataRef& attribute) const {
-            return m_managedAttributes.end() != std::find(m_managedAttributes.begin(), m_managedAttributes.end(), attribute);
+            return m_managedAttributes.end() != std::find(m_managedAttributes.begin(), m_managedAttributes.end(), attribute); // NOLINT(modernize-use-ranges)
         }
 
         /**
@@ -819,7 +819,7 @@ namespace gamp::render::gl::glsl {
         }
 
         bool ownsUniform(const GLUniformDataRef& uniform) {
-            return m_managedUniforms.end() != std::find(m_managedUniforms.begin(), m_managedUniforms.end(), uniform);
+            return m_managedUniforms.end() != std::find(m_managedUniforms.begin(), m_managedUniforms.end(), uniform); // NOLINT(modernize-use-ranges)
         }
 
         /**
@@ -859,12 +859,11 @@ namespace gamp::render::gl::glsl {
         /**
          * Validates and returns the location of a shader uniform.<br>
          * Uses either the cached value {@link #getCachedUniformLocation(String)} if valid,
-         * or the GLSL queried via {@link GL2ES2#glGetUniformLocation(int, String)}.<br>
-         * The location will be cached and set in the
-         * {@link GLUniformData} object.
-         * <p>
-         * The current shader program ({@link #attachShaderProgram(GL2ES2, ShaderProgram)})
-         * must be in use ({@link #useProgram(GL2ES2, boolean) }) !</p>
+         * or the GLSL queried via {@link GL2ES2#glGetUniformLocation(int, String)}.
+         * The location will be cached and set in the GLUniformData object.
+         *
+         * The current shader program (attachShaderProgram(GL2ES2, ShaderProgram))
+         * must be in use ({@link #useProgram(GL2ES2, boolean) }) !
          *
          * @return -1 if there is no such attribute available,
          *         otherwise >= 0
@@ -896,12 +895,11 @@ namespace gamp::render::gl::glsl {
         }
 
         /**
-         * Set the uniform data, if it's location is valid, i.e. &ge; 0.
-         * <p>
-         * This method uses the {@link GLUniformData}'s location if valid, i.e. &ge; 0.<br/>
-         * If data's location is invalid, it will be retrieved via {@link #getUniformLocation(GL2ES2, GLUniformData)},
+         * Set the uniform data, if it's location is valid, i.e. >= 0.
+         *
+         * This method uses the {@link GLUniformData}'s location if valid, i.e. >= 0.
+         * If data's location is invalid, it will be retrieved via getUniformLocation(GL2ES2, GLUniformData),
          * set and cached in this state.
-         * </p>
          *
          * @return false, if the location could not be determined, otherwise true
          *

@@ -18,5 +18,6 @@
 
 #include <GL/gl.h>
 #include <GL/glext.h>
+#include <GLES2/gl2ext.h>
 
 #endif /* GAMP_RENDER_GL_GLHEADER_HPP_ */

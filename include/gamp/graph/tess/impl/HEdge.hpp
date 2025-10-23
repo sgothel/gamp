@@ -102,7 +102,7 @@ namespace gamp::graph::tess::impl {
         }
 
         std::string toString() {
-            return "HEdge{this "+jau::to_hexstring(this)+", prev "+jau::to_hexstring(m_prev)+", next "+jau::to_hexstring(m_next)+"}";
+            return "HEdge{this "+jau::toHexString(this)+", prev "+jau::toHexString(m_prev)+", next "+jau::toHexString(m_next)+"}";
         }
         void printChain() {
             int i=0;

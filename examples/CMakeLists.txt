@@ -5,14 +5,11 @@ include_directories(
 )
 
 # These examples use the standard separate compilation
-if (EMSCRIPTEN)
-    file(GLOB SOURCES_IDIOMATIC_TARGETS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cpp")
-    #set(SOURCES_IDIOMATIC_TARGETS "RedSquareES2.cpp")
-else()
-    file(GLOB SOURCES_IDIOMATIC_TARGETS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cpp")
-endif()
+file(GLOB SOURCES_IDIOMATIC_TARGETS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cpp")
 
 string( REPLACE ".cpp" "" BASENAMES_IDIOMATIC_TARGETS "${SOURCES_IDIOMATIC_TARGETS}" )
+
+set(TARGETS_USING_GLUTESS2 Primitives02 Unused)
 
 set( SDL_TARGETS_IDIOMATIC_TARGETS "" )
 set( SDL_TARGETS_IDIOMATIC_FILES "" )
@@ -37,7 +34,12 @@ foreach( name ${BASENAMES_IDIOMATIC_TARGETS} )
     else()
         target_link_options(${target} PUBLIC ${gamp_EXE_LINKER_FLAGS})
     endif()
-    target_link_libraries(${target} gamp ${SDL2_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+    set(${target}_LIBS "gamp" ${SDL2_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+    if (${target} IN_LIST TARGETS_USING_GLUTESS2)
+      set(${target}_LIBS ${${target}_LIBS} "glutess2")
+    endif()
+    message(STATUS "${target} libs: ${${target}_LIBS}")
+    target_link_libraries(${target} ${${target}_LIBS})
 endforeach()
 
 install(TARGETS ${SDL_TARGETS_IDIOMATIC_TARGETS} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

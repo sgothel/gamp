@@ -854,8 +854,8 @@ namespace gamp::wt::event {
 
         std::string toString() const noexcept {
             std::string res = "KeyEvent[";
-            res.append(getEventTypeString()).append(", sym ").append(jau::to_hexstring(*m_keySym))
-               .append(", char ").append(jau::to_hexstring(m_keyChar));
+            res.append(getEventTypeString()).append(", sym ").append(jau::toHexString(*m_keySym))
+               .append(", char ").append(jau::toHexString(m_keyChar));
             if( isPrintableKey() ) {
                 res.append(" `").append(std::string(1, (char)m_keyChar)).append("`");
             }

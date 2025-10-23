@@ -61,8 +61,7 @@ class GearsObjectES2 {
   private:
     int               m_name;
     ShaderState&      m_st;
-    PMVMat4f&         m_pmvMatrix;
-    GLUniformDataRef  m_pmvMatrixUniform;
+    GLUniformSyncPMVMat4fRef m_pmvMatUni;
     GLUniformVec4fRef m_colorUniform;
     jau::math::Vec4f  m_gearColor;
     jau::math::Vec3f  m_tx;
@@ -132,8 +131,8 @@ class GearsObjectES2 {
                    GLsizei   teeth,
                    float     tooth_depth,
                    jau::math::Vec3f tx,
-                   PMVMat4f& pmvMatrix, GLUniformDataRef pmvMatrixUniform, GLUniformVec4fRef colorUniform)
-    : m_name(name), m_st(st), m_pmvMatrix(pmvMatrix), m_pmvMatrixUniform(std::move(pmvMatrixUniform)),
+                   GLUniformSyncPMVMat4fRef &pmvMatUni, GLUniformVec4fRef colorUniform)
+    : m_name(name), m_st(st), m_pmvMatUni(pmvMatUni),
       m_colorUniform(std::move(colorUniform)), m_gearColor(gearColor), m_tx(tx),
       m_useMappedBuffers(false), m_picked(false), m_objbox(), m_viewbox(), m_PMvi() {
         const float dz = width * 0.5f;
@@ -329,11 +328,12 @@ class GearsObjectES2 {
     }
 
     void draw(GL& gl, float ang_rad) {
-        m_pmvMatrix.pushMv();
-        m_pmvMatrix.translateMv(m_tx);
-        m_objbox.transform(m_pmvMatrix.getMv(), m_viewbox); // view-box for findPick
-        m_pmvMatrix.rotateMv(ang_rad, 0.0f, 0.0f, 1.0f);
-        m_st.pushUniform(gl, m_pmvMatrixUniform);  // automatic sync + update of Mvi + Mvit
+        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        pmv.pushMv();
+        pmv.translateMv(m_tx);
+        m_objbox.transform(pmv.getMv(), m_viewbox); // view-box for findPick
+        pmv.rotateMv(ang_rad, 0.0f, 0.0f, 1.0f);
+        m_st.pushUniform(gl, m_pmvMatUni);  // automatic sync + update of Mvi + Mvit
 
         if( m_picked ) {
             const float gray = ( m_gearColor.x + m_gearColor.y + m_gearColor.z ) / 3.0f;
@@ -350,16 +350,17 @@ class GearsObjectES2 {
         draw(gl, m_outwardFace, GL_TRIANGLE_STRIP);
         draw(gl, m_insideRadiusCyl, GL_TRIANGLE_STRIP);
 
-        m_PMvi = m_pmvMatrix.getPMvi();
-        m_pmvMatrix.popMv();
+        m_PMvi = pmv.getPMvi();
+        pmv.popMv();
     }
     bool dispatchAction(const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
-        m_pmvMatrix.pushMv();
-        m_pmvMatrix.translateMv(m_tx);
+        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        pmv.pushMv();
+        pmv.translateMv(m_tx);
 
         const bool done = action(e, win, *this);
 
-        m_pmvMatrix.popMv();
+        pmv.popMv();
         return done;
     }
 
@@ -378,12 +379,11 @@ class GearsObjectES2 {
 class GearsES2 : public RenderListener {
   private:
     constexpr static jau::math::Vec3f lightPos = jau::math::Vec3f(5.0f, 5.0f, 10.0f);
+    constexpr static PMVData mat_req = PMVData::inv_proj | PMVData::inv_mv | PMVData::inv_tps_mv;
 
     ShaderState                m_st;
-    PMVMat4f                   m_pmvMatrix;
-    GLUniformSyncMatrices4fRef m_pmvMatrixUniform;
-    GLUniformVec4fRef          m_colorUniform;
-    bool                       m_useMappedBuffers;
+    GLUniformSyncPMVMat4fRef   m_pmvMatUni;
+    GLUniformVec4fRef          m_colorUni;
     jau::math::Vec4f           m_gear1Color, m_gear2Color, m_gear3Color;
     GearsObjectES2             m_gear1, m_gear2, m_gear3;
 
@@ -408,24 +408,22 @@ class GearsES2 : public RenderListener {
     GearsES2()
     : RenderListener(RenderListener::Private()),
       m_st(),
-      m_pmvMatrix(PMVMat4f::INVERSE_PROJECTION | PMVMat4f::INVERSE_MODELVIEW | PMVMat4f::INVERSE_TRANSPOSED_MODELVIEW),
-      m_pmvMatrixUniform(GLUniformSyncMatrices4f::create("mgl_PMVMatrix", m_pmvMatrix.getSyncPMvMviMvit())),  // P, Mv, Mvi and Mvit
-      m_colorUniform(GLUniformVec4f::create("mgl_StaticColor", GearsObjectES2::red)),
-      m_useMappedBuffers(false),
+      m_pmvMatUni(GLUniformSyncPMVMat4f::create("mgl_PMVMatrix", mat_req)),  // P, Mv, Mvi and Mvit
+      m_colorUni(GLUniformVec4f::create("mgl_StaticColor", GearsObjectES2::red)),
       m_gear1Color(GearsObjectES2::red),
       m_gear2Color(GearsObjectES2::green),
       m_gear3Color(GearsObjectES2::blue),
-      m_gear1(1, m_st, m_gear1Color, 1.0f, 4.0f, 1.0f, 20, 0.7f, Vec3f( -3.0f, -2.0f, 0.0f), m_pmvMatrix, m_pmvMatrixUniform, m_colorUniform),
-      m_gear2(2, m_st, m_gear2Color, 0.5f, 2.0f, 2.0f, 10, 0.7f, Vec3f(  3.1f, -2.0f, 0.0f), m_pmvMatrix, m_pmvMatrixUniform, m_colorUniform),
-      m_gear3(3, m_st, m_gear3Color, 1.3f, 2.0f, 0.5f, 10, 0.7f, Vec3f( -3.1f,  4.2f, 0.0f), m_pmvMatrix, m_pmvMatrixUniform, m_colorUniform)
+      m_gear1(1, m_st, m_gear1Color, 1.0f, 4.0f, 1.0f, 20, 0.7f, Vec3f( -3.0f, -2.0f, 0.0f), m_pmvMatUni, m_colorUni),
+      m_gear2(2, m_st, m_gear2Color, 0.5f, 2.0f, 2.0f, 10, 0.7f, Vec3f(  3.1f, -2.0f, 0.0f), m_pmvMatUni, m_colorUni),
+      m_gear3(3, m_st, m_gear3Color, 1.3f, 2.0f, 0.5f, 10, 0.7f, Vec3f( -3.1f,  4.2f, 0.0f), m_pmvMatUni, m_colorUni)
     { }
 
     constexpr bool doRotate() const noexcept { return m_doRotate; }
     constexpr void setDoRotate(bool rotate) noexcept { m_doRotate = rotate; }
     constexpr void setClearBuffers(bool v) noexcept { m_clearBuffers = v; }
     constexpr void setFlipVerticalInGLOrientation(bool v) noexcept { m_flipVerticalInGLOrientation = v; }
-    constexpr PMVMat4f& pmvMatrix() noexcept { return m_pmvMatrix; }
-    constexpr const PMVMat4f& pmvMatrix() const noexcept { return m_pmvMatrix; }
+    constexpr PMVMat4f& pmvMatrix() noexcept { return m_pmvMatUni->pmv(); }
+    constexpr const PMVMat4f& pmvMatrix() const noexcept { return m_pmvMatUni->pmv(); }
     constexpr const jau::math::Recti& viewport() const noexcept { return m_viewport; }
     constexpr Vec3f& pan() noexcept { return m_pan; }
     constexpr jau::math::Vec3f& rotEuler() noexcept { return m_rotEuler; }
@@ -440,14 +438,12 @@ class GearsES2 : public RenderListener {
         m_gear3Color = gear3Color;
     }
     constexpr const jau::math::Vec3f& rotEuler() const noexcept { return m_rotEuler; }
-    constexpr bool  usingMappedBuffers() const noexcept { return m_useMappedBuffers; }
 
     void setZ(float zNear, float zFar, float zViewDist) {
         m_zNear     = zNear;
         m_zFar      = zFar;
         m_zViewDist = zViewDist;
     }
-    const PMVMat4f& getPMVMatrix() const noexcept { return m_pmvMatrix; }
 
     bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
@@ -479,13 +475,13 @@ class GearsES2 : public RenderListener {
         m_gear3.initGL(gl);
 
         // st.attachObject("pmvMatrix", pmvMatrix);
-        m_st.ownUniform(m_pmvMatrixUniform, true);
+        m_st.ownUniform(m_pmvMatUni, true);
 
         GLUniformVec3fRef lightU = GLUniformVec3f::create("mgl_LightPos", lightPos);
         m_st.ownUniform(lightU, true);
 
-        m_colorUniform = GLUniformVec4f::create("color", GearsObjectES2::red);
-        m_st.ownUniform(m_colorUniform, true);
+        m_colorUni = GLUniformVec4f::create("color", GearsObjectES2::red);
+        m_st.ownUniform(m_colorUni, true);
         m_st.pushAllUniforms(gl);
 
         if( m_clearBuffers ) {
@@ -515,7 +511,7 @@ class GearsES2 : public RenderListener {
     }
 
     void reshape(const WindowRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
-        jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
+        jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n\t%s\n", toString().c_str(), m_pmvMatUni->pmv().toString().c_str());
         if( !m_initialized ) { return; }
         m_viewport = viewport;
         reshapeImpl(win, viewport, float(viewport.width()), float(viewport.height()), when);
@@ -529,13 +525,13 @@ class GearsES2 : public RenderListener {
         // compute projection parameters 'normal'
         float left, right, bottom, top;
         if( imageHeight > imageWidth ) {
-            const float a = (float)imageHeight / (float)imageWidth;
+            const float a = imageHeight / imageWidth;
             left          = -1.0f;
             right         = 1.0f;
             bottom        = -a;
             top           = a;
         } else {
-            const float a = (float)imageWidth / (float)imageHeight;
+            const float a = imageWidth / imageHeight;
             left          = -a;
             right         = a;
             bottom        = -1.0f;
@@ -556,17 +552,18 @@ class GearsES2 : public RenderListener {
                    m_teethAngle, left, right, bottom, top, w, h, l, r, b, t, _w, _h, m_flipVerticalInGLOrientation);
         }
 
-        m_pmvMatrix.loadPIdentity();
+        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        pmv.loadPIdentity();
         if( m_flipVerticalInGLOrientation && win->isBLOriented() ) {
-            m_pmvMatrix.scaleP(1.0f, -1.0f, 1.0f);
+            pmv.scaleP(1.0f, -1.0f, 1.0f);
         }
-        m_pmvMatrix.frustumP(l, r, b, t, m_zNear, m_zFar);
+        pmv.frustumP(l, r, b, t, m_zNear, m_zFar);
 
-        m_pmvMatrix.loadMvIdentity();
-        m_pmvMatrix.translateMv(0.0f, 0.0f, -m_zViewDist);
+        pmv.loadMvIdentity();
+        pmv.translateMv(0.0f, 0.0f, -m_zViewDist);
 
         m_st.useProgram(gl, true);
-        m_st.pushUniform(gl, m_pmvMatrixUniform);
+        m_st.pushUniform(gl, m_pmvMatUni);
         m_st.useProgram(gl, false);
     }
 
@@ -595,16 +592,17 @@ class GearsES2 : public RenderListener {
         setGLStates(win, true);
 
         m_st.useProgram(gl, true);
-        m_pmvMatrix.pushMv();
-        m_pmvMatrix.translateMv(m_pan);
-        m_pmvMatrix.rotateMv(m_rotEuler.x, 1.0f, 0.0f, 0.0f);
-        m_pmvMatrix.rotateMv(m_rotEuler.y, 0.0f, 1.0f, 0.0f);
-        m_pmvMatrix.rotateMv(m_rotEuler.z, 0.0f, 0.0f, 1.0f);
+        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        pmv.pushMv();
+        pmv.translateMv(m_pan);
+        pmv.rotateMv(m_rotEuler.x, 1.0f, 0.0f, 0.0f);
+        pmv.rotateMv(m_rotEuler.y, 0.0f, 1.0f, 0.0f);
+        pmv.rotateMv(m_rotEuler.z, 0.0f, 0.0f, 1.0f);
 
         m_gear1.draw(gl, getTeethRotation(1, m_teethAngle));
         m_gear2.draw(gl, getTeethRotation(2, m_teethAngle));
         m_gear3.draw(gl, getTeethRotation(3, m_teethAngle));
-        m_pmvMatrix.popMv();
+        pmv.popMv();
         m_st.useProgram(gl, false);
 
         setGLStates(win, false);
@@ -619,7 +617,7 @@ class GearsES2 : public RenderListener {
                 return a->viewBounds().high().z > b->viewBounds().high().z;
             }
         } zDescending;
-        std::sort(gears.begin(), gears.end(), zDescending);
+        std::sort(gears.begin(), gears.end(), zDescending); // NOLINT(modernize-use-ranges)
 
         // We do not perform teeth-object rotation in object space for PointerEventAction!
         GearsObjectES2* res = nullptr;
@@ -632,15 +630,16 @@ class GearsES2 : public RenderListener {
     }
     /// Dispatch PointerShapeAction to given shape w/ matrix traversal
     bool dispatchForShape(GearsObjectES2& shape, const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
-        m_pmvMatrix.pushMv();
-        m_pmvMatrix.translateMv(m_pan);
-        m_pmvMatrix.rotateMv(m_rotEuler.x, 1.0f, 0.0f, 0.0f);
-        m_pmvMatrix.rotateMv(m_rotEuler.y, 0.0f, 1.0f, 0.0f);
-        m_pmvMatrix.rotateMv(m_rotEuler.z, 0.0f, 0.0f, 1.0f);
+        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        pmv.pushMv();
+        pmv.translateMv(m_pan);
+        pmv.rotateMv(m_rotEuler.x, 1.0f, 0.0f, 0.0f);
+        pmv.rotateMv(m_rotEuler.y, 0.0f, 1.0f, 0.0f);
+        pmv.rotateMv(m_rotEuler.z, 0.0f, 0.0f, 1.0f);
 
         const bool res = shape.dispatchAction(action, e, win);
 
-        m_pmvMatrix.popMv();
+        pmv.popMv();
         return res;
     }
 

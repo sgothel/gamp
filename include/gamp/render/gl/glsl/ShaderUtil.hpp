@@ -155,6 +155,7 @@ namespace gamp::render::gl::glsl {
             bool shaderCompilerAvail;
             /** List of binary shader formats */
             name_list_t binFormats;
+            const jau::type_info& signature() const noexcept override { return jau::static_ctti<CompilerInfo>(); }
         };
         typedef std::shared_ptr<CompilerInfo> CompilerInfoRef;
 
@@ -309,7 +310,7 @@ namespace gamp::render::gl::glsl {
             createShader(gl, shaderType, shader);
             err = glGetError();
             if(err!=GL_NO_ERROR) {
-                throw RenderException("createAndLoadShader: CreateShader failed, GL Error: "+jau::to_hexstring(err), E_FILE_LINE);
+                throw RenderException("createAndLoadShader: CreateShader failed, GL Error: "+jau::toHexString(err), E_FILE_LINE);
             }
 
             shaderBinary(gl, shader, binFormat, bin);
@@ -333,12 +334,12 @@ namespace gamp::render::gl::glsl {
             createShader(gl, shaderType, shader);
             err = glGetError();
             if(err!=GL_NO_ERROR) {
-                throw RenderException("createAndCompileShader: CreateShader failed, GL Error: "+jau::to_hexstring(err), E_FILE_LINE);
+                throw RenderException("createAndCompileShader: CreateShader failed, GL Error: "+jau::toHexString(err), E_FILE_LINE);
             }
             shaderSource(gl, shader, sources);
             err = glGetError();
             if(err!=GL_NO_ERROR) {
-                throw RenderException("createAndCompileShader: ShaderSource failed, GL Error: "+jau::to_hexstring(err), E_FILE_LINE);
+                throw RenderException("createAndCompileShader: ShaderSource failed, GL Error: "+jau::toHexString(err), E_FILE_LINE);
             }
 
             compileShader(gl, shader);

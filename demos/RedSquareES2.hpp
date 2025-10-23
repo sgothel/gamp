@@ -31,7 +31,8 @@ class RedSquareES2 : public RenderListener {
   private:
     ShaderState m_st;
     Recti m_viewport;
-    PMVMat4f m_pmv;
+    // PMVMat4f m_pmv;
+    GLUniformSyncPMVMat4fRef m_pmvMatUni;
     bool m_initialized;
     bool m_animating = true;
     jau::fraction_timespec m_tlast;
@@ -39,13 +40,14 @@ class RedSquareES2 : public RenderListener {
   public:
     RedSquareES2()
     : RenderListener(RenderListener::Private()),
-      m_pmv(), m_initialized(false) {  }
+      m_pmvMatUni(GLUniformSyncPMVMat4f::create("mgl_PMVMatrix")),
+      m_initialized(false) {  }
 
     Recti& viewport() noexcept { return m_viewport; }
     const Recti& viewport() const noexcept { return m_viewport; }
 
-    PMVMat4f& pmv() noexcept { return m_pmv; }
-    const PMVMat4f& pmv() const noexcept { return m_pmv; }
+    PMVMat4f& pmv() noexcept { return m_pmvMatUni->pmv(); }
+    const PMVMat4f& pmv() const noexcept { return m_pmvMatUni->pmv(); }
     bool animating() const noexcept { return m_animating; }
     bool& animating() noexcept { return m_animating; }
 
@@ -75,9 +77,10 @@ class RedSquareES2 : public RenderListener {
         m_st.attachShaderProgram(gl, sp0, true);
 
         // setup mgl_PMVMatrix
-        m_pmv.getP().loadIdentity();
-        m_pmv.getMv().loadIdentity();
-        m_st.ownUniform(GLUniformSyncMatrices4f::create("mgl_PMVMatrix", m_pmv.getSyncPMv()), true);
+        PMVMat4f &pmv = m_pmvMatUni->pmv();
+        pmv.getP().loadIdentity();
+        pmv.getMv().loadIdentity();
+        m_st.ownUniform(m_pmvMatUni, true);
 
         // Allocate Vertex Array
         GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("mgl_Vertex", 3, false, 4, GL_STATIC_DRAW);
@@ -122,14 +125,15 @@ class RedSquareES2 : public RenderListener {
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
 
-        m_pmv.getP().loadIdentity();
+        PMVMat4f &pmv = m_pmvMatUni->pmv();
+        pmv.getP().loadIdentity();
 
         const float aspect = 1.0f;
         const float fovy_deg=45.0f;
         const float aspect2 = ( (float) m_viewport.width() / (float) m_viewport.height() ) / aspect;
         const float zNear=1.0f;
         const float zFar=100.0f;
-        m_pmv.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
+        pmv.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
         m_st.useProgram(gl, true);
         m_st.pushAllUniforms(gl);
         m_st.useProgram(gl, false);
@@ -144,15 +148,16 @@ class RedSquareES2 : public RenderListener {
         ::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_st.useProgram(gl, true);
-        m_pmv.getMv().loadIdentity();
-        m_pmv.translateMv(0, 0, -10);
+        PMVMat4f &pmv = m_pmvMatUni->pmv();
+        pmv.getMv().loadIdentity();
+        pmv.translateMv(0, 0, -10);
         static float t_sum_ms = 0;
         if( m_animating ) {
             t_sum_ms += float( (when - m_tlast).to_ms() );
         }
         const float ang = jau::adeg_to_rad(t_sum_ms * 360.0f) / 4000.0f;
-        m_pmv.rotateMv(ang, 0, 0, 1);
-        m_pmv.rotateMv(ang, 0, 1, 0);
+        pmv.rotateMv(ang, 0, 0, 1);
+        pmv.rotateMv(ang, 0, 1, 0);
         m_st.pushAllUniforms(gl);
 
         // Draw a square

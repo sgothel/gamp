@@ -16,6 +16,7 @@
 #include <gamp/render/gl/GLHeader.hpp>
 #include <stdexcept>
 #include <jau/basic_types.hpp>
+#include <jau/string_util.hpp>
 
 using namespace jau;
 using namespace gamp::wt::event;
@@ -145,7 +146,7 @@ void gamp::wt::Window::disposeRenderListener(bool clearRenderListener, const jau
 std::string gamp::wt::Window::toString() const noexcept {
     std::string res = "Window[";
     res.append(to_string(m_state))
-       .append(", handle ").append(jau::to_hexstring(m_window_handle))
+       .append(", handle ").append(jau::toHexString(m_window_handle))
        .append(", bounds ").append(m_window_bounds.toString())
        .append(", listener[render ").append(std::to_string(m_render_listener.size()))
        .append(", window ").append(std::to_string(windowListenerCount()))

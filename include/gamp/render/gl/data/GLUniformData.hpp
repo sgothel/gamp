@@ -14,14 +14,13 @@
 
 #include <cstddef>
 #include <memory>
-#include <utility>
 
 #include <jau/basic_types.hpp>
 #include <jau/cpp_lang_util.hpp>
 #include <jau/debug.hpp>
-#include <jau/file_util.hpp>
 #include <jau/float_types.hpp>
-#include <jau/io_util.hpp>
+#include <jau/io/file_util.hpp>
+#include <jau/io/io_util.hpp>
 #include <jau/math/vec4f.hpp>
 #include <jau/string_util.hpp>
 #include <jau/math/util/syncbuffer.hpp>
@@ -57,6 +56,7 @@ namespace gamp::render::gl::data {
         /** Return the uniform name as used in the shader */
         const string_t& name() const noexcept { return m_name; }
 
+        /// Returns the uniform's location, -1 if no location has been retrieved or set
         constexpr GLint location() const noexcept { return m_location; }
 
         /**
@@ -139,9 +139,9 @@ namespace gamp::render::gl::data {
         void send(const GL& gl) const;
 
       protected:
-        GLUniformData(const jau::type_info& sig, std::string  name, GLint location,
+        GLUniformData(const jau::type_info& sig, std::string_view name, GLint location,
                       GLsizei rows, GLsizei columns, size_t count)
-        : m_signature(sig), m_name(std::move(name)), m_location(location),
+        : m_signature(sig), m_name(name), m_location(location),
           m_rows(rows), m_columns(columns), m_count(castOrThrow<size_t, GLsizei>(count)) {}
 
       private:
@@ -152,23 +152,77 @@ namespace gamp::render::gl::data {
     };
     typedef std::shared_ptr<GLUniformData> GLUniformDataRef;
 
+    class GLUniformSyncPMVMat4fExt : public GLUniformData {
+      public:
+        typedef SyncMatrices4<GLfloat> SyncMats4f;
+
+      private:
+        PMVMat4f& m_mat;
+        mutable SyncMats4f m_data;
+
+      public:
+        GLUniformSyncPMVMat4fExt(stringview_t name, PMVMat4f &mat, SyncMats4f &&data)
+        : GLUniformData(data.compSignature(), name,
+                        /*location=*/-1, /*rows=*/4, /*columns=*/4, /*count=*/data.matrixCount()),
+          m_mat(mat), m_data(data) {}
+
+        static std::shared_ptr<GLUniformSyncPMVMat4fExt> create(stringview_t name, PMVMat4f &mat, SyncMats4f &&data) {
+            return std::make_shared<GLUniformSyncPMVMat4fExt>(name, mat, std::move(data));
+        }
+        const void* data() const noexcept override { return m_data.syncedData(); }
+
+        constexpr const GLfloat* floats() const noexcept { return m_data.floats(); }
+
+        constexpr const PMVMat4f& pmv() const noexcept { return m_mat; }
+        constexpr PMVMat4f& pmv() noexcept { return m_mat; }
+    };
+    typedef std::shared_ptr<GLUniformSyncPMVMat4fExt> GLUniformSyncPMVMat4fExtRef;
+
+    class GLUniformSyncPMVMat4f : public GLUniformData {
+      public:
+        typedef SyncMatrices4<GLfloat> SyncMats4f;
+      private:
+        PMVMat4f m_mat;
+        mutable SyncMats4f m_data;
+
+      public:
+        GLUniformSyncPMVMat4f(stringview_t name, PMVMat4f &&mat)
+        : GLUniformData(mat.compSignature(), name,
+                        /*location=*/-1, /*rows=*/4, /*columns=*/4, /*count=*/mat.matrixCount()),
+          m_mat(mat), m_data(m_mat.makeSyncPMvReq()) {}
+
+        GLUniformSyncPMVMat4f(stringview_t name, PMVData derivedMatrices)
+        : GLUniformSyncPMVMat4f(name, PMVMat4f(derivedMatrices)) {}
+
+        static std::shared_ptr<GLUniformSyncPMVMat4f> create(stringview_t name, PMVData derivedMatrices=PMVData::none) {
+            return std::make_shared<GLUniformSyncPMVMat4f>(name, derivedMatrices);
+        }
+        const void* data() const noexcept override { return m_data.syncedData(); }
+
+        constexpr const GLfloat* floats() const noexcept { return m_data.floats(); }
+
+        constexpr const PMVMat4f& pmv() const noexcept { return m_mat; }
+        constexpr PMVMat4f& pmv() noexcept { return m_mat; }
+    };
+    typedef std::shared_ptr<GLUniformSyncPMVMat4f> GLUniformSyncPMVMat4fRef;
+
     class GLUniformSyncMatrices4f : public GLUniformData {
       public:
         typedef SyncMatrices4<GLfloat> SyncMats4f;
       private:
-        SyncMats4f& m_data;
+        mutable SyncMats4f m_data;
       public:
-        GLUniformSyncMatrices4f(const string_t& name, SyncMats4f& data)
+        GLUniformSyncMatrices4f(stringview_t name, SyncMats4f &&data)
         : GLUniformData(data.compSignature(), name,
                         /*location=*/-1, /*rows=*/4, /*columns=*/4, /*count=*/data.matrixCount()),
           m_data(data) {}
 
-        static std::shared_ptr<GLUniformSyncMatrices4f> create(const string_t& name, SyncMats4f& data) {
-            return std::make_shared<GLUniformSyncMatrices4f>(name, data);
+        static std::shared_ptr<GLUniformSyncMatrices4f> create(stringview_t name, SyncMats4f &&data) {
+            return std::make_shared<GLUniformSyncMatrices4f>(name, std::move(data));
         }
         const void* data() const noexcept override { return m_data.syncedData(); }
 
-        constexpr const GLfloat* floats() const { return m_data.floats(); }
+        constexpr const GLfloat* floats() const noexcept { return m_data.floats(); }
     };
     typedef std::shared_ptr<GLUniformSyncMatrices4f> GLUniformSyncMatrices4fRef;
 
@@ -177,18 +231,18 @@ namespace gamp::render::gl::data {
         jau::math::Vec4f m_data;
 
       public:
-        GLUniformVec4f(const string_t& name, const jau::math::Vec4f& v)
+        GLUniformVec4f(stringview_t name, const jau::math::Vec4f& v)
         : GLUniformData(jau::float_ctti::f32(), name,
                         /*location=*/-1, /*rows=*/1, /*columns=*/4, /*count=*/1),
           m_data(v) {}
 
-        static std::shared_ptr<GLUniformVec4f> create(const string_t& name, const jau::math::Vec4f& v) {
+        static std::shared_ptr<GLUniformVec4f> create(stringview_t name, const jau::math::Vec4f& v) {
             return std::make_shared<GLUniformVec4f>(name, v);
         }
         const void* data() const noexcept override { return m_data.cbegin(); }
 
-        constexpr const jau::math::Vec4f& vec4f() const { return m_data; }
-        constexpr jau::math::Vec4f& vec4f() { return m_data; }
+        constexpr const jau::math::Vec4f& vec4f() const noexcept { return m_data; }
+        constexpr jau::math::Vec4f& vec4f() noexcept { return m_data; }
     };
     typedef std::shared_ptr<GLUniformVec4f> GLUniformVec4fRef;
 
@@ -197,20 +251,40 @@ namespace gamp::render::gl::data {
         jau::math::Vec3f m_data;
 
       public:
-        GLUniformVec3f(const string_t& name, const jau::math::Vec3f& v)
+        GLUniformVec3f(stringview_t name, const jau::math::Vec3f& v)
         : GLUniformData(jau::float_ctti::f32(), name,
                         /*location=*/-1, /*rows=*/1, /*columns=*/3, /*count=*/1),
           m_data(v) {}
 
-        static std::shared_ptr<GLUniformVec3f> create(const string_t& name, const jau::math::Vec3f& v) {
+        static std::shared_ptr<GLUniformVec3f> create(stringview_t name, const jau::math::Vec3f& v) {
             return std::make_shared<GLUniformVec3f>(name, v);
         }
         const void* data() const noexcept override { return m_data.cbegin(); }
 
-        constexpr const jau::math::Vec3f& vec3f() const { return m_data; }
-        constexpr jau::math::Vec3f& vec3f() { return m_data; }
+        constexpr const jau::math::Vec3f& vec3f() const noexcept { return m_data; }
+        constexpr jau::math::Vec3f& vec3f() noexcept { return m_data; }
     };
     typedef std::shared_ptr<GLUniformVec3f> GLUniformVec3fRef;
+
+    class GLUniformScalarF32 : public GLUniformData {
+      private:
+        float m_data;
+
+      public:
+        GLUniformScalarF32(stringview_t name, float v)
+        : GLUniformData(jau::float_ctti::f32(), name,
+                        /*location=*/-1, /*rows=*/1, /*columns=*/1, /*count=*/1),
+          m_data(v) {}
+
+        static std::shared_ptr<GLUniformScalarF32> create(stringview_t name, float v) {
+            return std::make_shared<GLUniformScalarF32>(name, v);
+        }
+        const void* data() const noexcept override { return &m_data; }
+
+        constexpr float scalar() const noexcept { return m_data; }
+        constexpr float& scalar() noexcept { return m_data; }
+    };
+    typedef std::shared_ptr<GLUniformScalarF32> GLUniformScalarF32Ref;
 
     /**@}*/
 }

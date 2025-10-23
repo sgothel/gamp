@@ -82,7 +82,7 @@ namespace gamp::render::gl::data {
          * @param initialElementCount
          * @param vboUsage {@link GL2ES2#GL_STREAM_DRAW}, {@link GL#GL_STATIC_DRAW} or {@link GL#GL_DYNAMIC_DRAW}
          */
-        static server_ref createGLSL(const std::string& name, GLsizei compsPerElement,
+        static server_ref createGLSL(std::string_view name, GLsizei compsPerElement,
                                      bool normalized, GLsizei initialElementCount, GLenum vboUsage) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
                name, compsPerElement,
@@ -105,7 +105,7 @@ namespace gamp::render::gl::data {
          * @param buffer the user define data, taking ownership
          * @param vboUsage {@link GL2ES2#GL_STREAM_DRAW}, {@link GL#GL_STATIC_DRAW} or {@link GL#GL_DYNAMIC_DRAW}
          */
-        static server_ref createGLSL(const std::string& name, GLsizei compsPerElement,
+        static server_ref createGLSL(std::string_view name, GLsizei compsPerElement,
                                      bool normalized, GLsizei stride, buffer_t&& buffer, GLenum vboUsage) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
                name, compsPerElement,
@@ -127,7 +127,7 @@ namespace gamp::render::gl::data {
          * @param mappedElementCount
          * @param vboUsage {@link GL2ES2#GL_STREAM_DRAW}, {@link GL#GL_STATIC_DRAW} or {@link GL#GL_DYNAMIC_DRAW}
          */
-        static server_ref createGLSLMapped(const std::string& name, GLsizei compsPerElement,
+        static server_ref createGLSLMapped(std::string_view name, GLsizei compsPerElement,
                                            bool normalized, GLsizei mappedElementCount, GLenum vboUsage) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
                name, compsPerElement,
@@ -152,7 +152,7 @@ namespace gamp::render::gl::data {
         static server_ref createData(GLsizei compsPerElement,
                                      GLsizei initialElementCount, GLenum vboUsage, GLenum vboTarget) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               "", compsPerElement,
+               "data", compsPerElement,
                /*normalized=*/false, /*stride=*/0, initialElementCount, client_t::DEFAULT_GROWTH_FACTOR,
                /*isVertexAttribute=*/false, std::move(std::make_unique<impl::GLDataArrayHandler<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, vboTarget);
@@ -176,7 +176,7 @@ namespace gamp::render::gl::data {
         static server_ref createData(GLsizei compsPerElement,
                                      GLsizei stride, buffer_t&& buffer, GLenum vboUsage, GLenum vboTarget) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               "", compsPerElement,
+               "data", compsPerElement,
                /*normalized=*/false, stride, std::move(buffer), client_t::DEFAULT_GROWTH_FACTOR,
                /*isVertexAttribute=*/false, std::move(std::make_unique<impl::GLDataArrayHandler<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, vboTarget);
@@ -199,7 +199,7 @@ namespace gamp::render::gl::data {
         static server_ref createDataMapped(GLsizei compsPerElement,
                                            GLsizei mappedElementCount, GLenum vboUsage, GLenum vboTarget) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               "", compsPerElement,
+               "mdata", compsPerElement,
                /*normalized=*/false, /*stride=*/0, mappedElementCount,
                /*isVertexAttribute=*/false, std::move(std::make_unique<impl::GLDataArrayHandler<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, vboTarget);
@@ -222,7 +222,7 @@ namespace gamp::render::gl::data {
         static server_ref createGLSLInterleaved(GLsizei compsPerElement,
                                                 bool normalized, GLsizei initialElementCount, GLenum vboUsage) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               std::string(mgl_InterleaveArray), compsPerElement,
+               mgl_InterleaveArray, compsPerElement,
                normalized, /*stride=*/0, initialElementCount, client_t::DEFAULT_GROWTH_FACTOR,
                /*isVertexAttribute=*/false, std::move(std::make_unique<impl::GLSLArrayHandlerInterleaved<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, GL_ARRAY_BUFFER);
@@ -245,7 +245,7 @@ namespace gamp::render::gl::data {
         static server_ref createGLSLInterleaved(GLsizei compsPerElement,
                                                 bool normalized, GLsizei stride, buffer_t&& buffer, GLenum vboUsage) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               std::string(mgl_InterleaveArray), compsPerElement,
+               mgl_InterleaveArray, compsPerElement,
                normalized, stride, std::move(buffer), client_t::DEFAULT_GROWTH_FACTOR,
                /*isVertexAttribute=*/true, std::move(std::make_unique<impl::GLSLArrayHandlerInterleaved<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, GL_ARRAY_BUFFER);
@@ -268,7 +268,7 @@ namespace gamp::render::gl::data {
         static server_ref createGLSLInterleavedMapped(GLsizei compsPerElement,
                                                       bool normalized, GLsizei mappedElementCount, GLenum vboUsage) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               std::string(mgl_InterleaveArray), compsPerElement,
+               mgl_InterleaveArray, compsPerElement,
                normalized, /*stride=*/0, mappedElementCount,
                /*isVertexAttribute=*/false, std::move(std::make_unique<impl::GLSLArrayHandlerInterleaved<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, GL_ARRAY_BUFFER);
@@ -297,7 +297,7 @@ namespace gamp::render::gl::data {
          * @param compsPerElement This interleaved array segment's component count per element
          * @param vboTarget {@link GL#GL_ARRAY_BUFFER} or {@link GL#GL_ELEMENT_ARRAY_BUFFER}
          */
-        proxy_ref addGLSLSubArray(const std::string& name, GLsizei compsPerElement, GLenum vboTarget) {
+        proxy_ref addGLSLSubArray(std::string_view name, GLsizei compsPerElement, GLenum vboTarget) {
             if( m_interleavedOffset >= uintptr_t(client_t::compsPerElem()) * uintptr_t(client_t::bytesPerComp()) ) {
                 const GLsizei iOffC = m_interleavedOffset / client_t::bytesPerComp();
                 throw RenderException("Interleaved offset > total components (" + std::to_string(iOffC) + " > " + std::to_string(client_t::compsPerElem()) + ")", E_FILE_LINE);
@@ -428,7 +428,7 @@ namespace gamp::render::gl::data {
             .append(", usesShaderState ")
             .append(std::to_string(nullptr != client_t::m_shaderState))
             .append(", dataType ")
-            .append(jau::to_hexstring(proxy_t::m_compType))
+            .append(jau::toHexString(proxy_t::m_compType))
             .append(", compsPerElem ")
             .append(std::to_string(proxy_t::compsPerElem()))
             .append(", stride ")
@@ -441,15 +441,15 @@ namespace gamp::render::gl::data {
             .append(", ")
             .append(proxy_t::elemStatsToString())
             .append(", mappedStorage ")
-            .append(jau::to_hexstring(m_mappedStorage ? m_mappedStorage.get() : nullptr))
+            .append(jau::toHexString(m_mappedStorage ? m_mappedStorage.get() : nullptr))
             .append(", vboEnabled ")
             .append(std::to_string(client_t::m_vboEnabled))
             .append(", vboName ")
             .append(std::to_string(client_t::m_vboName))
             .append(", vboUsage ")
-            .append(jau::to_hexstring(client_t::m_vboUsage))
+            .append(jau::toHexString(client_t::m_vboUsage))
             .append(", vboTarget ")
-            .append(jau::to_hexstring(client_t::m_vboTarget))
+            .append(jau::toHexString(client_t::m_vboTarget))
             .append(", vboOffset ")
             .append(std::to_string(client_t::m_vboOffset))
             .append(", enabled ")
@@ -476,7 +476,7 @@ namespace gamp::render::gl::data {
 
       public:
         /** Private client-mem ctor w/ passing custom buffer */
-        GLArrayDataServer(Private, const std::string& name, GLsizei componentsPerElement,
+        GLArrayDataServer(Private, std::string_view name, GLsizei componentsPerElement,
                           bool normalized, GLsizei stride, buffer_t&& data, float growthFactor,
                           bool isVertexAttribute, impl::GLArrayHandlerPtr<value_type>&& glArrayHandler,
                           GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget)
@@ -489,7 +489,7 @@ namespace gamp::render::gl::data {
         }
 
         /** Private client-mem ctor w/o passing custom buffer */
-        GLArrayDataServer(Private, const std::string& name, GLsizei componentsPerElement,
+        GLArrayDataServer(Private, std::string_view name, GLsizei componentsPerElement,
                           bool normalized, GLsizei stride, GLsizei initialElementCount, float growthFactor,
                           bool isVertexAttribute, impl::GLArrayHandlerPtr<value_type>&& glArrayHandler,
                           GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget)
@@ -502,7 +502,7 @@ namespace gamp::render::gl::data {
         }
 
         /// using memory mapped elements
-        GLArrayDataServer(Private, const std::string& name, GLsizei componentsPerElement,
+        GLArrayDataServer(Private, std::string_view name, GLsizei componentsPerElement,
                           bool normalized, GLsizei stride, GLsizei mappedElementCount,
                           bool isVertexAttribute, impl::GLArrayHandlerPtr<value_type>&& glArrayHandler,
                           GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget)

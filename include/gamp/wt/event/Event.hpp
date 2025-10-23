@@ -91,7 +91,7 @@ namespace gamp::wt::event {
         std::string toString() const noexcept {
             std::string s = "WTEvent[consumed ";
             s.append(m_consumed ? "true" : "false");
-            s.append(", when ").append(m_when.to_string());
+            s.append(", when ").append(m_when.toString());
             s.append("]");
             return s;
         }

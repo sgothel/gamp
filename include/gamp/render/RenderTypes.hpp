@@ -30,8 +30,7 @@ namespace gamp::wt {
 
 namespace gamp::render {
 
-    /** @defgroup Gamp_Render Gamp Rendering
-     *  Managed rendering support, data handling and functionality.
+    /** @addtogroup Gamp_Render
      *
      *  @{
      */

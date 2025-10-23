@@ -19,7 +19,7 @@
 
 #include <jau/basic_types.hpp>
 #include <jau/debug.hpp>
-#include <jau/file_util.hpp>
+#include <jau/io/file_util.hpp>
 
 #include <gamp/Gamp.hpp>
 #include <gamp/render/RenderContext.hpp>
@@ -47,8 +47,8 @@ struct GLLaunchProps {
 
 int launch(std::string_view sfile, const GLLaunchProps& props, const RenderListenerRef& demo, int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
-    std::string demo_name = std::string("Gamp ").append(jau::fs::basename(sfile, {{".cpp"}, {".hpp"}}));
-    printf("Launching: %s, source %s, exe %s\n", demo_name.c_str(), sfile.data(), argv[0]);
+    std::string demo_name = std::string("Gamp ").append(jau::io::fs::basename(sfile, {{".cpp"}, {".hpp"}}));
+    std::cout << "Launching: " << demo_name << ", source " << sfile << " , exe " << argv[0] << "\n";
 
     int win_width = 1920, win_height = 1000;
     #if defined(__EMSCRIPTEN__)

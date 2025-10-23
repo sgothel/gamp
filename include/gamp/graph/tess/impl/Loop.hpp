@@ -201,9 +201,9 @@ namespace gamp::graph::tess::impl {
             return closestV;
         }
 
-        bool intersectsOutline(const Vertex& a1, const Vertex& a2, const Vertex& b) {
-            for(const GraphOutlineRef& outline : m_outlines) {
-                const GraphVertexRefList& vertices = outline->graphPoints();
+        bool intersectsOutline(const Vertex& a1, const Vertex& a2, const Vertex& b) const noexcept {
+            for(const GraphOutlineRef &outline : m_outlines) {
+                const GraphVertexRefList &vertices = outline->graphPoints();
                 size_t sz = vertices.size();
                 if( sz >= 2 ) {
                     const Vertex* v0 = &vertices[0]->vertex();
@@ -225,7 +225,7 @@ namespace gamp::graph::tess::impl {
             }
             return false;
         }
-        HEdgePtr isValidNeighbor(HEdgePtr candEdge, bool delaunay) {
+        HEdgePtr isValidNeighbor(HEdgePtr candEdge, bool delaunay) const noexcept {
             const GraphVertexRef& rootGPoint = m_root->getGraphPoint();
             const GraphVertexRef& nextGPoint = m_root->getNext()->getGraphPoint();
             const Vertex& rootPoint = rootGPoint->vertex();
@@ -263,11 +263,11 @@ namespace gamp::graph::tess::impl {
          * @param root and edge of this triangle
          * @return the triangle iff it satisfies, null otherwise
          */
-        TriangleRef createTriangle(Vertex& v1, Vertex& v2, Vertex& v3, HEdgePtr rootT) {
+        TriangleRef createTriangle(Vertex& v1, Vertex& v2, Vertex& v3, HEdgePtr rootT) const noexcept {
             return Triangle::create(v1, v2, v3, checkVerticesBoundary(rootT));
         }
 
-        Triangle::tribit_t checkVerticesBoundary(HEdgePtr rootT) {
+        Triangle::tribit_t checkVerticesBoundary(HEdgePtr rootT) const noexcept {
             Triangle::tribit_t boundary;
             boundary.put(0, rootT->getGraphPoint()->isBoundaryContained());
             boundary.put(1, rootT->getNext()->getGraphPoint()->isBoundaryContained());
@@ -360,7 +360,7 @@ namespace gamp::graph::tess::impl {
             HEdge::connect(crossEdgeSib, m_root);
         }
 
-        bool checkInside(const Vertex& v) {
+        bool checkInside(const Vertex& v) const noexcept {
             if(!m_box.contains(v.coord())){
                 return false;
             }
@@ -382,7 +382,7 @@ namespace gamp::graph::tess::impl {
             return inside;
         }
 
-        size_t computeLoopSize() {
+        size_t computeLoopSize() const noexcept {
             size_t size = 0;
             HEdgePtr e = m_root;
             do{

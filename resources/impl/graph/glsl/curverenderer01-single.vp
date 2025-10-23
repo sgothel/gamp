@@ -25,7 +25,7 @@ void main(void)
     gl_Position = gcu_PMVMatrix[0] * gcv_position;
 
     // Transforming The Normal To ModelView-Space
-    gcv_Normal = normalize((gcu_PMVMatrix[3] * gca_Normal).xyz);
+    gcv_Normal = normalize((gcu_PMVMatrix[3] * vec4(gca_Normal, 1.0)).xyz);
 
     // Calculating The Vector From The Vertex Position To The Light Position
     gcv_lightDir = gcu_LightPos - gcv_position.xyz;

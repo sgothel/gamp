@@ -121,8 +121,6 @@ namespace gamp {
      * Note that all environment variables listed below can be set using `_` instead of `.`.
      */
     class GampEnv : public jau::root_environment {
-        friend class BTManager;
-
         private:
             GampEnv() noexcept; // NOLINT(modernize-use-equals-delete)
 
@@ -131,7 +129,7 @@ namespace gamp {
             const bool DEBUG_GLOBAL;
 
         private:
-            const bool exploding; // just to trigger exploding properties
+            [[maybe_unused]] const bool exploding; // just to trigger exploding properties
 
         public:
             /**

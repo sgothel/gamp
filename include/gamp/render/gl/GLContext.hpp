@@ -25,6 +25,7 @@
 #include <gamp/render/gl/GLLiterals.hpp>
 #include <gamp/render/gl/GLVersionNum.hpp>
 #include <gamp/wt/Surface.hpp>
+#include <string_view>
 
 namespace gamp::render::gl {
     using namespace gamp::render;
@@ -181,14 +182,24 @@ namespace gamp::render::gl {
             return GL4bc == name();
         }
 
+        /** Indicates whether this profile is capable of GL4 core (only).  <p>Includes [ GL4 ].</p> */
+        constexpr bool isGL4core() const noexcept {
+            return GL4 == name();
+        }
+
         /** Indicates whether this profile is capable of GL4.    <p>Includes [ GL4bc, GL4 ].</p> */
         constexpr bool isGL4() const noexcept {
-            return isGL4bc() || GL4 == name();
+            return isGL4bc() || isGL4core();
         }
 
         /** Indicates whether this profile is capable of GL3bc.  <p>Includes [ GL4bc, GL3bc ].</p> */
         constexpr bool isGL3bc() const noexcept {
             return isGL4bc() || GL3bc == name();
+        }
+
+        /** Indicates whether this profile is capable of GL3 core (only).  <p>Includes [ GL4, GL3 ].</p> */
+        constexpr bool isGL3core() const noexcept {
+            return isGL4core() || GL3 == name();
         }
 
         /** Indicates whether this profile is capable of GL3.    <p>Includes [ GL4bc, GL4, GL3bc, GL3 ].</p> */
@@ -265,6 +276,16 @@ namespace gamp::render::gl {
          */
         constexpr bool isGL2ES3() const noexcept {
             return isGL3ES3() || isGL2GL3();
+        }
+
+        /**
+         * Indicates whether this GL object uses a GL core profile. <p>Includes [ GL4, GL3, GLES3, GL2ES2 ].</p>
+         * @see #isGLES3()
+         * @see #isGLES2()
+         * @see #isGL3core()
+         */
+        constexpr bool isGLcore() const noexcept {
+            return isGLES3() || isGLES2() || isGL3core();
         }
 
         /**
@@ -437,14 +458,14 @@ namespace gamp::render::gl {
         GLContext(Private) noexcept : RenderContext(RenderContext::Private()) { }
 
         /** Private: Create a new instance of a non-current context. Given profile tag must be one of this class' constant `GL` profiles. */
-        GLContext(Private, gamp::handle_t context, GLProfile profile,
-                  RenderContextFlags contextFlags, GLVersionNumber glVersion) noexcept
+        GLContext(Private, gamp::handle_t context, GLProfile&& profile,
+                  RenderContextFlags contextFlags, GLVersionNumber&& glVersion) noexcept
         : RenderContext(RenderContext::Private(), context, contextFlags, glVersion),
           m_glprofile(std::move(profile)), m_glversion(std::move(glVersion)) {}
 
         /** Private: Create a new instance of a current context. Given profile tag must be one of this class' constant `GL` profiles. */
-        GLContext(Private, const wt::SurfaceRef& surface, gamp::handle_t context, GLProfile profile,
-                  RenderContextFlags contextFlags, GLVersionNumber glVersion) noexcept
+        GLContext(Private, const wt::SurfaceRef& surface, gamp::handle_t context, GLProfile&& profile,
+                  RenderContextFlags contextFlags, GLVersionNumber&& glVersion) noexcept
         : RenderContext(RenderContext::Private(), context, contextFlags, glVersion),
           m_glprofile(std::move(profile)), m_glversion(std::move(glVersion))
         {
@@ -459,13 +480,13 @@ namespace gamp::render::gl {
         }
 
         /** Create a new instance of a non-current context. Given profile tag must be one of this class' constant `GL` profiles. */
-        static RenderContextPtr create(gamp::handle_t context, GLProfile profile,
+        static RenderContextPtr create(gamp::handle_t context, GLProfile&& profile,
                                        RenderContextFlags contextFlags, const char* gl_version_cstr) noexcept
         {
             return std::make_unique<GLContext>(Private(), context, std::move(profile), contextFlags, GLVersionNumber::create(gl_version_cstr));
         }
         /** Create a new instance of a current. Given profile tag must be one of this class' constant `GL` profiles. */
-        static RenderContextPtr create(const wt::SurfaceRef& surface, gamp::handle_t context, GLProfile profile,
+        static RenderContextPtr create(const wt::SurfaceRef& surface, gamp::handle_t context, GLProfile&& profile,
                                        RenderContextFlags contextFlags, const char* gl_version_cstr) noexcept
         {
             return std::make_unique<GLContext>(Private(), surface, context, std::move(profile), contextFlags, GLVersionNumber::create(gl_version_cstr));
@@ -521,10 +542,16 @@ namespace gamp::render::gl {
             (void)name; // FIXME
             return false;
         }
+        bool isExtensionAvailable(std::string_view name) const noexcept {
+            (void)name; // FIXME
+            return false;
+        }
         bool isExtensionAvailable(const char* name) const noexcept {
             (void)name; // FIXME
             return false;
         }
+
+        bool isNPOTTextureAvailable() const noexcept { return true; }
 
         void dispose() noexcept override;
 
@@ -537,11 +564,11 @@ namespace gamp::render::gl {
 
         std::string toString() const override {
             return std::string("GL[")
-               .append(jau::to_hexstring(context())).append(", ")
+               .append(jau::toHexString(context())).append(", ")
                .append(to_string(contextFlags())).append(", ")
                .append(glProfile().toString()).append(", ")
                .append(glVersion().toString()).append(" -> surface ")
-               .append(m_surface?jau::to_hexstring(m_surface->surfaceHandle()):"nil").append("]");
+               .append(m_surface?jau::toHexString(m_surface->surfaceHandle()):"nil").append("]");
         }
 
     };

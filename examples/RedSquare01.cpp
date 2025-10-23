@@ -13,15 +13,16 @@
 
 #include <cstdio>
 #include <cmath>
-#include <gamp/render/RenderContext.hpp>
-#include <gamp/wt/event/Event.hpp>
 #include <memory>
+
 #include <jau/basic_types.hpp>
-#include <jau/file_util.hpp>
 #include <jau/fraction_type.hpp>
+#include <jau/io/file_util.hpp>
 
 #include <gamp/Gamp.hpp>
 #include <gamp/render/gl/GLTypes.hpp>
+#include <gamp/render/RenderContext.hpp>
+#include <gamp/wt/event/Event.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;
@@ -102,7 +103,7 @@ static bool animating = true;
 class MyKeyListener : public KeyListener {
   public:
     void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
-        printf("KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
+        printf("KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
         if( e.keySym() == VKeyCode::VK_ESCAPE ) {
             WindowRef win = e.source().lock();
             if( win ) {
@@ -116,7 +117,7 @@ class MyKeyListener : public KeyListener {
         }
     }
     void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
-        printf("KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().bitCount());
+        printf("KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
     }
 };
 typedef std::shared_ptr<MyKeyListener> MyKeyListenerRef;
@@ -132,7 +133,7 @@ class RedSquareES2 : public RenderListener {
         if( !m_initialized ) {
             return;
         }
-        const PMVMat4f::SyncMats4& spmv = m_pmv.getSyncPMv();
+        const PMVMat4f::SyncMats4& spmv = m_pmv.makeSyncPMv();
         glUniformMatrix4fv(u_pmv, (GLsizei)spmv.matrixCount(), false, spmv.floats());
     }
 
@@ -249,8 +250,8 @@ class RedSquareES2 : public RenderListener {
 int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
     std::string_view sfile(__FILE__);
-    std::string demo_name = std::string("gamp ").append(jau::fs::basename(sfile, ".cpp"));
-    printf("Demo: %s, source %s, exe %s\n", demo_name.c_str(), sfile.data(), argv[0]);
+    std::string demo_name = std::string("gamp ").append(jau::io::fs::basename(sfile, ".cpp"));
+    std::cout << "Launching: " << demo_name << ", source " << sfile << " , exe " << argv[0] << "\n";
 
     int win_width = 1920, win_height = 1000;
     #if defined(__EMSCRIPTEN__)
