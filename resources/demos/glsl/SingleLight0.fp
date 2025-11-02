@@ -1,5 +1,5 @@
 // Copyright (c) 2010-2025 Gothel Software e.K.
-// Details see GearsES2.java
+// Single Per Pixel Lighting (Example: GearsES2)
 
 #if __VERSION__ >= 130
   #define varying in
@@ -8,13 +8,14 @@
   #define mgl_FragColor gl_FragColor
 #endif
 
-uniform vec4 mgl_StaticColor;
+uniform vec4 gcu_StaticColor;
 
-varying vec3 normal;
-varying vec4 position;
-varying vec3 lightDir;
-varying float attenuation;
-varying vec3 cameraDir;
+varying vec3 gcv_normal;
+varying vec3 gcv_cameraDir;
+varying vec4 gcv_position;
+
+varying vec3 gcv_light0Dir;
+varying float gcv_light0Attenuation;
 
 // Defining The Material Colors
 const vec4 matAmbient  = vec4(0.2, 0.2, 0.2, 1.0); // orig default
@@ -26,22 +27,21 @@ const float matShininess = 0.5;
 
 void main()
 {
-    vec4 ambient = mgl_StaticColor * matAmbient;
+    vec4 ambient = gcu_StaticColor * matAmbient;
     vec4 specular = vec4(0.0);
 
-    float lambertTerm = dot(normal, lightDir);
-    vec4 diffuse = mgl_StaticColor * lambertTerm *  attenuation * matDiffuse;
+    float lambertTerm = dot(gcv_normal, gcv_light0Dir);
+    vec4 diffuse = gcu_StaticColor * lambertTerm *  gcv_light0Attenuation * matDiffuse;
     if (lambertTerm > 0.0) {
-        float NdotHV;
         /*
-        vec3 halfDir = normalize (lightDir + cameraDir);
-        NdotHV   = max(0.0, dot(normal, halfDir));
+        vec3 halfDir = normalize (gcv_light0Dir + gcv_cameraDir);
+        float NdotHV   = max(0.0, dot(gcv_normal, halfDir));
         */
-        vec3 E = normalize(-position.xyz);
-        vec3 R = reflect(-lightDir, normal);
-        NdotHV   = max(0.0, dot(R, E));
+        vec3 E = normalize(-gcv_position.xyz);
+        vec3 R = reflect(-gcv_light0Dir, gcv_normal);
+        float NdotHV = max(0.0, dot(R, E));
 
-        specular += mgl_StaticColor * pow(NdotHV, matShininess) * attenuation * matSpecular;
+        specular += gcu_StaticColor * pow(NdotHV, matShininess) * gcv_light0Attenuation * matSpecular;
     }
 
     mgl_FragColor = ambient + diffuse + specular ;

@@ -87,8 +87,8 @@ class GearsObjectES2 {
     }
 
     void addInterleavedVertexAndNormalArrays(GLFloatArrayDataServerRef& array, GLsizei compsPerElem) {
-        array->addGLSLSubArray("mgl_Vertex", compsPerElem, GL_ARRAY_BUFFER);
-        array->addGLSLSubArray("mgl_Normal", compsPerElem, GL_ARRAY_BUFFER);
+        array->addGLSLSubArray("gca_Vertex", compsPerElem, GL_ARRAY_BUFFER);
+        array->addGLSLSubArray("gca_Normal", compsPerElem, GL_ARRAY_BUFFER);
     }
 
     void vert(GLFloatArrayDataServerRef& array, float x, float y, float z, const jau::math::Vec3f& n) {
@@ -408,8 +408,8 @@ class GearsES2 : public RenderListener {
     GearsES2()
     : RenderListener(RenderListener::Private()),
       m_st(),
-      m_pmvMatUni(GLUniformSyncPMVMat4f::create("mgl_PMVMatrix", mat_req)),  // P, Mv, Mvi and Mvit
-      m_colorUni(GLUniformVec4f::create("mgl_StaticColor", GearsObjectES2::red)),
+      m_pmvMatUni(GLUniformSyncPMVMat4f::create("gcu_PMVMatrix", mat_req)),  // P, Mv, Mvi and Mvit
+      m_colorUni(GLUniformVec4f::create("gcu_StaticColor", GearsObjectES2::red)),
       m_gear1Color(GearsObjectES2::red),
       m_gear2Color(GearsObjectES2::green),
       m_gear3Color(GearsObjectES2::blue),
@@ -422,8 +422,8 @@ class GearsES2 : public RenderListener {
     constexpr void setDoRotate(bool rotate) noexcept { m_doRotate = rotate; }
     constexpr void setClearBuffers(bool v) noexcept { m_clearBuffers = v; }
     constexpr void setFlipVerticalInGLOrientation(bool v) noexcept { m_flipVerticalInGLOrientation = v; }
-    constexpr PMVMat4f& pmvMatrix() noexcept { return m_pmvMatUni->pmv(); }
-    constexpr const PMVMat4f& pmvMatrix() const noexcept { return m_pmvMatUni->pmv(); }
+    PMVMat4f& pmvMatrix() noexcept { return m_pmvMatUni->pmv(); }
+    const PMVMat4f& pmvMatrix() const noexcept { return m_pmvMatUni->pmv(); }
     constexpr const jau::math::Recti& viewport() const noexcept { return m_viewport; }
     constexpr Vec3f& pan() noexcept { return m_pan; }
     constexpr jau::math::Vec3f& rotEuler() noexcept { return m_rotEuler; }
@@ -477,10 +477,9 @@ class GearsES2 : public RenderListener {
         // st.attachObject("pmvMatrix", pmvMatrix);
         m_st.ownUniform(m_pmvMatUni, true);
 
-        GLUniformVec3fRef lightU = GLUniformVec3f::create("mgl_LightPos", lightPos);
+        GLUniformVec3fRef lightU = GLUniformVec3f::create("gcu_Light0Pos", lightPos);
         m_st.ownUniform(lightU, true);
 
-        m_colorUni = GLUniformVec4f::create("color", GearsObjectES2::red);
         m_st.ownUniform(m_colorUni, true);
         m_st.pushAllUniforms(gl);
 

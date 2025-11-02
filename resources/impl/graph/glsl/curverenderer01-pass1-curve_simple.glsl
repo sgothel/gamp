@@ -36,10 +36,10 @@
 
         vec2 f = vec2((dtx.y - dtx.x + 2.0*rtex.x*dtx.x), (dty.y - dty.x + 2.0*rtex.x*dty.x));
         float position = rtex.y - (rtex.x * (1.0 - rtex.x));
-
         float a = clamp(0.5 - ( position/length(f) ) * sign(gcv_CurveParam.y), 0.0, 1.0);
-        if( false && 0.0 == a ) {
-            #if USE_DISCARD
+
+        if( a <= EPSILON ) {
+            #ifdef USE_DISCARD
                 discard; // freezes NV tegra2 compiler
             #else
                 graphColor = vec4(0);
@@ -66,19 +66,19 @@
     vec4 ambient = graphColor * matAmbient;
     vec4 specular = vec4(0.0);
 
-    float lambertTerm = dot(gcv_Normal, gcv_lightDir);
-    vec4 diffuse = graphColor * lambertTerm *  gcv_attenuation * matDiffuse;
+    float lambertTerm = dot(gcv_Normal, gcv_light0Dir);
+    vec4 diffuse = graphColor * lambertTerm *  gcv_light0Attenuation * matDiffuse;
     if (lambertTerm > 0.0) {
         float NdotHV;
         /*
-        vec3 halfDir = normalize (gcv_lightDir + gcv_cameraDir);
+        vec3 halfDir = normalize (gcv_light0Dir + gcv_cameraDir);
         NdotHV   = max(0.0, dot(gcv_Normal, halfDir));
         */
         vec3 E = normalize(-gcv_position.xyz);
-        vec3 R = reflect(-gcv_lightDir, gcv_Normal);
+        vec3 R = reflect(-gcv_light0Dir, gcv_Normal);
         NdotHV   = max(0.0, dot(R, E));
 
-        specular += graphColor * pow(NdotHV, matShininess) * gcv_attenuation * matSpecular;
+        specular += graphColor * pow(NdotHV, matShininess) * gcv_light0Attenuation * matSpecular;
     }
     mgl_FragColor = ambient + diffuse + specular ;
 #else

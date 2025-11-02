@@ -40,7 +40,7 @@ class RedSquareES2 : public RenderListener {
   public:
     RedSquareES2()
     : RenderListener(RenderListener::Private()),
-      m_pmvMatUni(GLUniformSyncPMVMat4f::create("mgl_PMVMatrix")),
+      m_pmvMatUni(GLUniformSyncPMVMat4f::create("gcu_PMVMatrix")),
       m_initialized(false) {  }
 
     Recti& viewport() noexcept { return m_viewport; }
@@ -83,7 +83,7 @@ class RedSquareES2 : public RenderListener {
         m_st.ownUniform(m_pmvMatUni, true);
 
         // Allocate Vertex Array
-        GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("mgl_Vertex", 3, false, 4, GL_STATIC_DRAW);
+        GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("gca_Vertex", 3, false, 4, GL_STATIC_DRAW);
         vertices->reserve(4); // reserve 4 elements (4x3 components) upfront, otherwise growIfNeeded is used
         vertices->put3f(-2,  2, 0);
         vertices->put3f( 2,  2, 0);
@@ -93,7 +93,7 @@ class RedSquareES2 : public RenderListener {
         vertices->seal(gl, true);
 
         // Allocate Color Array
-        GLFloatArrayDataServerRef colors = GLFloatArrayDataServer::createGLSL("mgl_Color", 4, false, 4, GL_STATIC_DRAW);
+        GLFloatArrayDataServerRef colors = GLFloatArrayDataServer::createGLSL("gca_Color", 4, false, 4, GL_STATIC_DRAW);
         assert(GL_FLOAT == vertices->compType()); // determined via template type jau::float32_t
         colors->put4f(1, 0, 0, 1); // used implied growIfNeeded
         colors->put4f(0, 0, 1, 1);

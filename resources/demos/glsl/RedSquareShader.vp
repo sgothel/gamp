@@ -5,14 +5,14 @@
   #define varying out
 #endif
 
-uniform mat4    mgl_PMVMatrix[2];
-attribute vec4    mgl_Vertex;
-attribute vec4    mgl_Color;
-varying vec4    frontColor;
+uniform mat4    gcu_PMVMatrix[2];
+attribute vec4    gca_Vertex;
+attribute vec4    gca_Color;
+varying vec4    gcv_frontColor;
 
 void main(void)
 {
-  frontColor=mgl_Color;
-  gl_Position = mgl_PMVMatrix[0] * mgl_PMVMatrix[1] * mgl_Vertex;
+  gcv_frontColor = gca_Color;
+  gl_Position = gcu_PMVMatrix[0] * gcu_PMVMatrix[1] * gca_Vertex;
 }
 

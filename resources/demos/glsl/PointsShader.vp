@@ -10,32 +10,32 @@
   #define MEDIUMP
 #endif
 
-uniform vec4 mgl_ColorStatic;
-uniform mat4 mgl_PMVMatrix[4]; // P, Mv, Mvi and Mvit (transpose(inverse(ModelView)) == normalMatrix)
+uniform vec4 gcu_ColorStatic;
+uniform mat4 gcu_PMVMatrix[4]; // P, Mv, Mvi and Mvit (transpose(inverse(ModelView)) == normalMatrix)
 
 // [0].rgba: 0, smooth, attnMinSz, attnMaxSz
 // [1].rgba: attnCoeff(3), attnFadeTs
-uniform MEDIUMP vec4 mgl_PointParams[2]; 
+uniform MEDIUMP vec4 gcu_PointParams[2];
 
-#define pointSmooth                 (mgl_PointParams[0].g)
-#define pointSizeMin                (mgl_PointParams[0].b)
-#define pointSizeMax                (mgl_PointParams[0].a)
-#define pointDistanceConstantAtten  (mgl_PointParams[1].r)
-#define pointDistanceLinearAtten    (mgl_PointParams[1].g)
-#define pointDistanceQuadraticAtten (mgl_PointParams[1].b)
-#define pointFadeThresholdSize      (mgl_PointParams[1].a)
+#define pointSmooth                 (gcu_PointParams[0].g)
+#define pointSizeMin                (gcu_PointParams[0].b)
+#define pointSizeMax                (gcu_PointParams[0].a)
+#define pointDistanceConstantAtten  (gcu_PointParams[1].r)
+#define pointDistanceLinearAtten    (gcu_PointParams[1].g)
+#define pointDistanceQuadraticAtten (gcu_PointParams[1].b)
+#define pointFadeThresholdSize      (gcu_PointParams[1].a)
 
-attribute vec4 mgl_Vertex;
-attribute float mgl_PointSize;
+attribute vec4 gca_Vertex;
+attribute float gca_PointSize;
 
-varying vec4 frontColor;
+varying vec4 gcv_frontColor;
 
 void main(void)
 {
-  frontColor = mgl_ColorStatic;
+  gcv_frontColor = gcu_ColorStatic;
 
-  vec4 eyeCoord = mgl_PMVMatrix[1] * mgl_Vertex;
-  gl_Position = mgl_PMVMatrix[0] * eyeCoord;
+  vec4 eyeCoord = gcu_PMVMatrix[1] * gca_Vertex;
+  gl_Position = gcu_PMVMatrix[0] * eyeCoord;
 
   float dist = distance(eyeCoord, vec4(0.0, 0.0, 0.0, 1.0));
   float atten = sqrt( 1.0 / ( pointDistanceConstantAtten +
@@ -44,10 +44,10 @@ void main(void)
                               ) * dist
                             )
                     );
-  float size = clamp(mgl_PointSize * atten, pointSizeMin, pointSizeMax);
+  float size = clamp(gca_PointSize * atten, pointSizeMin, pointSizeMax);
   gl_PointSize = max(size, pointFadeThresholdSize);
 
   float fade = min(size, pointFadeThresholdSize) / pointFadeThresholdSize;
-  frontColor.a *= fade * fade;
+  gca_frontColor.a *= fade * fade;
 }
 

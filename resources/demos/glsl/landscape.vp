@@ -4,8 +4,8 @@
   #define varying out
 #endif
 
-attribute vec2 inVertex;
+attribute vec2 gca_inVertex;
 
 void main() {
-  gl_Position = vec4(inVertex, 0, 1);
+  gl_Position = vec4(gca_inVertex, 0, 1);
 }

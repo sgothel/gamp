@@ -16,7 +16,7 @@ uniform float   gcu_Weight;
 #endif
 
 #ifdef USE_LIGHT0
-    uniform vec3 gcu_LightPos;
+    uniform vec3 gcu_Light0Pos;
 #endif
 
 uniform mat4    gcu_PMVMatrix02[3]; // P, Mv, and Mvi

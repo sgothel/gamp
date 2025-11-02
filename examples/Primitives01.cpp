@@ -50,7 +50,7 @@ struct PMVMat4fUniform {
 
     PMVMat4fUniform()
     : m( PMVData::inv_proj | PMVData::inv_mv | PMVData::inv_tps_mv ),
-      u( GLUniformSyncMatrices4f::create("mgl_PMVMatrix", m.makeSyncPMvMviMvit()) )  // P, Mv, Mvi and Mvit
+      u( GLUniformSyncMatrices4f::create("gcu_PMVMatrix", m.makeSyncPMvMviMvit()) )  // P, Mv, Mvi and Mvit
     {}
 };
 
@@ -70,11 +70,11 @@ class Shape {
     Shape(GLenum type, ShaderState &st, PMVMat4fUniform& pmvMatU)
     : m_type(type), m_st(st), m_pmvMatUni(pmvMatU), m_array( GLFloatArrayDataServer::createGLSLInterleaved(2*3, false, 4, GL_STATIC_DRAW) )
     {
-        m_array->addGLSLSubArray("mgl_Vertex", 3, GL_ARRAY_BUFFER);
-        m_array->addGLSLSubArray("mgl_Normal", 3, GL_ARRAY_BUFFER);
+        m_array->addGLSLSubArray("gca_Vertex", 3, GL_ARRAY_BUFFER);
+        m_array->addGLSLSubArray("gca_Normal", 3, GL_ARRAY_BUFFER);
         m_st.ownAttribute(m_array, true);
 
-        m_uColor = GLUniformVec4f::create("mgl_StaticColor", Vec4f(1, 0, 0, 1));
+        m_uColor = GLUniformVec4f::create("gcu_StaticColor", Vec4f(1, 0, 0, 1));
         m_st.ownUniform(m_uColor, true);
     }
 
@@ -177,7 +177,7 @@ class Primitives01 : public RenderListener {
         m_pmvMat.m.getMv().loadIdentity();
         m_st.ownUniform(m_pmvMat.u, true);
 
-        GLUniformVec3fRef lightU = GLUniformVec3f::create("mgl_LightPos", lightPos);
+        GLUniformVec3fRef lightU = GLUniformVec3f::create("gcu_Light0Pos", lightPos);
         m_st.ownUniform(lightU, true);
 
         m_st.pushAllUniforms(gl);

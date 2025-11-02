@@ -7,10 +7,10 @@
   #define mgl_FragColor gl_FragColor
 #endif
 
-varying vec4 frontColor;
+varying vec4 gcv_frontColor;
 
 void main (void)
 {
-    mgl_FragColor = frontColor;
+    mgl_FragColor = gcv_frontColor;
 }
 

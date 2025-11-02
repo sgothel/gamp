@@ -13,4 +13,6 @@
     const float matShininess = 0.5;
 #endif
 
+const float EPSILON =  0.0000001;  // FIXME: determine proper hw-precision
+
 #endif // constants_glsl

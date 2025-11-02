@@ -8,15 +8,15 @@
   #define mgl_FragData gl_FragData
 #endif
 
-uniform sampler2D gcs_TexUnit0;
-uniform sampler2D gcs_TexUnit1;
+uniform sampler2D gcu_TexUnit0;
+uniform sampler2D gcu_TexUnit1;
 
-varying vec4    frontColor;
-varying vec2      texCoord;
+varying vec4    gcv_frontColor;
+varying vec2    gcv_texCoord;
 
 void main (void)
 {
-  vec2 rg = texture2D(gcs_TexUnit0, texCoord).rg + texture2D(gcs_TexUnit1, texCoord).rg;
-  float b = frontColor.b - length(rg);
+  vec2 rg = texture2D(gcu_TexUnit0, gcv_texCoord).rg + texture2D(gcu_TexUnit1, gcv_texCoord).rg;
+  float b = gcv_frontColor.b - length(rg);
   mgl_FragData[0] = vec4( rg, b, 1.0 );
 }

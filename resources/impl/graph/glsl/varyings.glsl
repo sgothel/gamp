@@ -24,9 +24,9 @@ varying vec2  gcv_FboTexCoord;
 
 #ifdef USE_LIGHT0
     varying vec4 gcv_position;
-    varying vec3 gcv_lightDir;
-    varying float gcv_attenuation;
     varying vec3 gcv_cameraDir;
+    varying vec3 gcv_light0Dir;
+    varying float gcv_light0Attenuation;
 #endif
 
 #endif // varyings_glsl

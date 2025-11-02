@@ -3,7 +3,7 @@
   #define varying in
   out vec4 mgl_FragColor;
 #else
-  #define mgl_FragColor gl_FragColor   
+  #define mgl_FragColor gl_FragColor
 #endif
 
 #ifdef GL_ES
@@ -14,17 +14,17 @@
 
 // [0].rgba: 0, smooth, attnMinSz, attnMaxSz
 // [1].rgba: attnCoeff(3), attnFadeTs
-uniform MEDIUMP vec4 mgl_PointParams[2]; 
+uniform MEDIUMP vec4 gcu_PointParams[2];
 
-#define pointSmooth                 (mgl_PointParams[0].g)
+#define pointSmooth                 (gcu_PointParams[0].g)
 
-varying vec4 frontColor;
+varying vec4 gcv_frontColor;
 
 // #define TEST 1
 
 void main (void)
-{ 
-  mgl_FragColor = frontColor;
+{
+  mgl_FragColor = gcv_frontColor;
 
   if( pointSmooth > 0.5 ) {
       // smooth (AA)

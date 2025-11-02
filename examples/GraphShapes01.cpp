@@ -72,6 +72,7 @@ class GraphRenderer {
         bool m_hasLight0 = true;
         bool m_hasColorChannel = false;
         bool m_hasColorTexture = false;
+        bool m_hasDiscard = true;
     };
   private:
     GraphRendererProps m_props;
@@ -82,7 +83,6 @@ class GraphRenderer {
     constexpr bool usesNormal() const noexcept { return m_props.m_hasLight0 || m_props.m_hasNormalChannel; }
     constexpr GLsizei arrayCompsPerElement() const noexcept { return usesNormal()? 3*3 : 2*3; }
 
-    static constexpr bool DEBUG_MODE = true;
     static constexpr std::string_view GLSL_PARAM_COMMENT_START = "\n// Gamp Graph Parameter Start\n";
     static constexpr std::string_view GLSL_PARAM_COMMENT_END = "// Gamp Graph Parameter End\n\n";
     static constexpr std::string_view GLSL_USE_COLOR_CHANNEL = "#define USE_COLOR_CHANNEL 1\n";
@@ -90,12 +90,12 @@ class GraphRenderer {
     static constexpr std::string_view GLSL_USE_LIGHT0 = "#define USE_LIGHT0 1\n";
     static constexpr std::string_view GLSL_USE_COLOR_TEXTURE = "#define USE_COLOR_TEXTURE 1\n";
     static constexpr std::string_view GLSL_USE_FRUSTUM_CLIPPING = "#define USE_FRUSTUM_CLIPPING 1\n";
+    static constexpr std::string_view GLSL_USE_DISCARD = "#define USE_DISCARD 1\n";
     static constexpr std::string_view GLSL_DEF_SAMPLE_COUNT = "#define SAMPLE_COUNT ";
     static constexpr std::string_view GLSL_CONST_SAMPLE_COUNT = "const float sample_count = ";
     static constexpr std::string_view GLSL_MAIN_BEGIN = "void main (void)\n{\n";
     static constexpr std::string_view gcuTexture2D = "gcuTexture2D";
     static constexpr std::string_view colTexLookupFuncName = "texture2D";
-    static constexpr std::string_view GLSL_USE_DISCARD = "#define USE_DISCARD 1\n";
     static constexpr std::string_view shader_basename = "curverenderer01";
     static constexpr std::string_view source_dir = "impl/graph/glsl";
     static constexpr std::string_view bin_dir = "impl/graph/glsl/bin";
@@ -109,6 +109,8 @@ class GraphRenderer {
     constexpr bool initialized() const noexcept { return m_initialized; }
 
     bool init(GL& gl, const jau::fraction_timespec& when) {
+        ShaderCode::DEBUG_CODE = true;
+
         std::string vertexShaderName, fragmentShaderName;
         vertexShaderName.append(shader_basename);
         if( m_props.m_isTwoPass ) {
@@ -139,8 +141,9 @@ class GraphRenderer {
             posFp = rsFp->insertShaderSource(0, posFp, GLSL_PARAM_COMMENT_START);
 
             // if( !gl.getContext().hasRendererQuirk(GLRendererQuirks.GLSLBuggyDiscard) ) {
+            if( m_props.m_hasDiscard ) {
                 posFp = rsFp->insertShaderSource(0, posFp, GLSL_USE_DISCARD);
-            // }
+            }
 
             if( m_props.m_hasFrustumClipping ) {
                 posVp = rsVp->insertShaderSource(0, posVp, GLSL_USE_FRUSTUM_CLIPPING);
@@ -207,7 +210,7 @@ class GraphRenderer {
 
             std::string passS = m_props.m_pass1 ? "-pass1-" : "-pass2-";
             std::string shaderSegment = string_t(source_dir).append("/").append(shader_basename).append(passS).append("curve_simple").append(".glsl"); // sms.tech+sms.sub+".glsl";
-            if(DEBUG_MODE) {
+            if( Graph::DEBUG_MODE || ShaderCode::DEBUG_CODE ) {
                 jau::PLAIN_PRINT(true, "RegionRenderer.createShaderProgram.1: segment %s", shaderSegment.c_str());
             }
             posFp = rsFp->insertShaderSourceFile(0, posFp, shaderSegment);
@@ -586,7 +589,7 @@ class GraphShapes01 : public RenderListener {
             return false;
         }
 
-        GLUniformVec3fRef lightU = GLUniformVec3f::create("gcu_LightPos", lightPos);
+        GLUniformVec3fRef lightU = GLUniformVec3f::create("gcu_Light0Pos", lightPos);
         m_st.ownUniform(lightU, true);
         m_st.pushAllUniforms(gl);
 
@@ -829,8 +832,6 @@ class Example : public GraphShapes01 {
 
 int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
-    // ShaderCode::DEBUG_CODE = true;
-
     return launch("GraphShapes01.cpp",
                   GLLaunchProps{.profile=GLProfile(GLProfile::GLES2),
                                 .contextFlags=gamp::render::RenderContextFlags::verbose}, // | gamp::render::RenderContextFlags::debug},
