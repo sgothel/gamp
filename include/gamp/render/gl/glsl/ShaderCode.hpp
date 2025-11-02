@@ -1190,7 +1190,7 @@ namespace gamp::render::gl::glsl {
             if( defaultPrecision.length() > 0 ) {
                 return insertShaderSource(0, pos, string_t(defaultPrecision));
             }
-            return 0;
+            return pos;
         }
 
         /** Returns true, if GLSL version requires default precision, i.e. ES2 or GLSL [1.30 .. 1.50[. */
