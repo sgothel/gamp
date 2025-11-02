@@ -73,7 +73,7 @@ namespace gamp::graph::tess::impl {
 
             if (!loop) {
                 // HEdge.BOUNDARY -> Winding.CCW
-                if (!FixedWindingRule) {
+                if constexpr (!FixedWindingRule) {
                     const Winding winding = polyline.getWinding();
                     if( Winding::CCW != winding ) {
                         WARN_PRINT("CDT2.add.xx.BOUNDARY: !CCW but %s", to_string(winding).c_str());
