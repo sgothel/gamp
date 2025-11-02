@@ -70,6 +70,17 @@ namespace gamp::render::gl {
         /** The default profile, used for the device default profile map  */
         constexpr static std::string_view GL_UNDEF = "undef";
 
+        constexpr static bool isValidTag(std::string_view tag) noexcept {
+            return GL4 == tag ||
+                   GL4bc == tag ||
+                   GL3 == tag ||
+                   GL3bc == tag ||
+                   GL2 == tag ||
+                   GLES3 == tag ||
+                   GLES2 == tag ||
+                   GLES1 == tag;
+        }
+
       private:
         constexpr static std::string_view mapProfile2Tag(const jau::util::VersionNumber& version, GLProfileMask mask) noexcept {
             if( 1 != jau::ct_bit_count( number(mask) ) ) {
@@ -165,6 +176,8 @@ namespace gamp::render::gl {
 
         static const jau::type_info& GLSignature() noexcept { return jau::static_ctti<GLProfile>(); }
         const jau::type_info& signature() const noexcept override { return GLSignature(); }
+
+        constexpr bool isValid() const noexcept { return GLProfile::isValidTag(name()); }
 
         /// Downcast dereferenced given `const RenderProfile&` to `const GLProfile&`, throws exception if signature doesn't match GLSignature()
         static const GLProfile& downcast(const RenderProfile& rp) {

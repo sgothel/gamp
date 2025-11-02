@@ -93,7 +93,7 @@ namespace gamp::render {
         virtual const jau::type_info& signature() const noexcept { return jau::static_ctti<RenderProfile>(); }
 
         constexpr const jau::util::VersionNumber& version() const noexcept { return m_version; }
-        constexpr const std::string_view& name() const noexcept { return m_profile; }
+        constexpr const std::string_view name() const noexcept { return m_profile; }
 
         constexpr bool operator==(const RenderProfile& rhs) const noexcept {
             return signature() == rhs.signature() && m_profile == rhs.m_profile && m_version == rhs.version();

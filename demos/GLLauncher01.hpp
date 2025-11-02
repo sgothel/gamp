@@ -45,18 +45,23 @@ struct GLLaunchProps {
     gamp::render::RenderContextFlags contextFlags;
 };
 
-int launch(std::string_view sfile, const GLLaunchProps& props, const RenderListenerRef& demo, int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
+int launch(std::string_view sfile, GLLaunchProps props, const RenderListenerRef& demo, int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
     std::string demo_name = std::string("Gamp ").append(jau::io::fs::basename(sfile, {{".cpp"}, {".hpp"}}));
     std::cout << "Launching: " << demo_name << ", source " << sfile << " , exe " << argv[0] << "\n";
 
-    int win_width = 1920, win_height = 1000;
     #if defined(__EMSCRIPTEN__)
-        win_width = 1024, win_height = 576; // 16:9
+        int win_width = 1024, win_height = 576; // 16:9
+    #else
+        int win_width = 1920, win_height = 1000;
     #endif
     {
         for(int i=1; i<argc; ++i) {
-            if( 0 == strcmp("-width", argv[i]) && i+1<argc) {
+            if( 0 == strcmp("-gl", argv[i]) && i+1<argc) {
+                if( gamp::render::gl::GLProfile::isValidTag(argv[i+1]) ) {
+                    props.profile = gamp::render::gl::GLProfile(argv[i+1]);
+                }
+            } else if( 0 == strcmp("-width", argv[i]) && i+1<argc) {
                 win_width = atoi(argv[i+1]);
                 ++i;
             } else if( 0 == strcmp("-height", argv[i]) && i+1<argc) {
@@ -67,7 +72,8 @@ int launch(std::string_view sfile, const GLLaunchProps& props, const RenderListe
                 ++i;
             }
         }
-        printf("-fps: %d\n", gamp::gpu_forced_fps());
+        std::cout << "-profile " << props.profile << ", context flags " << props.contextFlags << "\n";
+        printf("-window %d x %d, fps %d\n", win_width, win_height, gamp::gpu_forced_fps());
     }
 
     if( !gamp::init_gfx_subsystem(argv[0]) ) {
