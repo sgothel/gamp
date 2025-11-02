@@ -641,15 +641,27 @@ class GraphShapes01 : public RenderListener {
             ShapeRef frontShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
+            // Outer boundary-shapes are required as Winding::CCW (is CCW)
             oshape.moveTo(0.0f,-10.0f, 0);
             oshape.lineTo(15.0f,-10.0f, 0);
             oshape.quadTo(10.0f,5.0f,0, 15.0f,10.0f,0);
             oshape.cubicTo(6.0f,15.0f,0, 5.0f,8.0f,0, 0.0f,10.0f,0);
             oshape.closePath();
+            // Inner hole-shapes should be Winding::CW (is CCW and will be fixed to CW below)
             oshape.moveTo(5.0f,-5.0f,0);
             oshape.quadTo(10.0f,-5.0f,0, 10.0f,0.0f,0);
             oshape.quadTo(5.0f,0.0f,0, 5.0f,-5.0f,0);
             oshape.closePath();
+            {
+                const Winding w10 = oshape.outlines()[0].getWinding();
+                const Winding w11 = oshape.outlines()[1].getWinding();
+                oshape.outlines()[0].setWinding(Winding::CCW);
+                oshape.outlines()[1].setWinding(Winding::CW);
+                jau::PLAIN_PRINT(true, "Special.frontShape.10.winding_area: %s -> %s",
+                    to_string(w10).c_str(), to_string(oshape.outlines()[0].getWinding()).c_str());
+                jau::PLAIN_PRINT(true, "Special.frontShape.11.winding_area: %s -> %s",
+                    to_string(w11).c_str(), to_string(oshape.outlines()[1].getWinding()).c_str());
+            }
 
             frontShape->update(gl);
             frontShape->setColor(Vec4f(0.4f, 0.4f, 0.1f, 1));
@@ -659,13 +671,17 @@ class GraphShapes01 : public RenderListener {
 
             ShapeRef backShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
             m_shapes.push_back(backShape);
-            backShape->outlines() = oshape.flipFace(-dz);
+            backShape->outlines() = oshape.flipFace(-dz); // winding preserved and is correct
             backShape->outlines().clearCache();
             backShape->update(gl);
             backShape->setColor(Vec4f(0.2f, 0.2f, 0.5f, 1));
             backShape->position().x = -1.0f;
             backShape->scale().x *= 0.1f;
             backShape->scale().y *= 0.1f;
+            jau::PLAIN_PRINT(true, "Special.backShape.10.winding_area: %s",
+                to_string(backShape->outlines().outlines()[0].getWinding()).c_str());
+            jau::PLAIN_PRINT(true, "Special.backShape.11.winding_area: %s",
+                to_string(backShape->outlines().outlines()[1].getWinding()).c_str());
         }
         if ( true ) {
             ShapeRef frontShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
