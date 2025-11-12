@@ -266,6 +266,26 @@ namespace gamp::render::gl::data {
     };
     typedef std::shared_ptr<GLUniformVec3f> GLUniformVec3fRef;
 
+    class GLUniformVec2f : public GLUniformData {
+      private:
+        jau::math::Vec2f m_data;
+
+      public:
+        GLUniformVec2f(stringview_t name, const jau::math::Vec2f& v)
+        : GLUniformData(jau::float_ctti::f32(), name,
+                        /*location=*/-1, /*rows=*/1, /*columns=*/2, /*count=*/1),
+          m_data(v) {}
+
+        static std::shared_ptr<GLUniformVec2f> create(stringview_t name, const jau::math::Vec2f& v) {
+            return std::make_shared<GLUniformVec2f>(name, v);
+        }
+        const void* data() const noexcept override { return m_data.cbegin(); }
+
+        constexpr const jau::math::Vec2f& vec2f() const noexcept { return m_data; }
+        constexpr jau::math::Vec2f& vec2f() noexcept { return m_data; }
+    };
+    typedef std::shared_ptr<GLUniformVec2f> GLUniformVec2fRef;
+
     class GLUniformScalarF32 : public GLUniformData {
       private:
         float m_data;

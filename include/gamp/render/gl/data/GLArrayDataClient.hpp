@@ -334,6 +334,14 @@ namespace gamp::render::gl::data {
             return *this;
         }
 
+        constexpr_cxx20 client_t& put(std::initializer_list<value_type> initlist) {
+            if( !proxy_t::sealed() ) {
+                growIfNeeded(initlist.size());
+                m_buffer.put(initlist, jau::Bool::False);
+            }
+            return *this;
+        }
+
         constexpr_cxx20 client_t& put(const value_type v) {
             if( !proxy_t::sealed() ) {
                 growIfNeeded(1);
@@ -590,4 +598,3 @@ namespace gamp::render::gl::data::impl {
 }
 
 #endif /* GAMP_GLARRAYDATACLIENT_HPP_ */
-
