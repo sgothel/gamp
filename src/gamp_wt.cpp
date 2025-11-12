@@ -14,7 +14,6 @@
 #include <gamp/wt/event/KeyEvent.hpp>
 #include <gamp/wt/Window.hpp>
 #include <gamp/render/gl/GLHeader.hpp>
-#include <stdexcept>
 #include <jau/basic_types.hpp>
 #include <jau/string_util.hpp>
 

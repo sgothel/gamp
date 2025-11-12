@@ -403,7 +403,6 @@ class Shape {
     float m_zOffset;
     GraphRenderer& m_renderer;
     GraphRegion m_region;
-    Vec4f m_color = Vec4f(0, 0, 0, 1);
     GLUniformVec4fRef m_uColor;
 
     Mat4f iMat;
@@ -418,7 +417,7 @@ class Shape {
     : m_st(st), m_pmvMatUni(std::move(pmvMatU)), m_oshape(3, 16),
       m_renderer(renderer), m_region(m_renderer, m_st)
     {
-        m_uColor = GLUniformVec4f::create("gcu_StaticColor", m_color);
+        m_uColor = GLUniformVec4f::create("gcu_StaticColor", Vec4f(0, 0, 0, 1));
         m_st.ownUniform(m_uColor, true);
     }
 
@@ -551,7 +550,7 @@ class GraphShapes01 : public RenderListener {
     GLUniformSyncPMVMat4fRef m_pmvMatUni;
     GraphRenderer m_renderer;
     std::vector<ShapeRef> m_shapes;
-    jau::math::Vec3f lightPos = jau::math::Vec3f(0.0f, 5.0f, 10.0f);
+    const jau::math::Vec3f lightPos = jau::math::Vec3f(0.0f, 5.0f, 10.0f);
 
   public:
     GraphShapes01()

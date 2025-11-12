@@ -31,7 +31,6 @@ class RedSquareES2 : public RenderListener {
   private:
     ShaderState m_st;
     Recti m_viewport;
-    // PMVMat4f m_pmv;
     GLUniformSyncPMVMat4fRef m_pmvMatUni;
     bool m_initialized;
     bool m_animating = true;
@@ -85,20 +84,20 @@ class RedSquareES2 : public RenderListener {
         // Allocate Vertex Array
         GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("gca_Vertex", 3, false, 4, GL_STATIC_DRAW);
         vertices->reserve(4); // reserve 4 elements (4x3 components) upfront, otherwise growIfNeeded is used
-        vertices->put3f(-2,  2, 0);
-        vertices->put3f( 2,  2, 0);
-        vertices->put3f(-2, -2, 0);
-        vertices->put3f( 2, -2, 0);
+        vertices->put( { -2,  2, 0, // 1st vertex
+                          2,  2, 0, // burst transfer, instead of 4x `put3f` for single vertice-value
+                         -2, -2, 0,
+                          2, -2, 0 } );
         m_st.ownAttribute(vertices, true);
         vertices->seal(gl, true);
 
         // Allocate Color Array
         GLFloatArrayDataServerRef colors = GLFloatArrayDataServer::createGLSL("gca_Color", 4, false, 4, GL_STATIC_DRAW);
         assert(GL_FLOAT == vertices->compType()); // determined via template type jau::float32_t
-        colors->put4f(1, 0, 0, 1); // used implied growIfNeeded
-        colors->put4f(0, 0, 1, 1);
-        colors->put4f(1, 0, 0, 1);
-        colors->put4f(1, 0, 0, 1);
+        colors->put( { 1, 0, 0, 1,  // uses implied growIfNeeded
+                       0, 0, 1, 1,  // burst transfer, instead of 4x `put4f` for single color-value
+                       1, 0, 0, 1,
+                       1, 0, 0, 1 } );
         m_st.ownAttribute(colors, true);
         colors->seal(gl, true);
 
