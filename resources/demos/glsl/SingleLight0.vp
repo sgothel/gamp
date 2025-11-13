@@ -1,11 +1,6 @@
 // Copyright (c) 2010-2025 Gothel Software e.K.
 // Single Per Pixel Lighting (Example: GearsES2)
 
-#if __VERSION__ >= 130
-  #define attribute in
-  #define varying out
-#endif
-
 uniform mat4 gcu_PMVMatrix[4]; // P, Mv, Mvi and Mvit
 uniform vec3 gcu_Light0Pos;
 

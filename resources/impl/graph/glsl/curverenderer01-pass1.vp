@@ -1,10 +1,5 @@
 // Copyright (c) 2010-2025 Gothel Software e.K.
 
-#if __VERSION__ >= 130
-  #define attribute in
-  #define varying out
-#endif
-
 #include uniforms.glsl
 #include attributes.glsl
 #include varyings.glsl

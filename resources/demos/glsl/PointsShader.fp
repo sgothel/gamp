@@ -1,20 +1,7 @@
 
-#if __VERSION__ >= 130
-  #define varying in
-  out vec4 mgl_FragColor;
-#else
-  #define mgl_FragColor gl_FragColor
-#endif
-
-#ifdef GL_ES
-  #define MEDIUMP mediump
-#else
-  #define MEDIUMP
-#endif
-
 // [0].rgba: 0, smooth, attnMinSz, attnMaxSz
 // [1].rgba: attnCoeff(3), attnFadeTs
-uniform MEDIUMP vec4 gcu_PointParams[2];
+uniform vec4 gcu_PointParams[2];
 
 #define pointSmooth                 (gcu_PointParams[0].g)
 

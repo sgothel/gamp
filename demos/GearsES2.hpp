@@ -459,8 +459,8 @@ class GearsES2 : public RenderListener {
             win->dispose(when);
             return false;
         }
-        vp0->defaultShaderCustomization(gl, true, true);
-        fp0->defaultShaderCustomization(gl, true, true);
+        vp0->defaultShaderCustomization(gl);
+        fp0->defaultShaderCustomization(gl);
         ShaderProgramRef sp0 = ShaderProgram::create();
         if( !sp0->add(gl, vp0, true) || !sp0->add(gl, fp0, true) ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());

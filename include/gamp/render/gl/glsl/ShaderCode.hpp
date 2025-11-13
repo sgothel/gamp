@@ -1112,6 +1112,23 @@ namespace gamp::render::gl::glsl {
         /** <i>Behavior</i> for GLSL extension directive, see {@link #createExtensionDirective(String, String)}, value {@value}. */
         constexpr static std::string_view WARN = "warn";
 
+      private:
+        constexpr static std::string_view vp_130_defines =
+                                                       "#define attribute in\n"
+                                                       "#define varying out\n"
+                                                       "#define IN in\n";
+        constexpr static std::string_view vp_100_defines =
+                                                        "#define IN\n";
+        constexpr static std::string_view fp_130_defines =
+                                               "#define varying in\n"
+                                               "#define IN in\n"
+                                               "out vec4 mgl_FragColor;\n"
+                                               "#define texture2D texture\n";
+
+        constexpr static std::string_view fp_100_defines =
+                                               "#define IN\n"
+                                               "#define mgl_FragColor gl_FragColor\n";
+      public:
         /**
          * Creates a GLSL extension directive.
          * <p>
@@ -1142,7 +1159,7 @@ namespace gamp::render::gl::glsl {
          * depending on the {@link GLContext#getGLSLVersionNumber() GLSL version} being used.
          * @param gl a GL context, which must have been made current once
          * @param pos position within this mutable shader source.
-         * @return the index after the inserted data, maybe 0 if nothing has be inserted.
+         * @return the index after the inserted data, maybe unchanged pos if nothing has be inserted.
          */
         size_t addDefaultShaderPrecision(const GL& gl, size_t pos) {
             std::string_view defaultPrecision;
@@ -1188,7 +1205,7 @@ namespace gamp::render::gl::glsl {
                 defaultPrecision = "";
             }
             if( defaultPrecision.length() > 0 ) {
-                return insertShaderSource(0, pos, string_t(defaultPrecision));
+                pos = insertShaderSource(0, pos, string_t(defaultPrecision));
             }
             return pos;
         }
@@ -1212,18 +1229,49 @@ namespace gamp::render::gl::glsl {
         }
 
         /**
+         * Add GLSL version and shader-type dependent defines of this shader source code.
+         * @param gl a GL context, which must have been made current once
+         * @param pos position within this mutable shader source.
+         * @return the index after the inserted data, maybe unchanged pos if nothing has be inserted.
+         */
+        size_t addGLSLDefines(const GL& gl, size_t pos) noexcept {
+            const jau::util::VersionNumber& glslVersion = gl.glProfile().glslVersion();
+            if ( GL_VERTEX_SHADER == m_shaderType ) {
+                pos = insertShaderSource(0, pos, "\n");
+                if( glslVersion >= Version1_30 ) {
+                    pos = insertShaderSource(0, pos, vp_130_defines);
+                } else {
+                    pos = insertShaderSource(0, pos, vp_100_defines);
+                }
+                pos = insertShaderSource(0, pos, "\n");
+            } else if ( GL_FRAGMENT_SHADER == m_shaderType ) {
+                pos = insertShaderSource(0, pos, "\n");
+                if( glslVersion >= Version1_30 ) {
+                    pos = insertShaderSource(0, pos, fp_130_defines);
+                } else {
+                    pos = insertShaderSource(0, pos, fp_100_defines);
+                }
+                pos = insertShaderSource(0, pos, "\n");
+            }
+            return pos;
+        }
+
+        /**
          * Default customization of this shader source code.
          * @param gl a GL context, which must have been made current once
-         * @param preludeVersion if true {@link GLContext#getGLSLVersionString()} is preluded, otherwise not.
+         * @param preludeVersion if true {@link GLContext#getGLSLVersionString()} is preluded, otherwise not. Defaults to true.
          * @param addDefaultPrecision if <code>true</code> default precision source code line(s) are added, i.e.
          *                            {@link #es2_default_precision_vp}, {@link #es2_default_precision_fp},
          *                            {@link #gl3_default_precision_vp_gp}, {@link #gl3_default_precision_fp} or none,
          *                            depending on the {@link GLContext#getGLSLVersionNumber() GLSL version} being used.
+         *                            Defaults to true.
+         * @param addDefaultDefines if true addGLSLDefines() is used to prelude common defines, defaults to true
          * @return the index after the inserted data, maybe 0 if nothing has be inserted.
          * @see #addGLSLVersion(GL2ES2)
-         * @see #addDefaultShaderPrecision(GL2ES2, int)
+         * @see #addDefaultShaderPrecision(GL2ES2, i, size_tnt)
+         * @see #addGLSLDefines(GL2ES2, size_t)
          */
-        size_t defaultShaderCustomization(const GL& gl, bool preludeVersion, bool addDefaultPrecision) {
+        size_t defaultShaderCustomization(const GL& gl, bool preludeVersion=true, bool addDefaultPrecision=true, bool addDefaultDefines=true) {
             size_t pos;
             if( preludeVersion ) {
                 pos = addGLSLVersion(gl);
@@ -1232,6 +1280,9 @@ namespace gamp::render::gl::glsl {
             }
             if( addDefaultPrecision ) {
                 pos = addDefaultShaderPrecision(gl, pos);
+            }
+            if( addDefaultDefines ) {
+                pos = addGLSLDefines(gl, pos);
             }
             return pos;
         }
@@ -1242,11 +1293,13 @@ namespace gamp::render::gl::glsl {
          * @param preludeVersion if true {@link GLContext#getGLSLVersionString()} is preluded, otherwise not.
          * @param esDefaultPrecision optional default precision source code line(s) preluded if not null and if {@link GL#isGLES()}.
          *        You may use {@link #es2_default_precision_fp} for fragment shader and {@link #es2_default_precision_vp} for vertex shader.
+         * @param addDefaultDefines if true addGLSLDefines() is used to prelude common defines, defaults to true
          * @return the index after the inserted data, maybe 0 if nothing has be inserted.
          * @see #addGLSLVersion(GL2ES2)
-         * @see #addDefaultShaderPrecision(GL2ES2, int)
+         * @see #addDefaultShaderPrecision(GL2ES2, size_t)
+         * @see #addGLSLDefines(GL2ES2, size_t)
          */
-        size_t defaultShaderCustomization(const GL& gl, bool preludeVersion, const string_t& esDefaultPrecision) {
+        size_t defaultShaderCustomization(const GL& gl, bool preludeVersion, const string_t& esDefaultPrecision, bool addDefaultDefines=true) {
             size_t pos;
             if( preludeVersion ) {
                 pos = addGLSLVersion(gl);
@@ -1257,6 +1310,9 @@ namespace gamp::render::gl::glsl {
                 pos = insertShaderSource(0, pos, esDefaultPrecision);
             } else {
                 pos = addDefaultShaderPrecision(gl, pos);
+            }
+            if( addDefaultDefines ) {
+                pos = addGLSLDefines(gl, pos);
             }
             return pos;
         }

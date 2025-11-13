@@ -1,13 +1,6 @@
 // Elevated shader
 // https://www.shadertoy.com/view/MdX3Rr by inigo quilez
 
-#if __VERSION__ >= 130
-  #define varying in
-  out vec4 mgl_FragColor;
-#else
-  #define mgl_FragColor gl_FragColor   
-#endif
-
 uniform vec3 iResolution;
 uniform float iGlobalTime;
 
@@ -15,7 +8,7 @@ uniform float iGlobalTime;
 // License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
 
 //stereo thanks to Croqueteer
-//#define STEREO 
+//#define STEREO
 
 mat3 m = mat3( 0.00,  0.80,  0.60,
               -0.80,  0.36, -0.48,
@@ -92,7 +85,7 @@ float fbm( vec3 p )
 }
 
 mat2 m2 = mat2(1.6,-1.2,1.2,1.6);
-	
+
 float fbm( vec2 p )
 {
     float f = 0.0;
@@ -145,14 +138,14 @@ float terrain2( in vec2 x )
 float map( in vec3 p )
 {
 	float h = terrain(p.xz);
-	
+
 	float ss = 0.03;
 	float hh = h*ss;
 	float fh = fract(hh);
 	float ih = floor(hh);
 	fh = mix( sqrt(fh), fh, smoothstep(50.0,140.0,h) );
 	h = (ih+fh)/ss;
-	
+
     return p.y - h;
 }
 
@@ -160,14 +153,14 @@ float map2( in vec3 p )
 {
 	float h = terrain2(p.xz);
 
-	
+
 	float ss = 0.03;
 	float hh = h*ss;
 	float fh = fract(hh);
 	float ih = floor(hh);
 	fh = mix( sqrt(fh), fh, smoothstep(50.0,140.0,h) );
 	h = (ih+fh)/ss;
-	
+
     return p.y - h;
 }
 
@@ -178,14 +171,14 @@ bool jinteresct(in vec3 rO, in vec3 rD, out float resT )
 	for( int j=0; j<120; j++ )
 	{
         //if( t>2000.0 ) break;
-		
+
 	    vec3 p = rO + t*rD;
 if( p.y>300.0 ) break;
         h = map( p );
 
 		if( h<0.1 )
 		{
-			resT = t; 
+			resT = t;
 			return true;
 		}
 		t += max(0.1,0.5*h);
@@ -237,7 +230,7 @@ vec3 calcNormal( in vec3 pos, float t )
 
 vec3 camPath( float time )
 {
-    vec2 p = 600.0*vec2( cos(1.4+0.37*time), 
+    vec2 p = 600.0*vec2( cos(1.4+0.37*time),
                          cos(3.2+0.31*time) );
 
 	return vec3( p.x, 0.0, p.y );
@@ -252,7 +245,7 @@ void main(void)
 	#ifdef STEREO
 	float isCyan = mod(gl_FragCoord.x + mod(gl_FragCoord.y,2.0),2.0);
     #endif
-	
+
     float time = iGlobalTime*.15;
 
 	vec3 light1 = normalize( vec3(  0.4, 0.22,  0.6 ) );
@@ -292,9 +285,9 @@ void main(void)
 		float dif1 = clamp( dot( light1, nor ), 0.0, 1.0 );
 		float dif2 = clamp( 0.2 + 0.8*dot( light2, nor ), 0.0, 1.0 );
 		float sh = 1.0;
-		if( dif1>0.001 ) 
+		if( dif1>0.001 )
 			sh = sinteresct(pos+light1*20.0,light1);
-		
+
 		vec3 dif1v = vec3(dif1);
 		dif1v *= vec3( sh, sh*sh*0.5+0.5*sh, sh*sh );
 
@@ -314,13 +307,13 @@ void main(void)
         col = mix( col, 0.4*vec3(0.6,0.65,0.7), s );
         #endif
 
-		
+
 		vec3 brdf  = 2.0*vec3(0.17,0.19,0.20)*clamp(nor.y,0.0,1.0);
 		     brdf += 6.0*vec3(1.00,0.95,0.80)*dif1v;
 		     brdf += 2.0*vec3(0.20,0.20,0.20)*dif2;
 
 		col *= brdf;
-		
+
 		float fo = 1.0-exp(-pow(0.0015*t,1.5));
 		vec3 fco = vec3(0.7) + 0.6*vec3(0.8,0.7,0.5)*pow( sundot, 4.0 );
 		col = mix( col, fco, fo );
@@ -330,10 +323,10 @@ void main(void)
 
 	vec2 uv = xy*0.5+0.5;
 	col *= 0.7 + 0.3*pow(16.0*uv.x*uv.y*(1.0-uv.x)*(1.0-uv.y),0.1);
-	
-    #ifdef STEREO	
-    col *= vec3( isCyan, 1.0-isCyan, 1.0-isCyan );	
+
+    #ifdef STEREO
+    col *= vec3( isCyan, 1.0-isCyan, 1.0-isCyan );
 	#endif
-	
+
 	mgl_FragColor = vec4(col,1.0);
 }

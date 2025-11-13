@@ -1,10 +1,5 @@
 // Copyright (c) 2010-2025 Gothel Software e.K.
 
-#if __VERSION__ >= 130
-  #define attribute in
-  #define varying out
-#endif
-
 uniform mat4    gcu_PMVMatrix[2];
 attribute vec4    gca_Vertex;
 attribute vec4    gca_Color;

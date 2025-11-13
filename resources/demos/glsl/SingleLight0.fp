@@ -1,13 +1,6 @@
 // Copyright (c) 2010-2025 Gothel Software e.K.
 // Single Per Pixel Lighting (Example: GearsES2)
 
-#if __VERSION__ >= 130
-  #define varying in
-  out vec4 mgl_FragColor;
-#else
-  #define mgl_FragColor gl_FragColor
-#endif
-
 uniform vec4 gcu_StaticColor;
 
 varying vec3 gcv_normal;

@@ -127,8 +127,8 @@ class GraphRenderer {
             return false;
         }
         {
-            size_t posVp = rsVp->defaultShaderCustomization(gl, true, true);
-            size_t posFp = rsFp->defaultShaderCustomization(gl, true, true);
+            size_t posVp = rsVp->defaultShaderCustomization(gl);
+            size_t posFp = rsFp->defaultShaderCustomization(gl);
             if( posVp == std::string::npos || posFp == std::string::npos ) {
                 jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d\n", E_FILE_LINE);
                 return false;

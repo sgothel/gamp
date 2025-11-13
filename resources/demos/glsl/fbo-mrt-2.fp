@@ -1,9 +1,7 @@
 //Copyright (c) 2010-2025 Gothel Software e.K.
 
 #if __VERSION__ >= 130
-  #define varying in
   out vec4 mgl_FragData[2];
-  #define texture2D texture
 #else
   #define mgl_FragData gl_FragData
 #endif
