@@ -152,6 +152,10 @@ namespace gamp::render::gl::data {
     };
     typedef std::shared_ptr<GLUniformData> GLUniformDataRef;
 
+    inline std::ostream& operator<<(std::ostream& out, const GLUniformData& v) {
+        return out << v.toString();
+    }
+
     class GLUniformSyncPMVMat4fExt : public GLUniformData {
       public:
         typedef SyncMatrices4<GLfloat> SyncMats4f;
