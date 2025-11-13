@@ -205,4 +205,8 @@ namespace gamp {
  * Multiple complex shapes are rotated with front- and back-face as well as per-pixel-lighting.
  */
 
+ /** \example SolInSpace.cpp
+  * Simple solar fragment-shader w/ core- and halo-radius.
+  */
+
 #endif /*  JAU_GAMP_HPP_ */

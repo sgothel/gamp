@@ -44,6 +44,9 @@ functionality including linear algebra and geometry.
   - This C++ example demonstrates simple polylines using the the GLU tesselator and per-pixel-lighting.
 * [RedSquare](https://jausoft.com/projects/gamp/RedSquareES2.html) (source: [rendering](https://jausoft.com/projects/gamp/build/documentation/cpp/html/RedSquareES2_8hpp-example.html), [input](https://jausoft.com/projects/gamp/build/documentation/cpp/html/RedSquareES2_8cpp-example.html))
   - The mandatory most simple example.
+* Primitive Shader
+  - [SolInSpace](https://jausoft.com/projects/gamp/SolInSpace.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/SolInSpace_8cpp-example.html))
+    - Simple solar fragment-shader w/ core- and halo-radius.
 
 ## Earlier Work
 [gfxbox2](https://jausoft.com/cgit/cs_class/gfxbox2.git/about/) of our CS class
