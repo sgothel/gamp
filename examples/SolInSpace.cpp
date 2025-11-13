@@ -151,10 +151,10 @@ class Example : public RenderListener {
         // Allocate Vertex Array
         GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("gca_Vertex", 3, false, 4, GL_STATIC_DRAW);
         vertices->reserve(4); // reserve 4 elements (4x3 components) upfront, otherwise growIfNeeded is used
-        vertices->put( { -2,  2, 0, // 1st vertex
-                          2,  2, 0, // burst transfer, instead of 4x `put3f` for single vertice-value
-                         -2, -2, 0,
-                          2, -2, 0 } );
+        vertices->put( { -radius,  radius, 0, // 1st vertex
+                          radius,  radius, 0, // burst transfer, instead of 4x `put3f` for single vertice-value
+                         -radius, -radius, 0,
+                          radius, -radius, 0 } );
         m_st.ownAttribute(vertices, true);
         vertices->seal(gl, true);
 
@@ -166,6 +166,9 @@ class Example : public RenderListener {
             m_st.destroy(gl);
             win->dispose(when);
         }
+        m_st.pushAllUniforms(gl);
+        m_st.useProgram(gl, false);
+
         win->addKeyListener(m_kl);
         return m_initialized;
     }
@@ -191,7 +194,7 @@ class Example : public RenderListener {
         pmv.setToPerspective(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
 
         m_st.useProgram(gl, true);
-        m_st.pushAllUniforms(gl);
+        m_st.pushUniform(gl, m_pmvMatUni);
         m_st.useProgram(gl, false);
     }
 
@@ -240,7 +243,6 @@ class Example : public RenderListener {
         m_st.pushUniform(gl, m_uWinCenter);
         m_st.pushUniform(gl, m_uWinRadius);
         m_st.pushUniform(gl, m_uCoreRadius);
-        // m_st.pushAllUniforms(gl);
         if( m_once ) {
             std::cerr << "XXX: " << m_st << "\n";
             m_once = false;
