@@ -289,11 +289,11 @@ namespace gamp::render::gl::glsl {
          * @see ShaderProgram#glReplaceShader
          */
         GLArrayDataRef getAttribute(const stringview_t name) const {
-            return m_activeAttribDataMap.get(name);
+            return m_activeAttribMap.get(name);
         }
 
         bool isActiveAttribute(const GLArrayDataRef& attribute) const {
-            return attribute == m_activeAttribDataMap.get(attribute->name());
+            return attribute == m_activeAttribMap.get(attribute->name());
         }
 
         /**
@@ -376,7 +376,7 @@ namespace gamp::render::gl::glsl {
             const stringview_t name = attr->name();
             m_activeAttribLocationMap.put(name, location);
             attr->setLocation(gl, m_shaderProgram->program(), location);
-            m_activeAttribDataMap.put(name, attr);
+            m_activeAttribMap.put(name, attr);
             ::glBindAttribLocation(m_shaderProgram->program(), location, string_t(name).c_str());
         }
 
@@ -452,7 +452,7 @@ namespace gamp::render::gl::glsl {
                     jau::INFO_PRINT("ShaderState: glGetAttribLocation failed, no location for: %s", string_t(data->name()).c_str());
                 }
             }
-            m_activeAttribDataMap.put(data->name(), data);
+            m_activeAttribMap.put(data->name(), data);
             return location;
         }
 
@@ -545,7 +545,7 @@ namespace gamp::render::gl::glsl {
                 getAttribLocation(gl, data);
             } else {
                 // ensure data is the current bound one
-                m_activeAttribDataMap.put(data->name(), data);
+                m_activeAttribMap.put(data->name(), data);
             }
             return enableVertexAttribArray(gl, data->name(), data->location());
         }
@@ -674,11 +674,11 @@ namespace gamp::render::gl::glsl {
          */
         void releaseAllAttributes(const GL& gl) {
             if(m_shaderProgram) {
-                for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribDataMap.map()) {
+                for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribMap.map()) {
                     disableVertexAttribArray(gl, n.second);
                 }
             }
-            m_activeAttribDataMap.clear();
+            m_activeAttribMap.clear();
             m_enabledAttribDataMap.clear();
             m_activeAttribLocationMap.clear();
             m_managedAttributes.clear();
@@ -767,7 +767,7 @@ namespace gamp::render::gl::glsl {
             for(GLArrayDataRef& ad : m_managedAttributes) {
                 ad->setLocation(-1);
             }
-            for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribDataMap.map()) {
+            for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribMap.map()) {
                 relocateAttribute(gl, *n.second);
             }
         }
@@ -799,7 +799,7 @@ namespace gamp::render::gl::glsl {
          * preserves the attribute location .. (program not linked)
          */
         void setAllAttributes(const GL& gl) {
-            for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribDataMap.map()) {
+            for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribMap.map()) {
                 setAttribute(gl, *n.second);
             }
         }
@@ -822,9 +822,9 @@ namespace gamp::render::gl::glsl {
         void ownUniform(GLUniformData& data, bool own=true) {
             if(own) {
                 m_managedUniforms.push_back(&data);
-                m_activeUniformDataMap.put(data.name(), &data);
+                m_activeUniformMap.put(data.name(), &data);
             } else {
-                m_activeUniformDataMap.remove(data.name());
+                m_activeUniformMap.remove(data.name());
                 std::erase(m_managedUniforms, &data);
             }
         }
@@ -860,7 +860,7 @@ namespace gamp::render::gl::glsl {
                     return false;
                 }
             }
-            m_activeUniformDataMap.put(data.name(), &data);
+            m_activeUniformMap.put(data.name(), &data);
             return true;
         }
 
@@ -887,7 +887,7 @@ namespace gamp::render::gl::glsl {
                 return false;
             }
             if (!data.hasLocation() && !resolveUniform(gl, data)) {
-                m_activeUniformDataMap.remove(data.name());
+                m_activeUniformMap.remove(data.name());
                 return false;
             }
             data.send(gl);
@@ -902,7 +902,7 @@ namespace gamp::render::gl::glsl {
                 }
                 return false;
             }
-            for (const std::pair<const std::string_view, GLUniformData*>& n : m_activeUniformDataMap.map()) {
+            for (const std::pair<const std::string_view, GLUniformData*>& n : m_activeUniformMap.map()) {
                 GLUniformData &data = *n.second;
                 if (data.hasLocation() || resolveUniform(gl, data)) {
                     data.send(gl);
@@ -913,7 +913,7 @@ namespace gamp::render::gl::glsl {
 
         /// Returns true if given uniform data is active, i.e. previously resolved/pushed and used in current program.
         bool isActive(const GLUniformData& uniform) {
-            return &uniform == m_activeUniformDataMap.get(uniform.name());
+            return &uniform == m_activeUniformMap.get(uniform.name());
         }
 
         /**
@@ -923,7 +923,7 @@ namespace gamp::render::gl::glsl {
          * @return the GLUniformData object, nullptr if not previously resolved.
          */
         GLUniformData* getActiveUniform(const stringview_t name) {
-            return m_activeUniformDataMap.get(name);
+            return m_activeUniformMap.get(name);
         }
 
         /**
@@ -951,7 +951,7 @@ namespace gamp::render::gl::glsl {
          * and loses all indices
          */
         void releaseAllUniforms() {
-            m_activeUniformDataMap.clear();
+            m_activeUniformMap.clear();
             m_managedUniforms.clear();
         }
 
@@ -981,7 +981,7 @@ namespace gamp::render::gl::glsl {
             for (GLUniformData *u : m_managedUniforms) {
                 u->clearLocation();
             }
-            for (const std::pair<const std::string_view, GLUniformData*> &n : m_activeUniformDataMap.map()) {
+            for (const std::pair<const std::string_view, GLUniformData*> &n : m_activeUniformMap.map()) {
                 GLUniformData *data = n.second;
                 if (data->resolveLocation(gl, m_shaderProgram->program())) {
                     if (debug()) {
@@ -1009,7 +1009,7 @@ namespace gamp::render::gl::glsl {
                 sb.append("\n  ").append(n.first).append(": ").append(n.second?"enabled":"disabled");
             }
             sb.append("\n ],").append(" activeAttributes [");
-            for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribDataMap.map()) {
+            for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribMap.map()) {
                 if( alsoUnlocated || 0 <= n.second->location() ) {
                     sb.append("\n  ").append(n.second->toString());
                 }
@@ -1019,7 +1019,7 @@ namespace gamp::render::gl::glsl {
                 sb.append("\n  ").append(ad->toString());
             }
             sb.append("\n ],").append(" activeUniforms [");
-            for (const std::pair<const std::string_view, GLUniformData*>& n : m_activeUniformDataMap.map()) {
+            for (const std::pair<const std::string_view, GLUniformData*>& n : m_activeUniformMap.map()) {
                 const GLUniformData *ud = n.second;
                 if( alsoUnlocated || ud->hasLocation() ) {
                     sb.append("\n  ").append(ud->toString());
@@ -1038,13 +1038,13 @@ namespace gamp::render::gl::glsl {
         ShaderProgramRef m_shaderProgram      = nullptr;
         bool             m_resetAllShaderData = false;
 
-        StringViewHashMapWrap<bool, bool, false>              m_enabledAttribDataMap;
-        StringViewHashMapWrap<GLint, GLint, -1>               m_activeAttribLocationMap;
-        StringViewHashMapWrap<GLArrayDataRef, std::nullptr_t, nullptr> m_activeAttribDataMap;
-        std::vector<GLArrayDataRef>                       m_managedAttributes;
+        jau::StringViewHashMapWrap<bool, bool, false> m_enabledAttribDataMap;
+        jau::StringViewHashMapWrap<GLint, GLint, -1>  m_activeAttribLocationMap;
+        jau::StringViewHashMapWrap<GLArrayDataRef, std::nullptr_t, nullptr> m_activeAttribMap;
+        std::vector<GLArrayDataRef>              m_managedAttributes;
 
-        StringViewHashMapWrap<GLUniformData*, std::nullptr_t, nullptr> m_activeUniformDataMap;
-        std::vector<GLUniformData*>                       m_managedUniforms;
+        jau::StringViewHashMapWrap<GLUniformData*, std::nullptr_t, nullptr> m_activeUniformMap;
+        std::vector<GLUniformData*>              m_managedUniforms;
 
         StringAttachables m_attachables;
     };

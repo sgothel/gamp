@@ -33,6 +33,8 @@
 #include <jau/math/recti.hpp>
 #include <jau/math/util/pmvmat4.hpp>
 #include <jau/math/util/float_util.hpp>
+#include <jau/string_util.hpp>
+#include <jau/basic_collections.hpp>
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
@@ -85,142 +87,7 @@ namespace gamp {
     };
     typedef std::shared_ptr<Attachable> AttachableRef;
 
-    template<typename K, typename V>
-    using StringlikeHashMap = std::unordered_map<K, V, jau::string_hash, std::equal_to<>>;
-
-    template<typename Value_type, typename Novalue_type, Novalue_type no_value>
-    class StringHashMapWrap {
-      private:
-        jau::StringHashMap<Value_type> m_map;
-
-      public:
-        jau::StringHashMap<Value_type>& map() noexcept { return m_map; }
-        const jau::StringHashMap<Value_type>& map() const noexcept { return m_map; }
-
-        /** Returns the mapped value for the given name or `no_value` */
-        Value_type get(std::string_view key) const {
-            auto it = m_map.find(key);
-            if( it != m_map.end() ) {
-                return it->second;
-            }
-            return no_value;
-        }
-
-        /** Returns true if the given name maps to a value or `no_value`. */
-        bool containsKey(std::string_view key) const {
-            return m_map.contains(key);
-        }
-
-        /** Returns the string_view key of the first value, otherwise std::nullopt. Note: O(n) operation, slow. */
-        std::optional<std::string_view> containsValue(const Value_type& value) const {
-            for (const std::pair<const std::string, Value_type>& n : m_map) {
-                if( n.second == value ) {
-                    return std::optional<std::string_view>{n.first};
-                }
-            }
-            return std::nullopt;
-        }
-
-        /** Clears the hash map. */
-        void clear() { m_map.clear(); }
-
-        /**
-         * Maps the value for the given name, overwrites old mapping if exists.
-         * @return previously mapped value or `no_value`.
-         */
-        Value_type put(std::string_view key, const Value_type& obj) {
-            auto it = m_map.find(key);
-            if( it != m_map.end() ) {
-                Value_type old = it->second;
-                it->second        = obj;
-                return old;
-            }
-            m_map.insert({std::string(key), obj });
-            // m_attachedMap[key] = obj;
-            return no_value;
-        }
-
-        /** Removes value if mapped and returns it, otherwise returns `no_value`. */
-        Value_type remove(std::string_view key) {
-            auto it = m_map.find(key);
-            if( it != m_map.end() ) {
-                Value_type old = it->second;
-                m_map.erase(it);
-                return old;
-            }
-            return no_value;
-        }
-    };
-    using StringAttachables = StringHashMapWrap<AttachableRef, std::nullptr_t, nullptr>;
-
-    /**
-     * std::string_view std::unordered_map (jau::StringViewHashMap), use with care.
-     *
-     * Key values must persist through the lifecycle of the map.
-     */
-    template<typename Value_type, typename Novalue_type, Novalue_type no_value>
-    class StringViewHashMapWrap {
-      private:
-        jau::StringViewHashMap<Value_type> m_map;
-
-      public:
-        jau::StringViewHashMap<Value_type>& map() noexcept { return m_map; }
-        const jau::StringViewHashMap<Value_type>& map() const noexcept { return m_map; }
-
-        /** Returns the mapped value for the given name or `no_value` */
-        Value_type get(std::string_view key) const {
-            auto it = m_map.find(key);
-            if( it != m_map.end() ) {
-                return it->second;
-            }
-            return no_value;
-        }
-
-        /** Returns true if the given name maps to a value or `no_value`. */
-        bool containsKey(std::string_view key) const {
-            return m_map.contains(key);
-        }
-
-        /** Returns the string_view key of the first value, otherwise std::nullopt. Note: O(n) operation, slow. */
-        std::optional<std::string_view> containsValue(const Value_type& value) const {
-            for (const std::pair<const std::string, Value_type>& n : m_map) {
-                if( n.second == value ) {
-                    return std::optional<std::string_view>{n.first};
-                }
-            }
-            return std::nullopt;
-        }
-
-        /** Clears the hash map. */
-        void clear() { m_map.clear(); }
-
-        /**
-         * Maps the value for the given name, overwrites old mapping if exists.
-         * @return previously mapped value or `no_value`.
-         */
-        Value_type put(std::string_view key, const Value_type& obj) {
-            auto it = m_map.find(key);
-            if( it != m_map.end() ) {
-                Value_type old = it->second;
-                it->second        = obj;
-                return old;
-            }
-            m_map.insert({std::string(key), obj });
-            // m_attachedMap[key] = obj;
-            return no_value;
-        }
-
-        /** Removes value if mapped and returns it, otherwise returns `no_value`. */
-        Value_type remove(std::string_view key) {
-            auto it = m_map.find(key);
-            if( it != m_map.end() ) {
-                Value_type old = it->second;
-                m_map.erase(it);
-                return old;
-            }
-            return no_value;
-        }
-    };
+    using StringAttachables = jau::StringHashMapWrap<AttachableRef, std::nullptr_t, nullptr>;
 
     /**@}*/
 }  // namespace gamp
