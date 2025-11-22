@@ -17,7 +17,6 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 #include <jau/basic_types.hpp>
@@ -75,8 +74,13 @@ class GraphRenderer {
         bool m_hasDiscard = true;
     };
   private:
+    constexpr static PMVData mat_req = PMVData::inv_proj | PMVData::inv_mv | PMVData::inv_tps_mv;
+    constexpr static jau::math::Vec3f lightPos = jau::math::Vec3f(0.0f, 5.0f, 10.0f);
     GraphRendererProps m_props;
     ShaderState& m_st;
+    GLUniformSyncPMVMat4f m_pmvMat;
+    GLUniformVec3f m_light0Pos;
+    GLUniformVec4f m_staticColor;
     bool m_initialized;
 
   public:
@@ -103,13 +107,21 @@ class GraphRenderer {
   public:
     GraphRenderer(ShaderState& st)
     : m_st(st),
+      m_pmvMat("gcu_PMVMatrix", mat_req), // P, Mv, Mvi and Mvit
+      m_light0Pos("gcu_Light0Pos", lightPos),
+      m_staticColor("gcu_StaticColor", Vec4f(0, 0, 0, 1)),
       m_initialized(false)
-    { }
+    {
+        m_st.ownUniform(m_pmvMat);
+        m_st.ownUniform(m_light0Pos);
+        m_st.ownUniform(m_staticColor);
+    }
 
     constexpr bool initialized() const noexcept { return m_initialized; }
 
     bool init(GL& gl, const jau::fraction_timespec& when) {
         ShaderCode::DEBUG_CODE = true;
+        // ShaderState::VERBOSE_STATE = true;
 
         std::string vertexShaderName, fragmentShaderName;
         vertexShaderName.append(shader_basename);
@@ -237,7 +249,13 @@ class GraphRenderer {
         }
         m_st.attachShaderProgram(gl, sp0, true);
 
-        m_st.pushAllUniforms(gl);
+        PMVMat4f& pmv = m_pmvMat.pmv();
+        pmv.getP().loadIdentity();
+        pmv.getMv().loadIdentity();
+
+        m_st.pushUniform(gl, m_pmvMat);
+        m_st.pushUniform(gl, m_light0Pos);
+        m_st.pushUniform(gl, m_staticColor);
 
         m_initialized = sp0->inUse();
         if( !m_initialized ) {
@@ -247,10 +265,28 @@ class GraphRenderer {
         return m_initialized;
     }
 
+    void destroy(GL& gl) {
+        m_st.destroyShaderProgram(gl);
+    }
+
     void useProgram(GL& gl, bool on) {
         m_st.useProgram(gl, on);
     }
 
+    void updateColor(GL& gl) noexcept {
+        m_st.pushUniform(gl, m_staticColor);
+    }
+    void updatePMV(GL& gl) noexcept {
+        m_st.pushUniform(gl, m_pmvMat);
+    }
+    void updateAll(GL& gl) noexcept {
+        m_st.pushUniform(gl, m_pmvMat);
+        m_st.pushUniform(gl, m_staticColor);
+    }
+    PMVMat4f& pmv() noexcept { return m_pmvMat.pmv(); }
+    const PMVMat4f& pmv() const noexcept { return m_pmvMat.pmv(); }
+    const Vec4f& color() const noexcept { return m_staticColor.vec4f(); }
+    void setColor(const Vec4f& c) noexcept { m_staticColor.vec4f()=c; }
 };
 
 class GraphRegion {
@@ -277,11 +313,19 @@ class GraphRegion {
         if( m_renderer.usesNormal() ) {
             m_array->addGLSLSubArray("gca_Normal", 3, GL_ARRAY_BUFFER);
         }
-        m_st.ownAttribute(m_array, true);
-        // m_st.ownAttribute(m_indices, true);
+        m_st.ownAttribute(m_array);
+        // m_st.ownAttribute(m_indices);
     }
 
     constexpr bool initialized() const noexcept { return m_initialized; }
+
+    void destroy(GL& gl) {
+        m_st.destroyAllData(gl);
+        // m_array->destroy(gl); // owned by m_st
+        m_indices->destroy(gl);
+        m_num_vertices = 0;
+        m_num_indices = 0;
+    }
 
     void seal(GL& gl, bool seal_) {
         if( !m_initialized ) {
@@ -293,6 +337,7 @@ class GraphRegion {
         m_indices->enableBuffer(gl, false);
     }
 
+  private:
     void pushVertex(const Vertex& v, const Vec3f& normal) {
         // jau::PLAIN_PRINT(true, "pushVertex.0[%d]: v %s]", m_num_vertices, v.toString().c_str());
         m_array->put3f(v.coord());
@@ -314,7 +359,11 @@ class GraphRegion {
         pushVertex(vertIn3, normal);
     }
 
+  public:
     void addOutlineShape(OutlineShape& shape) {
+        if( !m_initialized ) {
+            return;
+        }
         if( Graph::DEBUG_MODE ) {
             jau::PLAIN_PRINT(true, "add.0 num[vertices %d, indices %d]", m_num_vertices, m_num_indices);
             jau::PLAIN_PRINT(true, "add.0 array: %s", m_array->toString().c_str());
@@ -380,7 +429,6 @@ class GraphRegion {
 
         ::glDrawElements(GL_TRIANGLES, m_indices->elemCount() * m_indices->compsPerElem(), GL_UNSIGNED_INT, nullptr);
 
-
         m_indices->bindBuffer(gl, false);
         m_array->enableBuffer(gl, false);
         // m_renderer.useProgram(gl, false);
@@ -393,17 +441,16 @@ typedef std::shared_ptr<Shape> ShapeRef;
 class Shape {
   private:
     ShaderState& m_st;
-    GLUniformSyncPMVMat4fRef m_pmvMatUni;
     OutlineShape m_oshape;
 
     Vec3f m_position;
     Quat4f m_rotation;
     Vec3f m_rotPivot;
     Vec3f m_scale = Vec3f(1, 1, 1);
-    float m_zOffset;
+    float m_zOffset = 0.0f;
+    Vec4f m_color = Vec4f(0, 0, 0, 1);
     GraphRenderer& m_renderer;
     GraphRegion m_region;
-    GLUniformVec4fRef m_uColor;
 
     Mat4f iMat;
     Mat4f tmpMat;
@@ -413,16 +460,19 @@ class Shape {
     struct Private{ explicit Private() = default; };
 
   public:
-    Shape(Private, ShaderState &st, GLUniformSyncPMVMat4fRef pmvMatU, GraphRenderer& renderer)
-    : m_st(st), m_pmvMatUni(std::move(pmvMatU)), m_oshape(3, 16),
+    Shape(Private, ShaderState &st, GraphRenderer &renderer)
+    : m_st(st), m_oshape(3, 16),
       m_renderer(renderer), m_region(m_renderer, m_st)
     {
-        m_uColor = GLUniformVec4f::create("gcu_StaticColor", Vec4f(0, 0, 0, 1));
-        m_st.ownUniform(m_uColor, true);
+        std::cerr << "XXX ctor.x " << m_st << "\n";
     }
 
-    static ShapeRef create(ShaderState &st, GLUniformSyncPMVMat4fRef pmvMatU, GraphRenderer& renderer) {
-        return std::make_shared<Shape>(Private(), st, std::move(pmvMatU), renderer);
+    static ShapeRef createShared(ShaderState &st, GraphRenderer &renderer) {
+        return std::make_shared<Shape>(Private(), st, renderer);
+    }
+
+    void destroy(GL& gl) {
+        m_region.destroy(gl);
     }
 
     constexpr const Vec3f& position() const noexcept { return m_position; }
@@ -443,8 +493,8 @@ class Shape {
     constexpr const OutlineShape& outlines() const noexcept { return m_oshape; }
     constexpr OutlineShape& outlines() noexcept { return m_oshape; }
 
-    const Vec4f& color() const noexcept { return m_uColor->vec4f(); }
-    void setColor(const Vec4f& c) noexcept { m_uColor->vec4f()=c; }
+    const Vec4f& color() const noexcept { return m_color; }
+    void setColor(const Vec4f& c) noexcept { m_color = c; }
 
     void update(GL& gl) {
         m_region.addOutlineShape(m_oshape);
@@ -452,12 +502,13 @@ class Shape {
     }
 
     void draw(GL &gl) {
-        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        PMVMat4f& pmv = m_renderer.pmv();
         pmv.pushMv();
         applyMatToMv(pmv);
-        m_st.pushUniform(gl, m_pmvMatUni); // automatic sync + update of Mvi + Mvit
 
-        m_st.pushUniform(gl, m_uColor);
+        m_renderer.setColor(m_color);
+        m_renderer.updateAll(gl); // PMV + Color
+
         m_region.draw(gl);
         pmv.popMv();
     }
@@ -539,7 +590,6 @@ class GraphShapes01 : public RenderListener {
   private:
     constexpr static float zNear=  1.0f;
     constexpr static float zFar =100.0f;
-    constexpr static PMVData mat_req = PMVData::inv_proj | PMVData::inv_mv | PMVData::inv_tps_mv;
 
     ShaderState m_st;
     Recti m_viewport;
@@ -547,16 +597,14 @@ class GraphShapes01 : public RenderListener {
     bool m_animating = true;
     bool m_oneframe = false;
     jau::fraction_timespec m_tlast;
-    GLUniformSyncPMVMat4fRef m_pmvMatUni;
     GraphRenderer m_renderer;
     std::vector<ShapeRef> m_shapes;
-    const jau::math::Vec3f lightPos = jau::math::Vec3f(0.0f, 5.0f, 10.0f);
+    bool m_once = true;
 
   public:
     GraphShapes01()
     : RenderListener(RenderListener::Private()),
       m_initialized(false),
-      m_pmvMatUni(GLUniformSyncPMVMat4f::create("gcu_PMVMatrix", mat_req)), // P, Mv, Mvi and Mvit
       m_renderer(m_st)
     {
     }
@@ -564,8 +612,6 @@ class GraphShapes01 : public RenderListener {
     Recti& viewport() noexcept { return m_viewport; }
     const Recti& viewport() const noexcept { return m_viewport; }
 
-    PMVMat4f& pmv() noexcept { return m_pmvMatUni->pmv(); }
-    const PMVMat4f& pmv() const noexcept { return m_pmvMatUni->pmv(); }
     bool animating() const noexcept { return m_animating; }
     bool& animating() noexcept { return m_animating; }
     void setOneFrame() noexcept { m_animating=false; m_oneframe=true; }
@@ -576,21 +622,11 @@ class GraphShapes01 : public RenderListener {
 
         GL& gl = GL::downcast(win->renderContext());
 
-        // setup mgl_PMVMatrix
-        PMVMat4f& pmv = m_pmvMatUni->pmv();
-        pmv.getP().loadIdentity();
-        pmv.getMv().loadIdentity();
-        m_st.ownUniform(m_pmvMatUni, true);
-
         if( !m_renderer.init(gl, when) ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
             win->dispose(when);
             return false;
         }
-
-        GLUniformVec3fRef lightU = GLUniformVec3f::create("gcu_Light0Pos", lightPos);
-        m_st.ownUniform(lightU, true);
-        m_st.pushAllUniforms(gl);
 
         const float lineWidth = 1/2.5f;
         const float dz = 0.005f;
@@ -605,7 +641,7 @@ class GraphShapes01 : public RenderListener {
             float thh = height/2.0f;
 
             float ctrX = 0, ctrY = 0, ctrZ = dz;
-            ShapeRef frontShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
+            ShapeRef frontShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
             // CCW
@@ -628,7 +664,7 @@ class GraphShapes01 : public RenderListener {
             frontShape->setColor(Vec4f(0.5f, 0.05f, 0.05f, 1));
             frontShape->position().x = -2.0f;
 
-            ShapeRef backShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
+            ShapeRef backShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(backShape);
             backShape->outlines() = oshape.flipFace(); // -dz);
             backShape->outlines().clearCache();
@@ -637,7 +673,7 @@ class GraphShapes01 : public RenderListener {
             backShape->position().x = -2.0f;
         }
         if( true) {
-            ShapeRef frontShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
+            ShapeRef frontShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
             // Outer boundary-shapes are required as Winding::CCW (is CCW)
@@ -668,7 +704,7 @@ class GraphShapes01 : public RenderListener {
             frontShape->scale().x *= 0.1f;
             frontShape->scale().y *= 0.1f;
 
-            ShapeRef backShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
+            ShapeRef backShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(backShape);
             backShape->outlines() = oshape.flipFace(-dz); // winding preserved and is correct
             backShape->outlines().clearCache();
@@ -683,7 +719,7 @@ class GraphShapes01 : public RenderListener {
                 to_string(backShape->outlines().outlines()[1].getWinding()).c_str());
         }
         if ( true ) {
-            ShapeRef frontShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
+            ShapeRef frontShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
             Glyph05FreeSerifBoldItalic_ae::addShapeToRegion(oshape);
@@ -694,7 +730,7 @@ class GraphShapes01 : public RenderListener {
             frontShape->scale().x *= 2.0f;
             frontShape->scale().y *= 2.0f;
 
-            ShapeRef backShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
+            ShapeRef backShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(backShape);
             backShape->outlines() = oshape.flipFace(-dz);
             backShape->outlines().clearCache();
@@ -706,7 +742,7 @@ class GraphShapes01 : public RenderListener {
             backShape->scale().y *= 2.0f;
         }
         if ( true ) {
-            ShapeRef frontShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
+            ShapeRef frontShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(frontShape);
             OutlineShape& oshape = frontShape->outlines();
             Glyph03FreeMonoRegular_M::addShapeToRegion(oshape);
@@ -717,7 +753,7 @@ class GraphShapes01 : public RenderListener {
             frontShape->scale().x *= 2.0f;
             frontShape->scale().y *= 2.0f;
 
-            ShapeRef backShape = Shape::create(m_st, m_pmvMatUni, m_renderer);
+            ShapeRef backShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(backShape);
             backShape->outlines() = oshape.flipFace(-dz);
             backShape->outlines().clearCache();
@@ -744,7 +780,12 @@ class GraphShapes01 : public RenderListener {
     }
 
     void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
+        GL& gl = GL::downcast(win->renderContext());
         jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", toString().c_str());
+        for(ShapeRef& s : m_shapes) {
+            s->destroy(gl);
+        }
+        m_renderer.destroy(gl);
         m_st.destroy(GL::downcast(win->renderContext()));
         m_initialized = false;
     }
@@ -754,14 +795,16 @@ class GraphShapes01 : public RenderListener {
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
 
-        PMVMat4f& pmv = m_pmvMatUni->pmv();
+        PMVMat4f& pmv = m_renderer.pmv();
         pmv.getP().loadIdentity();
         const float aspect = 1.0f;
         const float fovy_deg=45.0f;
         const float aspect2 = ( (float) m_viewport.width() / (float) m_viewport.height() ) / aspect;
         pmv.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
+        pmv.getMv().loadIdentity();
+        pmv.translateMv(0, 0, -5);
+
         m_st.useProgram(gl, true);
-        m_st.pushUniform(gl, m_pmvMatUni); // automatic sync + update of Mvi + Mvit
         // m_st.useProgram(gl, false);
     }
 
@@ -774,9 +817,6 @@ class GraphShapes01 : public RenderListener {
         ::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_st.useProgram(gl, true);
-        PMVMat4f& pmv = m_pmvMatUni->pmv();
-        pmv.getMv().loadIdentity();
-        pmv.translateMv(0, 0, -5);
 
         for(const ShapeRef& s : m_shapes) {
             if( animating() || m_oneframe ) {
@@ -786,8 +826,13 @@ class GraphShapes01 : public RenderListener {
             }
             s->draw(gl);
         }
-
         m_oneframe = false;
+
+        if( m_once ) {
+            m_once = false;
+            std::cerr << "XXX draw " << m_st << "\n";
+        }
+
         // m_st.useProgram(gl, false);
 
         m_tlast = when;

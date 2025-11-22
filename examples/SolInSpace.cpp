@@ -19,6 +19,7 @@
 #include <jau/float_types.hpp>
 #include <jau/fraction_type.hpp>
 #include <jau/io/file_util.hpp>
+#include <jau/math/mat4f.hpp>
 #include <jau/math/vec4f.hpp>
 
 #include <gamp/Gamp.hpp>
@@ -48,11 +49,11 @@ class Example : public RenderListener {
   private:
     ShaderState m_st;
     Recti m_viewport;
-    GLUniformSyncPMVMat4fRef m_pmvMatUni;
+    GLUniformSyncPMVMat4f m_pmvMatUni;
 
-    GLUniformVec4fRef m_uWinCenter;
-    GLUniformVec4fRef m_uCoreColor, m_uHaloColor, m_uBackColor;
-    GLUniformScalarF32Ref m_uWinRadius, m_uCoreRadius, m_uSeam;
+    GLUniformVec4f m_uWinCenter;
+    GLUniformVec4f m_uCoreColor, m_uHaloColor, m_uBackColor;
+    GLUniformScalarF32 m_uWinRadius, m_uCoreRadius, m_uSeam;
 
     bool m_initialized;
     jau::fraction_timespec m_tlast;
@@ -84,23 +85,33 @@ class Example : public RenderListener {
 
     Example()
     : RenderListener(RenderListener::Private()),
-      m_pmvMatUni(GLUniformSyncPMVMat4f::create("gcu_PMVMatrix")),
-      m_uWinCenter(GLUniformVec4f::create("gcu_solInSpace.winCenter", Vec4f())),
-      m_uCoreColor(GLUniformVec4f::create("gcu_solInSpace.coreColor", Vec4f(1.0f, 1.0f, 0.0f, 1.0f))),
-      m_uHaloColor(GLUniformVec4f::create("gcu_solInSpace.haloColor", Vec4f(1.0f, 0.99f, 0.0f, 1.0f))),
-      m_uBackColor(GLUniformVec4f::create("gcu_solInSpace.bgColor", Vec4f(0.0f, 0.0f, 0.0f, 0.5f))),
-      m_uWinRadius(GLUniformScalarF32::create("gcu_solInSpace.winRadius", 0)),
-      m_uCoreRadius(GLUniformScalarF32::create("gcu_solInSpace.coreRadius", coreRadius)),
-      m_uSeam(GLUniformScalarF32::create("gcu_solInSpace.seam", 0.005f)),
+      m_pmvMatUni("gcu_PMVMatrix"),
+      m_uWinCenter("gcu_solInSpace.winCenter", Vec4f()),
+      m_uCoreColor("gcu_solInSpace.coreColor", Vec4f(1.0f, 1.0f, 0.0f, 1.0f)),
+      m_uHaloColor("gcu_solInSpace.haloColor", Vec4f(1.0f, 0.99f, 0.0f, 1.0f)),
+      m_uBackColor("gcu_solInSpace.bgColor", Vec4f(0.0f, 0.0f, 0.0f, 0.5f)),
+      m_uWinRadius("gcu_solInSpace.winRadius", 0),
+      m_uCoreRadius("gcu_solInSpace.coreRadius", coreRadius),
+      m_uSeam("gcu_solInSpace.seam", 0.005f),
       m_initialized(false),
       m_kl(std::make_shared<MyKeyListener>(*this))
-    {  }
+    {
+        m_st.ownUniform(m_pmvMatUni);
+
+        m_st.ownUniform(m_uWinCenter);
+        m_st.ownUniform(m_uCoreColor);
+        m_st.ownUniform(m_uHaloColor);
+        m_st.ownUniform(m_uBackColor);
+        m_st.ownUniform(m_uWinRadius);
+        m_st.ownUniform(m_uCoreRadius);
+        m_st.ownUniform(m_uSeam);
+    }
 
     Recti& viewport() noexcept { return m_viewport; }
     const Recti& viewport() const noexcept { return m_viewport; }
 
-    PMVMat4f& pmv() noexcept { return m_pmvMatUni->pmv(); }
-    const PMVMat4f& pmv() const noexcept { return m_pmvMatUni->pmv(); }
+    PMVMat4f& pmv() noexcept { return m_pmvMatUni.pmv(); }
+    const PMVMat4f& pmv() const noexcept { return m_pmvMatUni.pmv(); }
 
     bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
         ShaderCode::DEBUG_CODE = true;
@@ -130,23 +141,14 @@ class Example : public RenderListener {
         m_st.attachShaderProgram(gl, sp0, true);
 
         // setup mgl_PMVMatrix
-        PMVMat4f &pmv = m_pmvMatUni->pmv();
+        PMVMat4f &pmv = m_pmvMatUni.pmv();
         pmv.getP().loadIdentity();
         pmv.getMv().loadIdentity();
-        m_st.ownUniform(m_pmvMatUni, true);
-
-        m_st.ownUniform(m_uWinCenter, true);
-        m_st.ownUniform(m_uCoreColor, true);
-        m_st.ownUniform(m_uHaloColor, true);
-        m_st.ownUniform(m_uBackColor, true);
-        m_st.ownUniform(m_uWinRadius, true);
-        m_st.ownUniform(m_uCoreRadius, true);
-        m_st.ownUniform(m_uSeam, true);
 
         // ::glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
         // m_uBackColor->vec4f().set(1.0f, 1.0f, 1.0f, 0.5f);
         ::glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        m_uBackColor->vec4f().set(0.0f, 0.0f, 0.0f, 0.5f);
+        m_uBackColor.vec4f().set(0.0f, 0.0f, 0.0f, 0.5f);
 
         // Allocate Vertex Array
         GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("gca_Vertex", 3, false, 4, GL_STATIC_DRAW);
@@ -155,7 +157,7 @@ class Example : public RenderListener {
                           radius,  radius, 0, // burst transfer, instead of 4x `put3f` for single vertice-value
                          -radius, -radius, 0,
                           radius, -radius, 0 } );
-        m_st.ownAttribute(vertices, true);
+        m_st.ownAttribute(vertices);
         vertices->seal(gl, true);
 
         ::glEnable(GL_DEPTH_TEST);
@@ -190,7 +192,7 @@ class Example : public RenderListener {
         const float aspect2 = ( (float) m_viewport.width() / (float) m_viewport.height() ) / aspect;
         const float zNear=1.0f;
         const float zFar=100.0f;
-        PMVMat4f &pmv = m_pmvMatUni->pmv();
+        PMVMat4f &pmv = m_pmvMatUni.pmv();
         pmv.setToPerspective(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
 
         m_st.useProgram(gl, true);
@@ -209,7 +211,7 @@ class Example : public RenderListener {
         ::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_st.useProgram(gl, true);
-        PMVMat4f &pmv = m_pmvMatUni->pmv();
+        PMVMat4f &pmv = m_pmvMatUni.pmv();
         pmv.getMv().loadIdentity();
         pmv.translateMv(0, 0, -3);
 
@@ -217,19 +219,19 @@ class Example : public RenderListener {
             const Vec3f center(0,0,0);
             Vec3f winCenter;
             pmv.mapObjToWin(center, m_viewport, winCenter);
-            m_uWinCenter->vec4f().set(winCenter, 1.0f);
+            m_uWinCenter.vec4f().set(winCenter, 1.0f);
 
             const Vec3f p1 = center + Vec3f(radius,0,0);
             Vec3f winP1;
             pmv.mapObjToWin(p1, m_viewport, winP1);
             Vec3f winR = winP1 - winCenter;
-            m_uWinRadius->scalar() = winR.length();
+            m_uWinRadius.scalar() = winR.length();
 
             static float dr_dir = 1;
             constexpr float dr_min = coreRadius * 1.0f-coreRadiusHalfStep;
             constexpr float dr_max = coreRadius * 1.0f+coreRadiusHalfStep;
             const float dt = (float)(when - m_tlast).to_ms() / 1000.0f;
-            float r = m_uCoreRadius->scalar() + coreRadiusHalfStep * dt * dr_dir;
+            float r = m_uCoreRadius.scalar() + coreRadiusHalfStep * dt * dr_dir;
             if( r <= dr_min ) {
                 dr_dir = 1;
                 r = dr_min;
@@ -237,7 +239,7 @@ class Example : public RenderListener {
                 dr_dir = -1;
                 r = dr_max;
             }
-            m_uCoreRadius->scalar() = r;
+            m_uCoreRadius.scalar() = r;
         }
         m_st.pushUniform(gl, m_pmvMatUni);
         m_st.pushUniform(gl, m_uWinCenter);

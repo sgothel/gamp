@@ -89,13 +89,14 @@ namespace gamp::render::gl::data {
         /**
          * The name of the reflecting shader array attribute.
          */
-        constexpr const std::string& name() const noexcept { return m_name; }
+        constexpr const std::string_view name() const noexcept { return m_name; }
 
         /**
          * Set a new name for this array.
          * <p>
          * This clears the location, i.e. sets it to -1.
          * </p>
+         * @param newName persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
          * @see setLocation(int)
          * @see setLocation(GL2ES2, int)
          */
@@ -128,7 +129,7 @@ namespace gamp::render::gl::data {
          *         &lt;0 denotes an invalid location, i.e. not found or used in the given shader program.
          */
         GLint setLocation(const GL&, GLuint program) noexcept {
-            m_location = glGetAttribLocation(program, m_name.c_str());
+            m_location = glGetAttribLocation(program, std::string(m_name).c_str());
             return m_location;
         }
 
@@ -143,7 +144,7 @@ namespace gamp::render::gl::data {
          */
         GLint setLocation(const GL&, GLuint program, GLint loc) noexcept {
             m_location = loc;
-            glBindAttribLocation(program, loc, m_name.c_str());
+            glBindAttribLocation(program, loc, std::string(m_name).c_str());
             return loc;
         }
 
@@ -159,7 +160,7 @@ namespace gamp::render::gl::data {
          *         &lt;0 denotes an invalid location, i.e. not found or used in the given shader program.
          */
         GLint retrieveLocation(const GL&, GLuint program) noexcept {
-            m_location = glGetAttribLocation(program, m_name.c_str());
+            m_location = glGetAttribLocation(program, std::string(m_name).c_str());
             return m_location;
         }
 
@@ -174,7 +175,7 @@ namespace gamp::render::gl::data {
         void bindLocation(const GL&, GLuint program, GLint location) noexcept {
             if( 0 <= location ) {
                 m_location = location;
-                glBindAttribLocation(program, location, m_name.c_str());
+                glBindAttribLocation(program, location, std::string(m_name).c_str());
             }
         }
 
@@ -392,7 +393,10 @@ namespace gamp::render::gl::data {
         }
 
       public:
-        /** Private ctor for shared_ptr. */
+        /**
+         * Private ctor for shared_ptr.
+         * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
+         */
         GLArrayData(Private,
                     std::string_view name, GLsizei componentsPerElement, GLenum componentType, jau::type_info compTypeSignature,
                     bool normalized, GLsizei stride, GLsizei mappedElementCount,
@@ -492,7 +496,7 @@ namespace gamp::render::gl::data {
         bool        m_alive;
         GLint       m_location;
         // buffer_ref  m_buffer;
-        std::string m_name;
+        std::string_view m_name;
         GLuint      m_vboName;
         uintptr_t   m_vboOffset;
         bool        m_vboEnabled;

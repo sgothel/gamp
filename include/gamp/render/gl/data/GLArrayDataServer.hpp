@@ -76,7 +76,7 @@ namespace gamp::render::gl::data {
          * and starting with a new created Buffer object with initialElementCount size
          *
          * The GL data type is determined via template type glType<Value_type>().
-         * @param name  The custom name for the GL attribute
+         * @param name Persistent custom name for the GL attribute, must be valid through the lifecycle of this instance
          * @param compsPerElement component count per element
          * @param normalized Whether the data shall be normalized
          * @param initialElementCount
@@ -98,7 +98,7 @@ namespace gamp::render::gl::data {
          * and starting with a given Buffer object incl it's stride
          *
          * The GL data type is determined via template type glType<Value_type>().
-         * @param name  The custom name for the GL attribute
+         * @param name Persistent custom name for the GL attribute, must be valid through the lifecycle of this instance
          * @param compsPerElement component count per element
          * @param normalized Whether the data shall be normalized
          * @param stride in bytes from one element to the other. If zero, compsPerElement * compSizeInBytes
@@ -121,7 +121,7 @@ namespace gamp::render::gl::data {
          * intended for GPU buffer storage mapping, see {@link GLMappedBuffer}, via {@link #mapStorage(GL, int)} and {@link #mapStorage(GL, long, long, int)}.
          *
          * The GL data type is determined via template type glType<Value_type>().
-         * @param name  The custom name for the GL attribute
+         * @param name Persistent custom name for the GL attribute, must be valid through the lifecycle of this instance
          * @param compsPerElement component count per element
          * @param normalized Whether the data shall be normalized
          * @param mappedElementCount
@@ -222,7 +222,7 @@ namespace gamp::render::gl::data {
         static server_ref createGLSLInterleaved(GLsizei compsPerElement,
                                                 bool normalized, GLsizei initialElementCount, GLenum vboUsage) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               mgl_InterleaveArray, compsPerElement,
+               gca_InterleaveArray, compsPerElement,
                normalized, /*stride=*/0, initialElementCount, client_t::DEFAULT_GROWTH_FACTOR,
                /*isVertexAttribute=*/false, std::move(std::make_unique<impl::GLSLArrayHandlerInterleaved<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, GL_ARRAY_BUFFER);
@@ -245,7 +245,7 @@ namespace gamp::render::gl::data {
         static server_ref createGLSLInterleaved(GLsizei compsPerElement,
                                                 bool normalized, GLsizei stride, buffer_t&& buffer, GLenum vboUsage) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               mgl_InterleaveArray, compsPerElement,
+               gca_InterleaveArray, compsPerElement,
                normalized, stride, std::move(buffer), client_t::DEFAULT_GROWTH_FACTOR,
                /*isVertexAttribute=*/true, std::move(std::make_unique<impl::GLSLArrayHandlerInterleaved<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, GL_ARRAY_BUFFER);
@@ -268,7 +268,7 @@ namespace gamp::render::gl::data {
         static server_ref createGLSLInterleavedMapped(GLsizei compsPerElement,
                                                       bool normalized, GLsizei mappedElementCount, GLenum vboUsage) {
             server_ref r = std::make_shared<GLArrayDataServer>(Private(),
-               mgl_InterleaveArray, compsPerElement,
+               gca_InterleaveArray, compsPerElement,
                normalized, /*stride=*/0, mappedElementCount,
                /*isVertexAttribute=*/false, std::move(std::make_unique<impl::GLSLArrayHandlerInterleaved<value_type>>()),
                /*vboName=*/0, /*vboOffset=*/0, vboUsage, GL_ARRAY_BUFFER);
@@ -293,7 +293,8 @@ namespace gamp::render::gl::data {
          * The memory of this interleaved array is being used (shared)
          *
          * Must be called before using the array, eg: {@link #seal(boolean)}, {@link #putf(float)}, ..
-         * @param name  The custom name for the GL attribute, maybe null if vboTarget is {@link GL#GL_ELEMENT_ARRAY_BUFFER}
+         * @param name Persistent custom name for the GL attribute, maybe null if vboTarget is {@link GL#GL_ELEMENT_ARRAY_BUFFER}.
+         *             must be valid through the lifecycle of this instance.
          * @param compsPerElement This interleaved array segment's component count per element
          * @param vboTarget {@link GL#GL_ARRAY_BUFFER} or {@link GL#GL_ELEMENT_ARRAY_BUFFER}
          */
@@ -518,9 +519,7 @@ namespace gamp::render::gl::data {
         void init_vbo(const GL& gl) override {
             client_t::init_vbo(gl);
             if( proxy_t::isVBO() && proxy_t::m_vboName == 0 ) {
-                GLuint tmp = 0;
-                ::glGenBuffers(1, &tmp);
-                proxy_t::m_vboName = tmp;
+                ::glGenBuffers(1, &(proxy_t::m_vboName));
                 if( 0 < m_interleavedOffset ) {
                     client_t::m_glArrayHandler->setSubArrayVBOName(proxy_t::m_vboName);
                 }

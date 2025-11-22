@@ -17,6 +17,7 @@
 #include <gamp/render/gl/GLTypes.hpp>
 #include <gamp/render/gl/data/GLArrayDataServer.hpp>
 #include <gamp/render/gl/data/GLUniformData.hpp>
+#include <gamp/render/gl/glsl/ShaderCode.hpp>
 #include <gamp/render/gl/glsl/ShaderState.hpp>
 
 using namespace jau::math;
@@ -31,7 +32,7 @@ class RedSquareES2 : public RenderListener {
   private:
     ShaderState m_st;
     Recti m_viewport;
-    GLUniformSyncPMVMat4fRef m_pmvMatUni;
+    GLUniformSyncPMVMat4f m_pmvMatUni;
     bool m_initialized;
     bool m_animating = true;
     jau::fraction_timespec m_tlast;
@@ -39,18 +40,23 @@ class RedSquareES2 : public RenderListener {
   public:
     RedSquareES2()
     : RenderListener(RenderListener::Private()),
-      m_pmvMatUni(GLUniformSyncPMVMat4f::create("gcu_PMVMatrix")),
-      m_initialized(false) {  }
+      m_pmvMatUni("gcu_PMVMatrix"),
+      m_initialized(false)
+    {
+        m_st.ownUniform(m_pmvMatUni);
+    }
 
     Recti& viewport() noexcept { return m_viewport; }
     const Recti& viewport() const noexcept { return m_viewport; }
 
-    PMVMat4f& pmv() noexcept { return m_pmvMatUni->pmv(); }
-    const PMVMat4f& pmv() const noexcept { return m_pmvMatUni->pmv(); }
+    PMVMat4f& pmv() noexcept { return m_pmvMatUni.pmv(); }
+    const PMVMat4f& pmv() const noexcept { return m_pmvMatUni.pmv(); }
     bool animating() const noexcept { return m_animating; }
     bool& animating() noexcept { return m_animating; }
 
     bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
+        ShaderCode::DEBUG_CODE = true;
+
         jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
         m_tlast = when;
 
@@ -76,10 +82,9 @@ class RedSquareES2 : public RenderListener {
         m_st.attachShaderProgram(gl, sp0, true);
 
         // setup mgl_PMVMatrix
-        PMVMat4f &pmv = m_pmvMatUni->pmv();
+        PMVMat4f &pmv = m_pmvMatUni.pmv();
         pmv.getP().loadIdentity();
         pmv.getMv().loadIdentity();
-        m_st.ownUniform(m_pmvMatUni, true);
 
         // Allocate Vertex Array
         GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("gca_Vertex", 3, false, 4, GL_STATIC_DRAW);
@@ -88,7 +93,7 @@ class RedSquareES2 : public RenderListener {
                           2,  2, 0, // burst transfer, instead of 4x `put3f` for single vertice-value
                          -2, -2, 0,
                           2, -2, 0 } );
-        m_st.ownAttribute(vertices, true);
+        m_st.ownAttribute(vertices);
         vertices->seal(gl, true);
 
         // Allocate Color Array
@@ -98,7 +103,7 @@ class RedSquareES2 : public RenderListener {
                        0, 0, 1, 1,  // burst transfer, instead of 4x `put4f` for single color-value
                        1, 0, 0, 1,
                        1, 0, 0, 1 } );
-        m_st.ownAttribute(colors, true);
+        m_st.ownAttribute(colors);
         colors->seal(gl, true);
 
         ::glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
@@ -124,7 +129,7 @@ class RedSquareES2 : public RenderListener {
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
 
-        PMVMat4f &pmv = m_pmvMatUni->pmv();
+        PMVMat4f &pmv = m_pmvMatUni.pmv();
         pmv.getP().loadIdentity();
 
         const float aspect = 1.0f;
@@ -147,7 +152,7 @@ class RedSquareES2 : public RenderListener {
         ::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_st.useProgram(gl, true);
-        PMVMat4f &pmv = m_pmvMatUni->pmv();
+        PMVMat4f &pmv = m_pmvMatUni.pmv();
         pmv.getMv().loadIdentity();
         pmv.translateMv(0, 0, -10);
         static float t_sum_ms = 0;

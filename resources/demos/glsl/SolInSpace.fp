@@ -2,7 +2,7 @@
 
 uniform mat4 gcu_PMVMatrix[2]; // P, Mv
 
-struct SolInSpace {
+layout(std140) struct SolInSpace {
     vec4 winCenter; // center in win-coord
     vec4 coreColor;
     vec4 haloColor;

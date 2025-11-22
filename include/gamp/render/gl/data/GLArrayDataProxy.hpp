@@ -57,7 +57,8 @@ namespace gamp::render::gl::data {
          *
          * This buffer is always {@link #sealed()}.
          *
-         * @param name  The custom name for the GL attribute, maybe null if gpuBufferTarget is {@link GL#GL_ELEMENT_ARRAY_BUFFER}
+         * @param name Persistent custom name for the GL attribute, maybe empty if gpuBufferTarget is {@link GL#GL_ELEMENT_ARRAY_BUFFER}.
+         *             Must be valid through the lifecycle of this instance
          * @param componentsPerElement The array component number
          * @param normalized Whether the data shall be normalized
          * @param stride
@@ -83,7 +84,8 @@ namespace gamp::render::gl::data {
          *
          * This buffer is always {@link #sealed()}.
          *
-         * @param name  The custom name for the GL attribute, maybe null if gpuBufferTarget is {@link GL#GL_ELEMENT_ARRAY_BUFFER}
+         * @param name Persistent custom name for the GL attribute, maybe empty if gpuBufferTarget is {@link GL#GL_ELEMENT_ARRAY_BUFFER}.
+         *             Must be valid through the lifecycle of this instance
          * @param componentsPerElement The array component number
          * @param normalized Whether the data shall be normalized
          * @param stride

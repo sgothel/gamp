@@ -44,38 +44,26 @@ using namespace gamp::wt::event;
 using namespace gamp::render::gl::glsl;
 using namespace gamp::render::gl::data;
 
-struct PMVMat4fUniform {
-    PMVMat4f         m;
-    GLUniformDataRef u;
-
-    PMVMat4fUniform()
-    : m( PMVData::inv_proj | PMVData::inv_mv | PMVData::inv_tps_mv ),
-      u( GLUniformSyncMatrices4f::create("gcu_PMVMatrix", m.makeSyncPMvMviMvit()) )  // P, Mv, Mvi and Mvit
-    {}
-};
-
 class Shape {
   private:
-    GLenum m_type;
-    ShaderState& m_st;
-    PMVMat4fUniform&  m_pmvMatUni;
-    GLFloatArrayDataServerRef m_array;
-
     Vec3f m_position;
     Quat4f m_rotation;
     Vec4f m_color = Vec4f(1, 0, 0, 1);
-    GLUniformVec4fRef m_uColor;
+
+    GLenum m_type;
+    ShaderState& m_st;
+    GLUniformSyncPMVMat4f& m_pmvMatUni;
+    GLUniformVec4f& m_staticColor;
+    GLFloatArrayDataServerRef m_array;
 
   public:
-    Shape(GLenum type, ShaderState &st, PMVMat4fUniform& pmvMatU)
-    : m_type(type), m_st(st), m_pmvMatUni(pmvMatU), m_array( GLFloatArrayDataServer::createGLSLInterleaved(2*3, false, 4, GL_STATIC_DRAW) )
+    Shape(GLenum type, ShaderState &st, GLUniformSyncPMVMat4f &pmvMatU, GLUniformVec4f &color)
+    : m_type(type), m_st(st), m_pmvMatUni(pmvMatU), m_staticColor(color),
+      m_array( GLFloatArrayDataServer::createGLSLInterleaved(2*3, false, 4, GL_STATIC_DRAW) )
     {
         m_array->addGLSLSubArray("gca_Vertex", 3, GL_ARRAY_BUFFER);
         m_array->addGLSLSubArray("gca_Normal", 3, GL_ARRAY_BUFFER);
-        m_st.ownAttribute(m_array, true);
-
-        m_uColor = GLUniformVec4f::create("gcu_StaticColor", Vec4f(1, 0, 0, 1));
-        m_st.ownUniform(m_uColor, true);
+        m_st.ownAttribute(m_array);
     }
 
     constexpr const Vec3f& position() const noexcept { return m_position; }
@@ -87,25 +75,26 @@ class Shape {
     constexpr const GLFloatArrayDataServerRef& vertices() const noexcept { return m_array; }
     constexpr GLFloatArrayDataServerRef& vertices() noexcept { return m_array; }
 
-    const Vec4f& color() const noexcept { return m_uColor->vec4f(); }
-    void setColor(const Vec4f& c) noexcept { m_uColor->vec4f()=c; }
+    const Vec4f& color() const noexcept { return m_color; }
+    void setColor(const Vec4f& c) noexcept { m_color=c; }
 
     void seal(GL&gl, bool seal) {
         m_array->seal(gl, seal);
     }
     void draw(GL &gl) {
-        m_pmvMatUni.m.pushMv();
-        m_pmvMatUni.m.translateMv(m_position); // identity + translate, scaled
+        m_pmvMatUni.pmv().pushMv();
+        m_pmvMatUni.pmv().translateMv(m_position); // identity + translate, scaled
         // Rotate shape around its scaled center
-        m_pmvMatUni.m.rotateMv(m_rotation);
-        m_st.pushUniform(gl, m_pmvMatUni.u); // automatic sync + update of Mvi + Mvit
+        m_pmvMatUni.pmv().rotateMv(m_rotation);
+        m_st.pushUniform(gl, m_pmvMatUni); // automatic sync + update of Mvi + Mvit
 
-        m_st.pushUniform(gl, m_uColor);
+        m_staticColor.vec4f() = m_color;
+        m_st.pushUniform(gl, m_staticColor);
 
         m_array->enableBuffer(gl, true);
         ::glDrawArrays(m_type, 0, m_array->elemCount());
         m_array->enableBuffer(gl, false);
-        m_pmvMatUni.m.popMv();
+        m_pmvMatUni.pmv().popMv();
     }
 
 };
@@ -123,21 +112,34 @@ class Primitives01 : public RenderListener {
     bool m_initialized;
     bool m_animating = true;
     jau::fraction_timespec m_tlast;
-    PMVMat4fUniform  m_pmvMat;
     Vec4f mgl_ColorStatic = Vec4f(0, 0, 0, 1);
+    GLUniformSyncPMVMat4f m_pmvMatUni;
+    GLUniformVec4f m_staticColor;
+    GLUniformVec3f m_light0Pos;
     Shape m_shape1, m_shape2;
+    bool m_once = true;
+
 
   public:
     Primitives01()
     : RenderListener(RenderListener::Private()),
       m_initialized(false),
-      m_shape1(GL_TRIANGLE_STRIP, m_st, m_pmvMat), m_shape2(GL_LINE_STRIP, m_st, m_pmvMat) {  }
+      m_pmvMatUni("gcu_PMVMatrix", PMVData::inv_proj | PMVData::inv_mv | PMVData::inv_tps_mv), // P, Mv, Mvi and Mvit
+      m_staticColor("gcu_StaticColor", Vec4f(1, 0, 0, 1)),
+      m_light0Pos("gcu_Light0Pos", lightPos),
+      m_shape1(GL_TRIANGLE_STRIP, m_st, m_pmvMatUni, m_staticColor),
+      m_shape2(GL_LINE_STRIP, m_st, m_pmvMatUni, m_staticColor)
+    {
+        m_st.ownUniform(m_pmvMatUni);
+        m_st.ownUniform(m_staticColor);
+        m_st.ownUniform(m_light0Pos);
+    }
 
     Recti& viewport() noexcept { return m_viewport; }
     const Recti& viewport() const noexcept { return m_viewport; }
 
-    PMVMat4f& pmv() noexcept { return m_pmvMat.m; }
-    const PMVMat4f& pmv() const noexcept { return m_pmvMat.m; }
+    PMVMat4f& pmv() noexcept { return m_pmvMatUni.pmv(); }
+    const PMVMat4f& pmv() const noexcept { return m_pmvMatUni.pmv(); }
     bool animating() const noexcept { return m_animating; }
     bool& animating() noexcept { return m_animating; }
 
@@ -173,12 +175,8 @@ class Primitives01 : public RenderListener {
         m_st.attachShaderProgram(gl, sp0, true);
 
         // setup mgl_PMVMatrix
-        m_pmvMat.m.getP().loadIdentity();
-        m_pmvMat.m.getMv().loadIdentity();
-        m_st.ownUniform(m_pmvMat.u, true);
-
-        GLUniformVec3fRef lightU = GLUniformVec3f::create("gcu_Light0Pos", lightPos);
-        m_st.ownUniform(lightU, true);
+        m_pmvMatUni.pmv().getP().loadIdentity();
+        m_pmvMatUni.pmv().getMv().loadIdentity();
 
         m_st.pushAllUniforms(gl);
 
@@ -257,13 +255,13 @@ class Primitives01 : public RenderListener {
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
 
-        m_pmvMat.m.getP().loadIdentity();
+        m_pmvMatUni.pmv().getP().loadIdentity();
         const float aspect = 1.0f;
         const float fovy_deg=45.0f;
         const float aspect2 = ( (float) m_viewport.width() / (float) m_viewport.height() ) / aspect;
-        m_pmvMat.m.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
+        m_pmvMatUni.pmv().perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
         m_st.useProgram(gl, true);
-        m_st.pushUniform(gl, m_pmvMat.u); // automatic sync + update of Mvi + Mvit
+        m_st.pushUniform(gl, m_pmvMatUni); // automatic sync + update of Mvi + Mvit
         m_st.useProgram(gl, true);
     }
 
@@ -276,8 +274,8 @@ class Primitives01 : public RenderListener {
         ::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_st.useProgram(gl, true);
-        m_pmvMat.m.getMv().loadIdentity();
-        m_pmvMat.m.translateMv(0, 0, -5);
+        m_pmvMatUni.pmv().getMv().loadIdentity();
+        m_pmvMatUni.pmv().translateMv(0, 0, -5);
 
         if( animating() ) {
             constexpr double angle_per_sec = 30;
@@ -287,6 +285,11 @@ class Primitives01 : public RenderListener {
         }
         m_shape1.draw(gl);
         m_shape2.draw(gl);
+
+        if( m_once ) {
+            m_once = false;
+            std::cerr << "XXX draw " << m_st << "\n";
+        }
 
         m_st.useProgram(gl, false);
 

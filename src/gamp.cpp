@@ -70,4 +70,5 @@ std::string gamp::render::RenderContext::toString() const {
 
 bool gamp::render::gl::glsl::ShaderCode::DEBUG_CODE = GampEnv::get().DEBUG_RENDER_GL_GLSL_CODE;
 bool gamp::render::gl::glsl::ShaderState::DEBUG_STATE = GampEnv::get().DEBUG_RENDER_GL_GLSL_STATE;
+bool gamp::render::gl::glsl::ShaderState::VERBOSE_STATE = false;
 bool gamp::graph::Graph::DEBUG_MODE = GampEnv::get().DEBUG_GRAPH_RENDER;

@@ -12,6 +12,8 @@
 #ifndef GAMP_RENDER_GL_GLLITERALS_HPP_
 #define GAMP_RENDER_GL_GLLITERALS_HPP_
 
+#include <string_view>
+
 #include <jau/cpp_lang_util.hpp>
 #include <jau/enum_util.hpp>
 
@@ -186,11 +188,11 @@ namespace gamp::render::gl {
         return jau::util::VersionNumber(glVersion.major(), glVersion.minor() * 10, 0);  // GL M.N  ->  GLSL M.N
     }
 
-    inline static constexpr std::string_view mgl_Vertex          = "mgl_Vertex";
-    inline static constexpr std::string_view mgl_Normal          = "mgl_Normal";
-    inline static constexpr std::string_view mgl_Color           = "mgl_Color";
-    inline static constexpr std::string_view mgl_MultiTexCoord   = "mgl_MultiTexCoord";
-    inline static constexpr std::string_view mgl_InterleaveArray = "mgl_InterleaveArray";  // magic name for interleaved arrays w/ sub-arrays
+    inline static constexpr std::string_view gca_Vertex          = "gca_Vertex";
+    inline static constexpr std::string_view gca_Normal          = "gca_Normal";
+    inline static constexpr std::string_view gca_Color           = "gca_Color";
+    inline static constexpr std::string_view gca_MultiTexCoord   = "gca_MultiTexCoord";
+    inline static constexpr std::string_view gca_InterleaveArray = "gca_InterleaveArray";  // magic name for interleaved arrays w/ sub-arrays
 
     /**
      * @param glArrayIndex the fixed function array index
@@ -200,16 +202,16 @@ namespace gamp::render::gl {
     inline std::string getPredefinedArrayIndexName(GLenum glArrayIndex, GLint multiTexCoordIndex) {
         switch( glArrayIndex ) {
             case GL_VERTEX_ARRAY:
-                return std::string(mgl_Vertex);
+                return std::string(gca_Vertex);
             case GL_NORMAL_ARRAY:
-                return std::string(mgl_Normal);
+                return std::string(gca_Normal);
             case GL_COLOR_ARRAY:
-                return std::string(mgl_Color);
+                return std::string(gca_Color);
             case GL_TEXTURE_COORD_ARRAY:
                 if( 0 <= multiTexCoordIndex ) {
-                    return std::string(mgl_MultiTexCoord).append(std::to_string(multiTexCoordIndex));
+                    return std::string(gca_MultiTexCoord).append(std::to_string(multiTexCoordIndex));
                 } else {
-                    return std::string(mgl_MultiTexCoord).append(std::to_string(multiTexCoordIndex));
+                    return std::string(gca_MultiTexCoord).append(std::to_string(multiTexCoordIndex));
                 }
             default: return "";
         }

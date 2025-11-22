@@ -327,18 +327,64 @@ bool GLProfile::isValidArrayDataType(GLenum index, GLsizei comps, GLenum type,
     return true;
 }
 
-void gamp::render::gl::data::GLUniformData::send(const GL&) const {
-    if( location() < 0 ) { return; }
-    if( columns() > 1 ) {
+bool gamp::render::gl::data::GLUniformData::resolveLocation(const GL&, GLuint program) noexcept {
+    if( isBuffer() ) {
+        m_bufferIndex = ::glGetUniformBlockIndex(program, string_t(m_name).c_str());
+        if (m_bufferIndex == GL_INVALID_INDEX) {
+            return false;
+        }
+        if( 0 == m_bufferName ) {
+            // buffer init once
+            ::glGenBuffers(1, &m_bufferName);
+            if( 0 == bufferName() ) {
+                return false;
+            }
+            ::glBindBuffer(GL_UNIFORM_BUFFER, bufferName());
+            ::glBufferData(GL_UNIFORM_BUFFER, bufferSize(), nullptr, GL_STREAM_DRAW);
+            ::glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+            ::glUniformBlockBinding(program, m_bufferIndex, m_bufferGlobalBinding); // per program/index
+
+            // only once
+            ::glBindBufferBase(GL_UNIFORM_BLOCK_BINDING, m_bufferGlobalBinding, bufferName());
+        } else {
+            ::glUniformBlockBinding(program, m_bufferIndex, m_bufferGlobalBinding); // per program/index
+        }
+        return true;
+    } else {
+        m_location = ::glGetUniformLocation(program, string_t(m_name).c_str());
+        return m_location >= 0;
+    }
+}
+bool gamp::render::gl::data::GLUniformData::sendSub(const GL&, GLintptr offset, GLsizeiptr size) noexcept {
+    if( !hasLocation() || !isBuffer() || 0 == bufferName() || offset+size > bufferSize()) {
+        return false;
+    }
+    ::glBindBuffer(GL_UNIFORM_BUFFER, bufferName());
+    ::glBufferSubData(GL_UNIFORM_BUFFER, offset, size, reinterpret_cast<const uint8_t*>(data())+offset);
+    ::glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    return true;
+}
+
+bool gamp::render::gl::data::GLUniformData::send(const GL&) noexcept {
+    if( !hasLocation() ) { return false; }
+    if( isBuffer() ) {
+        if( 0 == bufferName() || 0 == bufferSize() ) {
+            return false;
+        }
+        ::glBindBuffer(GL_UNIFORM_BUFFER, bufferName());
+        ::glBufferSubData(GL_UNIFORM_BUFFER, 0, bufferSize(), data());
+        ::glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    } else if( columns() > 1 ) {
         if( rows() > 1 ) {
             if( compSignature() != jau::float_ctti::f32() ) {
-                throw RenderException("glUniformMatrix matrix only supported for float: " + toString(), E_FILE_LINE);
+                return false;
             }
             switch( columns() ) {
                 case 2:  ::glUniformMatrix2fv(location(), count(), false, reinterpret_cast<const GLfloat*>(data())); break;
                 case 3:  ::glUniformMatrix3fv(location(), count(), false, reinterpret_cast<const GLfloat*>(data())); break;
                 case 4:  ::glUniformMatrix4fv(location(), count(), false, reinterpret_cast<const GLfloat*>(data())); break;
-                default: throw RenderException("glUniformMatrix only available for [2..4] columns: " + toString(), E_FILE_LINE);
+                default: return false;
             }
         } else {
             if( compSignature() == jau::float_ctti::f32() ) {
@@ -347,7 +393,7 @@ void gamp::render::gl::data::GLUniformData::send(const GL&) const {
                     case 2:  ::glUniform2fv(location(), count(), reinterpret_cast<const GLfloat*>(data())); break;
                     case 3:  ::glUniform3fv(location(), count(), reinterpret_cast<const GLfloat*>(data())); break;
                     case 4:  ::glUniform4fv(location(), count(), reinterpret_cast<const GLfloat*>(data())); break;
-                    default: throw RenderException("glUniform float32 vector only available for [1..4] columns: " + toString(), E_FILE_LINE);
+                    default: return false;
                 }
             } else if( compSignature() == jau::int_ctti::i32() ) {
                 switch( components() ) {
@@ -355,10 +401,10 @@ void gamp::render::gl::data::GLUniformData::send(const GL&) const {
                     case 2:  ::glUniform2iv(location(), count(), reinterpret_cast<const GLint*>(data())); break;
                     case 3:  ::glUniform3iv(location(), count(), reinterpret_cast<const GLint*>(data())); break;
                     case 4:  ::glUniform4iv(location(), count(), reinterpret_cast<const GLint*>(data())); break;
-                    default: throw RenderException("glUniform int32 vector only available for [1..4] columns: " + toString(), E_FILE_LINE);
+                    default: return false;
                 }
             } else {
-                throw RenderException("glUniformMatrix vector only supports integer and float: " + toString(), E_FILE_LINE);
+                return false;
             }
         }
     } else {
@@ -367,7 +413,8 @@ void gamp::render::gl::data::GLUniformData::send(const GL&) const {
         } else if( compSignature() == jau::float_ctti::f32() ) {
             ::glUniform1f(location(), *reinterpret_cast<const GLfloat*>(data()));
         } else {
-            throw RenderException("glUniform scalar only available for int32 and float32", E_FILE_LINE);
+            return false;
         }
     }
+    return true;
 }

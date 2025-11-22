@@ -66,7 +66,7 @@ namespace gamp::render::gl::data {
          * and starting with a new created Buffer object with initialElementCount size
          *
          * The GL data type is determined via template type glType<Value_type>().
-         * @param name  The custom name for the GL attribute.
+         * @param name Persistent custom name for the GL attribute, must be valid through the lifecycle of this instance
          * @param compsPerElement The array component number
          * @param normalized Whether the data shall be normalized
          * @param initialElementCount
@@ -88,7 +88,7 @@ namespace gamp::render::gl::data {
          * and starting with a given Buffer object incl it's stride.
          *
          * The GL data type is determined via template type glType<Value_type>().
-         * @param name  The custom name for the GL attribute.
+         * @param name Persistent custom name for the GL attribute, must be valid through the lifecycle of this instance
          * @param compsPerElement The array component number
          * @param normalized Whether the data shall be normalized
          * @param stride
@@ -494,7 +494,11 @@ namespace gamp::render::gl::data {
 
         struct Private{ explicit Private() = default; };
 
-        /** Private client-mem ctor w/ passing custom buffer */
+        /**
+         * Private client-mem ctor w/o passing custom buffer
+         *
+         * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
+         */
         GLArrayDataClient(Private, std::string_view name, GLsizei componentsPerElement,
                           bool normalized, GLsizei stride, buffer_t&& data, float growthFactor,
                           bool isVertexAttribute, impl::GLArrayHandlerPtr<value_type>&& glArrayHandler,
@@ -512,7 +516,11 @@ namespace gamp::render::gl::data {
             proxy_t::m_sealed = false;
         }
 
-        /** Private client-mem ctor w/o passing custom buffer */
+        /**
+         * Private client-mem ctor w/o passing custom buffer
+         *
+         * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
+         */
         GLArrayDataClient(Private, std::string_view name, GLsizei componentsPerElement,
                           bool normalized, GLsizei stride, GLsizei initialElementCount, float growthFactor,
                           bool isVertexAttribute, impl::GLArrayHandlerPtr<value_type>&& glArrayHandler,
@@ -530,7 +538,11 @@ namespace gamp::render::gl::data {
             proxy_t::m_sealed = false;
         }
 
-        /// using memory mapped elements
+        /**
+         * using memory mapped elements
+         *
+         * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
+         */
         GLArrayDataClient(Private,
                           std::string_view name, GLsizei componentsPerElement,
                           bool normalized, GLsizei stride, GLsizei mappedElementCount,
