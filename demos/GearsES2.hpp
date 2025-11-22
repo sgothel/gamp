@@ -419,10 +419,10 @@ class GearsES2 : public RenderListener {
       m_gear2(2, m_st, m_gear2Color, 0.5f, 2.0f, 2.0f, 10, 0.7f, Vec3f(  3.1f, -2.0f, 0.0f), m_pmvMatUni, m_colorUni),
       m_gear3(3, m_st, m_gear3Color, 1.3f, 2.0f, 0.5f, 10, 0.7f, Vec3f( -3.1f,  4.2f, 0.0f), m_pmvMatUni, m_colorUni)
     {
-        m_st.ownUniform(m_pmvMatUni);
+        m_st.manage(m_pmvMatUni);
 
-        m_st.ownUniform(m_lightU);
-        m_st.ownUniform(m_colorUni);
+        m_st.manage(m_lightU);
+        m_st.manage(m_colorUni);
     }
 
     constexpr bool doRotate() const noexcept { return m_doRotate; }

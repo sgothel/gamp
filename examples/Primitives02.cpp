@@ -87,7 +87,7 @@ class Shape {
     {
         m_array->addGLSLSubArray("gca_Vertex", 3, GL_ARRAY_BUFFER);
         m_array->addGLSLSubArray("gca_Normal", 3, GL_ARRAY_BUFFER);
-        m_st.ownAttribute(m_array);
+        m_st.manage(m_array);
     }
 
     static ShapeRef createShared(ShaderState &st, GLUniformSyncPMVMat4f& pmvMatU, GLUniformVec4f& color) {
@@ -235,9 +235,9 @@ class Primitives02 : public RenderListener {
       m_light0Pos("gcu_Light0Pos", lightPos),
       m_staticColor("gcu_StaticColor", Vec4f(0, 0, 0, 1))
     {
-        m_st.ownUniform(m_pmvMat);
-        m_st.ownUniform(m_light0Pos);
-        m_st.ownUniform(m_staticColor);
+        m_st.manage(m_pmvMat);
+        m_st.manage(m_light0Pos);
+        m_st.manage(m_staticColor);
     }
 
     Recti& viewport() noexcept { return m_viewport; }

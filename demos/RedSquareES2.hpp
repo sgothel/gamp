@@ -43,7 +43,7 @@ class RedSquareES2 : public RenderListener {
       m_pmvMatUni("gcu_PMVMatrix"),
       m_initialized(false)
     {
-        m_st.ownUniform(m_pmvMatUni);
+        m_st.manage(m_pmvMatUni);
     }
 
     Recti& viewport() noexcept { return m_viewport; }
@@ -93,7 +93,7 @@ class RedSquareES2 : public RenderListener {
                           2,  2, 0, // burst transfer, instead of 4x `put3f` for single vertice-value
                          -2, -2, 0,
                           2, -2, 0 } );
-        m_st.ownAttribute(vertices);
+        m_st.manage(vertices);
         vertices->seal(gl, true);
 
         // Allocate Color Array
@@ -103,7 +103,7 @@ class RedSquareES2 : public RenderListener {
                        0, 0, 1, 1,  // burst transfer, instead of 4x `put4f` for single color-value
                        1, 0, 0, 1,
                        1, 0, 0, 1 } );
-        m_st.ownAttribute(colors);
+        m_st.manage(colors);
         colors->seal(gl, true);
 
         ::glClearColor(1.0f, 1.0f, 1.0f, 0.0f);

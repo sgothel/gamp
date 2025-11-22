@@ -63,7 +63,7 @@ class Shape {
     {
         m_array->addGLSLSubArray("gca_Vertex", 3, GL_ARRAY_BUFFER);
         m_array->addGLSLSubArray("gca_Normal", 3, GL_ARRAY_BUFFER);
-        m_st.ownAttribute(m_array);
+        m_st.manage(m_array);
     }
 
     constexpr const Vec3f& position() const noexcept { return m_position; }
@@ -130,9 +130,9 @@ class Primitives01 : public RenderListener {
       m_shape1(GL_TRIANGLE_STRIP, m_st, m_pmvMatUni, m_staticColor),
       m_shape2(GL_LINE_STRIP, m_st, m_pmvMatUni, m_staticColor)
     {
-        m_st.ownUniform(m_pmvMatUni);
-        m_st.ownUniform(m_staticColor);
-        m_st.ownUniform(m_light0Pos);
+        m_st.manage(m_pmvMatUni);
+        m_st.manage(m_staticColor);
+        m_st.manage(m_light0Pos);
     }
 
     Recti& viewport() noexcept { return m_viewport; }

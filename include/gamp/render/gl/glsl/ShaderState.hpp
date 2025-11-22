@@ -293,7 +293,7 @@ namespace gamp::render::gl::glsl {
             return m_activeAttribMap.get(name);
         }
 
-        bool isActiveAttribute(const GLArrayDataRef& attribute) const {
+        bool isActive(const GLArrayDataRef& attribute) const {
             return attribute == m_activeAttribMap.get(attribute->name());
         }
 
@@ -320,8 +320,8 @@ namespace gamp::render::gl::glsl {
          * @see #getAttribute(String)
          * @see GLArrayData#associate(Object, bool)
          */
-        void ownAttribute(const GLArrayDataRef& attr, bool own = true) {
-            if(own) {
+        void manage(const GLArrayDataRef& attr, bool enable = true) {
+            if(enable) {
                 const GLint location = getCachedAttribLocation(attr->name());
                 if(0<=location) {
                     attr->setLocation(location);
@@ -330,10 +330,11 @@ namespace gamp::render::gl::glsl {
             } else {
                 std::erase(m_managedAttributes, attr);
             }
-            attr->associate(*this, own);
+            attr->associate(*this, enable);
         }
 
-        bool ownsAttribute(const GLArrayDataRef& attribute) const {
+        /// Returns true if given attribute is managed via manage()
+        bool isManaged(const GLArrayDataRef& attribute) const {
             return m_managedAttributes.end() != std::find(m_managedAttributes.begin(), m_managedAttributes.end(), attribute); // NOLINT(modernize-use-ranges)
         }
 
@@ -820,8 +821,8 @@ namespace gamp::render::gl::glsl {
          *
          * @param uniform the {@link GLUniformData} which lifecycle shall be managed
          */
-        void ownUniform(GLUniformData& data, bool own=true) {
-            if(own) {
+        void manage(GLUniformData& data, bool enable=true) {
+            if(enable) {
                 m_managedUniforms.push_back(&data);
                 m_activeUniformMap.put1(data.name(), &data);
             } else {
@@ -830,8 +831,8 @@ namespace gamp::render::gl::glsl {
             }
         }
 
-        /// Returns true if given uniform is managed, i.e. previously owned
-        bool isManaged(const GLUniformData& uniform) {
+        /// Returns true if given uniform is managed via manage()
+        bool isManaged(const GLUniformData& uniform) const {
             return m_managedUniforms.end() != std::find(m_managedUniforms.begin(), m_managedUniforms.end(), &uniform); // NOLINT(modernize-use-ranges)
         }
 

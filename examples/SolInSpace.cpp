@@ -96,15 +96,15 @@ class Example : public RenderListener {
       m_initialized(false),
       m_kl(std::make_shared<MyKeyListener>(*this))
     {
-        m_st.ownUniform(m_pmvMatUni);
+        m_st.manage(m_pmvMatUni);
 
-        m_st.ownUniform(m_uWinCenter);
-        m_st.ownUniform(m_uCoreColor);
-        m_st.ownUniform(m_uHaloColor);
-        m_st.ownUniform(m_uBackColor);
-        m_st.ownUniform(m_uWinRadius);
-        m_st.ownUniform(m_uCoreRadius);
-        m_st.ownUniform(m_uSeam);
+        m_st.manage(m_uWinCenter);
+        m_st.manage(m_uCoreColor);
+        m_st.manage(m_uHaloColor);
+        m_st.manage(m_uBackColor);
+        m_st.manage(m_uWinRadius);
+        m_st.manage(m_uCoreRadius);
+        m_st.manage(m_uSeam);
     }
 
     Recti& viewport() noexcept { return m_viewport; }
@@ -157,7 +157,7 @@ class Example : public RenderListener {
                           radius,  radius, 0, // burst transfer, instead of 4x `put3f` for single vertice-value
                          -radius, -radius, 0,
                           radius, -radius, 0 } );
-        m_st.ownAttribute(vertices);
+        m_st.manage(vertices);
         vertices->seal(gl, true);
 
         ::glEnable(GL_DEPTH_TEST);

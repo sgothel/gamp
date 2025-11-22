@@ -112,9 +112,9 @@ class GraphRenderer {
       m_staticColor("gcu_StaticColor", Vec4f(0, 0, 0, 1)),
       m_initialized(false)
     {
-        m_st.ownUniform(m_pmvMat);
-        m_st.ownUniform(m_light0Pos);
-        m_st.ownUniform(m_staticColor);
+        m_st.manage(m_pmvMat);
+        m_st.manage(m_light0Pos);
+        m_st.manage(m_staticColor);
     }
 
     constexpr bool initialized() const noexcept { return m_initialized; }
@@ -313,8 +313,8 @@ class GraphRegion {
         if( m_renderer.usesNormal() ) {
             m_array->addGLSLSubArray("gca_Normal", 3, GL_ARRAY_BUFFER);
         }
-        m_st.ownAttribute(m_array);
-        // m_st.ownAttribute(m_indices);
+        m_st.manage(m_array);
+        // m_st.manage(m_indices);
     }
 
     constexpr bool initialized() const noexcept { return m_initialized; }
