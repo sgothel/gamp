@@ -88,6 +88,7 @@ namespace gamp {
     typedef std::shared_ptr<Attachable> AttachableRef;
 
     using StringAttachables = jau::StringHashMapWrap<AttachableRef, std::nullptr_t, nullptr>;
+    using StringViewAttachables = jau::StringViewHashMapWrap<AttachableRef, std::nullptr_t, nullptr>;
 
     /**@}*/
 }  // namespace gamp

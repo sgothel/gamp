@@ -67,12 +67,13 @@ namespace gamp::render::gl::glsl {
 
         /**
          * Attaches user object for the given name, overwrites old mapping if exists.
+         * @param key persistent std::string_view key, must be valid through the lifecycle of this instance
          * @return previously set object or nullptr.
          */
-        AttachableRef attachObject(std::string_view key, const AttachableRef& obj) { return m_attachables.put(key, obj); }
+        AttachableRef attachObject(std::string_view key, const AttachableRef& obj) { return m_attachables.put1(key, obj); }
 
         /** Removes attached object if exists and returns it, otherwise returns nullptr. */
-        AttachableRef detachObject(std::string_view key) { return m_attachables.remove(key); }
+        AttachableRef detachObject(std::string_view key) { return m_attachables.remove1(key); }
 
         /**
          * Turns the shader program on or off
@@ -352,7 +353,7 @@ namespace gamp::render::gl::glsl {
         void bindAttribLocation(const GL&, GLint location, const stringview_t name) {
             if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
             if(m_shaderProgram->linked()) throw RenderException("Program is already linked", E_FILE_LINE);
-            m_activeAttribLocationMap.put(name, location);
+            m_activeAttribLocationMap.put1(name, location);
             ::glBindAttribLocation(m_shaderProgram->program(), location, string_t(name).c_str());
         }
 
@@ -374,9 +375,9 @@ namespace gamp::render::gl::glsl {
             if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
             if(m_shaderProgram->linked()) throw RenderException("Program is already linked", E_FILE_LINE);
             const stringview_t name = attr->name();
-            m_activeAttribLocationMap.put(name, location);
+            m_activeAttribLocationMap.put1(name, location);
             attr->setLocation(gl, m_shaderProgram->program(), location);
-            m_activeAttribMap.put(name, attr);
+            m_activeAttribMap.put1(name, attr);
             ::glBindAttribLocation(m_shaderProgram->program(), location, string_t(name).c_str());
         }
 
@@ -404,7 +405,7 @@ namespace gamp::render::gl::glsl {
                 if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
                 location = ::glGetAttribLocation(m_shaderProgram->program(), string_t(name).c_str());
                 if(0<=location) {
-                    m_activeAttribLocationMap.put(name, location);
+                    m_activeAttribLocationMap.put1(name, location);
                     if(debug()) {
                         jau::INFO_PRINT("ShaderState: glGetAttribLocation: %s, loc: %d", string_t(name).c_str(), location);
                     }
@@ -444,7 +445,7 @@ namespace gamp::render::gl::glsl {
                 if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
                 location = data->setLocation(gl, m_shaderProgram->program());
                 if(0<=location) {
-                    m_activeAttribLocationMap.put(name, location);
+                    m_activeAttribLocationMap.put1(name, location);
                     if(debug()) {
                         jau::INFO_PRINT("ShaderState: glGetAttribLocation: %s, loc: %d", string_t(data->name()).c_str(), location);
                     }
@@ -452,7 +453,7 @@ namespace gamp::render::gl::glsl {
                     jau::INFO_PRINT("ShaderState: glGetAttribLocation failed, no location for: %s", string_t(data->name()).c_str());
                 }
             }
-            m_activeAttribMap.put(data->name(), data);
+            m_activeAttribMap.put1(data->name(), data);
             return location;
         }
 
@@ -477,7 +478,7 @@ namespace gamp::render::gl::glsl {
       private:
         /// @param name Persistent attribute name, must be valid through the lifecycle of this instance
         bool enableVertexAttribArray(const GL& gl, const stringview_t name, GLint location) {
-            m_enabledAttribDataMap.put(name, true);
+            m_enabledAttribDataMap.put1(name, true);
             if(0>location) {
                 location = getAttribLocation(gl, name);
                 if(0>location) {
@@ -545,7 +546,7 @@ namespace gamp::render::gl::glsl {
                 getAttribLocation(gl, data);
             } else {
                 // ensure data is the current bound one
-                m_activeAttribMap.put(data->name(), data);
+                m_activeAttribMap.put1(data->name(), data);
             }
             return enableVertexAttribArray(gl, data->name(), data->location());
         }
@@ -553,7 +554,7 @@ namespace gamp::render::gl::glsl {
       private:
         /// @param name Persistent attribute name, must be valid through the lifecycle of this instance
         bool disableVertexAttribArray(const GL& gl, const stringview_t name, GLint location) {
-            m_enabledAttribDataMap.put(name, false);
+            m_enabledAttribDataMap.put1(name, false);
             if(0>location) {
                 location = getAttribLocation(gl, name);
                 if(0>location) {
@@ -705,7 +706,7 @@ namespace gamp::render::gl::glsl {
             for (const std::pair<const std::string_view, bool>& n : m_enabledAttribDataMap.map()) {
                 const stringview_t name = n.first;
                 if(removeFromState) {
-                    m_enabledAttribDataMap.remove(name);
+                    m_enabledAttribDataMap.remove1(name);
                 }
                 const GLint index = getAttribLocation(gl, name);
                 if(0<=index) {
@@ -720,7 +721,7 @@ namespace gamp::render::gl::glsl {
             const stringview_t name = attribute.name();
             const GLint loc = attribute.setLocation(gl, m_shaderProgram->program());
             if(0<=loc) {
-                m_activeAttribLocationMap.put(name, loc);
+                m_activeAttribLocationMap.put1(name, loc);
                 if(debug()) {
                     jau::INFO_PRINT("ShaderState: relocateAttribute: %s, loc: %d", attribute.toString().c_str(), loc);
                 }
@@ -822,9 +823,9 @@ namespace gamp::render::gl::glsl {
         void ownUniform(GLUniformData& data, bool own=true) {
             if(own) {
                 m_managedUniforms.push_back(&data);
-                m_activeUniformMap.put(data.name(), &data);
+                m_activeUniformMap.put1(data.name(), &data);
             } else {
-                m_activeUniformMap.remove(data.name());
+                m_activeUniformMap.remove1(data.name());
                 std::erase(m_managedUniforms, &data);
             }
         }
@@ -860,7 +861,7 @@ namespace gamp::render::gl::glsl {
                     return false;
                 }
             }
-            m_activeUniformMap.put(data.name(), &data);
+            m_activeUniformMap.put1(data.name(), &data);
             return true;
         }
 
@@ -887,7 +888,7 @@ namespace gamp::render::gl::glsl {
                 return false;
             }
             if (!data.hasLocation() && !resolveUniform(gl, data)) {
-                m_activeUniformMap.remove(data.name());
+                m_activeUniformMap.remove1(data.name());
                 return false;
             }
             data.send(gl);
@@ -912,7 +913,7 @@ namespace gamp::render::gl::glsl {
         }
 
         /// Returns true if given uniform data is active, i.e. previously resolved/pushed and used in current program.
-        bool isActive(const GLUniformData& uniform) {
+        bool isActive(const GLUniformData& uniform) const {
             return &uniform == m_activeUniformMap.get(uniform.name());
         }
 
@@ -923,7 +924,8 @@ namespace gamp::render::gl::glsl {
          * @return the GLUniformData object, nullptr if not previously resolved.
          */
         GLUniformData* getActiveUniform(const stringview_t name) {
-            return m_activeUniformMap.get(name);
+            GLUniformData** v = m_activeUniformMap.get(name);
+            return v ? *v : nullptr;
         }
 
         /**
@@ -1046,7 +1048,7 @@ namespace gamp::render::gl::glsl {
         jau::StringViewHashMapWrap<GLUniformData*, std::nullptr_t, nullptr> m_activeUniformMap;
         std::vector<GLUniformData*>              m_managedUniforms;
 
-        StringAttachables m_attachables;
+        StringViewAttachables m_attachables;
     };
 
     inline std::ostream& operator<<(std::ostream& out, const ShaderState& v) {

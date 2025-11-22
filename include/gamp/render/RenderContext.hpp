@@ -114,7 +114,7 @@ namespace gamp::render {
         gamp::handle_t m_context;
         jau::util::VersionNumber m_version;
         RenderContextFlags m_flags;
-        StringAttachables m_attachables;
+        StringViewAttachables m_attachables;
 
       protected:
         struct Private { explicit Private() = default; };
@@ -166,12 +166,13 @@ namespace gamp::render {
 
         /**
          * Attaches user object for the given name, overwrites old mapping if exists.
+         * @param key persistent std::string_view key, must be valid through the lifecycle of this instance
          * @return previously set object or nullptr.
          */
-        AttachableRef attachObject(std::string_view key, const AttachableRef& obj) { return m_attachables.put(key, obj); }
+        AttachableRef attachObject(std::string_view key, const AttachableRef& obj) { return m_attachables.put1(key, obj); }
 
         /** Removes attached object if exists and returns it, otherwise returns nullptr. */
-        AttachableRef detachObject(std::string_view key) { return m_attachables.remove(key); }
+        AttachableRef detachObject(std::string_view key) { return m_attachables.remove1(key); }
 
         virtual std::string toString() const;
     };
