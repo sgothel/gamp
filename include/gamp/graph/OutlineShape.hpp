@@ -17,6 +17,7 @@
 #include <jau/enum_util.hpp>
 #include <jau/math/geom/geom3f.hpp>
 #include <jau/math/geom/plane/affine_transform.hpp>
+#include <jau/math/vec3f.hpp>
 
 #include <gamp/graph/Graph.hpp>
 #include <gamp/graph/Outline.hpp>
@@ -153,7 +154,17 @@ namespace gamp::graph {
         constexpr const Vec3f& normal() const noexcept { return m_normal; }
         /** Writing the normal vector, optionally used by tesselator to add (interleaved) normals.  */
         constexpr Vec3f& normal() noexcept { return m_normal; }
-
+        void setNormal(Point3f p0, Point3f p1, Point3f p2) noexcept {
+            m_normal.cross((p1 - p0), (p2 - p0));
+        }
+        void setNormal() noexcept {
+            if(m_outlines.size() > 0){
+                const VertexList& v = m_outlines[0].vertices();
+                if(v.size() > 2){
+                    setNormal(v[0].coord(), v[1].coord(), v[2].coord());
+                }
+            }
+        }
         /**
          * Return the number of newly added vertices during getTriangles(VerticesState)
          * while transforming the outlines to VerticesState::QUADRATIC_NURBS and triangulation.
@@ -613,6 +624,7 @@ namespace gamp::graph {
         void closePath() {
             if ( 0 < lastOutline().vertexCount() ) {
                 closeLastOutline(true);
+                setNormal();
                 addEmptyOutline();
             }
         }

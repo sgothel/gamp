@@ -80,7 +80,9 @@
 
         specular += graphColor * pow(NdotHV, matShininess) * gcv_light0Attenuation * matSpecular;
     }
-    mgl_FragColor = ambient + diffuse + specular ;
+
+    // mgl_FragColor = ambient + max(diffuse, vec4(0.0f)) + specular;
+    mgl_FragColor = max(ambient*2.0f, ambient + max(diffuse, vec4(0.0f)) + specular);
 #else
     mgl_FragColor = graphColor;
 #endif
