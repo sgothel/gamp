@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <cmath>
 #include <gamp/graph/Graph.hpp>
+#include <gamp/graph/Outline.hpp>
 #include <gamp/graph/PrimTypes.hpp>
 #include <gamp/render/gl/data/GLBuffers.hpp>
 #include <gamp/wt/event/KeyEvent.hpp>
@@ -47,7 +48,6 @@
 
 #include <gamp/graph/OutlineShape.hpp>
 
-#include "../demos/graph/testshapes/Glyph05FreeSerifBoldItalic_ae.hpp"
 #include "../demos/graph/testshapes/Glyph03FreeMonoRegular_M.hpp"
 
 #include "../demos/GLLauncher01.hpp"
@@ -81,6 +81,8 @@
 #include <gamp/render/gl/data/GLUniformData.hpp>
 #include <gamp/render/gl/glsl/ShaderState.hpp>
 
+#include "model_cobramk3.hpp"
+
 #include "../demos/GLLauncher01.hpp"
 
 using namespace jau::math;
@@ -96,6 +98,29 @@ using namespace gamp::render::gl::glsl;
 using namespace gamp::render::gl::data;
 
 using namespace gamp::graph::tess;
+
+#if 0
+static void printOutlineShape(const std::string &tag, const OutlineShape& o, size_t idx=0) {
+    size_t o_idx=0;
+    printf("- %s: OutlineShape [%2zu]: %u outlines: %s\n", tag.c_str(), idx, o.outlines().size(), o.toString().c_str());
+    for(const Outline& ol : o.outlines()){
+        printf("  - Outline [%2zu][%2zu]:\n", idx, o_idx);
+        for(const Vertex& v : ol.vertices()){
+            printf("    - V[%2zu][%2zu]: %s\n", idx, o_idx, v.coord().toString().c_str());
+        }
+        ++o_idx;
+    }
+}
+
+static void printOutlineShapes(const std::string &tag, const std::vector<OutlineShape>& oshapes) {
+    printf("%s: %zu OutlineShapes\n", tag.c_str(), oshapes.size());
+    size_t os_idx=0;
+    for( const OutlineShape& o : oshapes ) {
+        printOutlineShape(tag, o, os_idx);
+        ++os_idx;
+    }
+}
+#endif
 
 class GraphRenderer {
   public:
@@ -253,7 +278,7 @@ class GraphRegion {
         }
         if( Graph::DEBUG_MODE ) {
             jau::PLAIN_PRINT(true, "add.0 array: %s", m_array->toString().c_str());
-            jau::PLAIN_PRINT(true, "add.0 segments: %s", GLUtilTesselator::Segment::toString("- ", m_segments).c_str() );
+            jau::PLAIN_PRINT(true, "add.0 segments:\n%s", GLUtilTesselator::Segment::toString("- ", m_segments).c_str() );
         }
         // TODO use a GLUtilTesselator instance to be reused (perf)?
         // - Keep native tesselator instance in GLUtilTesselator, callback setup and etc
@@ -265,7 +290,7 @@ class GraphRegion {
 
         if( Graph::DEBUG_MODE ) {
             jau::PLAIN_PRINT(true, "add.x array: %s", m_array->toString().c_str());
-            jau::PLAIN_PRINT(true, "add.x segments: %s", GLUtilTesselator::Segment::toString("- ", m_segments).c_str() );
+            jau::PLAIN_PRINT(true, "add.x segments:\n%s", GLUtilTesselator::Segment::toString("- ", m_segments).c_str() );
         }
     }
 
@@ -311,7 +336,7 @@ class Shape {
     bool iMatIdent = true;
     bool iMatDirty = false;
 
-	float m_velo = 0; // m/s
+    float m_velo = 0; // m/s
 
     struct Private{ explicit Private() = default; };
 
@@ -332,7 +357,7 @@ class Shape {
 
     constexpr const Vec3f& position() const noexcept { return m_position; }
     constexpr Vec3f& position() noexcept { iMatDirty=true; return m_position; }
-	constexpr void set_position(Vec3f new_pos) noexcept { m_position = new_pos; }
+    constexpr void set_position(Vec3f new_pos) noexcept { m_position = new_pos; }
 
     constexpr const float& zOffset() const noexcept { return m_zOffset; }
     constexpr float& zOffset() noexcept { iMatDirty=true; return m_zOffset; }
@@ -371,19 +396,18 @@ class Shape {
         pmv.popMv();
     }
 
-	/// Game ..
-	void tick(float dt) {
-		if( !jau::is_zero(m_velo) ) {
-			iMatDirty = true;
-			m_rotation.rotateByAngleZ( M_PI_2);
-			Vec3f dir = m_rotation.rotateVector(Vec3f(1, 0, 0));
-			m_rotation.rotateByAngleZ(-M_PI_2);
-			Vec3f d_p = dir * m_velo * dt;
-
-			m_position += d_p;
-		}
-	}
-	float& velo() noexcept { return m_velo; }
+    /// Game ..
+    void tick(float dt) {
+        if( !jau::is_zero(m_velo) ) {
+            iMatDirty = true;
+            m_rotation.rotateByAngleZ( M_PI_2);
+            Vec3f dir = m_rotation.rotateVector(Vec3f(1, 0, 0));
+            m_rotation.rotateByAngleZ(-M_PI_2);
+            Vec3f d_p = dir * m_velo * dt;
+            m_position += d_p;
+        }
+    }
+    float& velo() noexcept { return m_velo; }
 
   private:
     /**
@@ -513,182 +537,11 @@ class Primitives03 : public RenderListener {
         }
 
         //const float lineWidth = 1/2.5f;
-        const float dz = 0.05f;
-        if( true ) {
-            // Cross / Plus
-            const float width = 2.0f;
-            const float height = 1.0f;
-			const float deep = 0.3f;
-
-            //float lwh = lineWidth/2.0f;
-
-            float twh = width/2.0f;
-            float thh = height/2.0f;
-			float tdh = deep/2.0f;
-
-            float ctrX = 0, ctrY = 0, ctrZ = dz;
-
-			float over   = ctrZ + tdh;
-			float overh  = over - tdh/2.0f;
-			float under  = ctrZ - tdh;
-			float underh = under + tdh/2.0f;
-            ShapeRef frontShape = Shape::createShared(m_renderer);
-            m_shapes.push_back(frontShape);
-            std::vector<OutlineShape>& oshapes = frontShape->outlineShapes();
-			Point3f shoot_tl = Point3f(ctrX-width*1/100, ctrY+thh    , ctrZ);
-			Point3f shoot_tr = Point3f(ctrX+width*1/100, ctrY+thh    , ctrZ);
-			Point3f shoot_br = Point3f(ctrX+width*1/100, ctrY+thh*4/5, ctrZ);
-			Point3f shoot_bl = Point3f(ctrX-width*1/100, ctrY+thh*4/5, ctrZ);
-
-			Point3f ship_top_left  = Point3f(ctrX-width*1.5f/10, ctrY+thh*4/5, ctrZ);
-			Point3f ship_top_right = Point3f(ctrX+width*1.5f/10, ctrY+thh*4/5, ctrZ);
-			Point3f ship_bottom_right = Point3f(ctrX+width*2/06, ctrY-thh, overh);
-			Point3f ship_bottom_left = Point3f(ctrX-width*2/06, ctrY-thh, overh);
-
-			Point3f ship_center_top = Point3f(ctrX, ctrZ, over);
-
-			Point3f ship_left = Point3f(ctrX-twh+(width/18), ctrY-thh/2, ctrZ);
-			Point3f ship_right = Point3f(ctrX+twh-(width/18), ctrY-thh/2, ctrZ);
-			// CCW
-            {
-       			OutlineShape oshape;
-                oshape.lineTo(shoot_bl.x, shoot_bl.y, shoot_bl.z);
-                oshape.lineTo(ship_top_left.x, ship_top_left.y, ship_top_left.z);
-    			oshape.lineTo(ship_center_top.x, ship_center_top.y, ship_center_top.z);
-    			oshape.lineTo(ship_top_right.x, ship_top_right.y, ship_top_right.z);
-    			oshape.lineTo(shoot_br.x, shoot_br.y, shoot_br.z);
-    			oshape.lineTo(shoot_bl.x, shoot_bl.y, shoot_bl.z);
-    			oshape.closePath();
-    			oshapes.push_back(oshape);
-            }
-            {
-                OutlineShape oshape;
-                oshape.lineTo(shoot_tl.x, shoot_tl.y, shoot_tl.z);
-    			oshape.lineTo(shoot_bl.x, shoot_bl.y, shoot_bl.z);
-    			oshape.lineTo(shoot_br.x, shoot_br.y, shoot_br.z);
-    			oshape.lineTo(shoot_tr.x, shoot_tr.y, shoot_tr.z);
-    			oshape.lineTo(shoot_tl.x, shoot_tl.y, shoot_tl.z);
-    			oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-            {
-                OutlineShape oshape;
-    			oshape.lineTo(ship_center_top.x, ship_center_top.y, ship_center_top.z);
-    			oshape.lineTo(ship_bottom_right.x, ship_bottom_right.y, ship_bottom_right.z);
-    			oshape.lineTo(ship_top_right.x, ship_top_right.y, ship_top_right.z);
-    			oshape.lineTo(ship_center_top.x, ship_center_top.y, ship_center_top.z);
-    			oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-            {
-                OutlineShape oshape;
-    			oshape.lineTo(ship_center_top.x, ship_center_top.y, ship_center_top.z);
-    			oshape.lineTo(ship_top_left.x, ship_top_left.y, ship_top_left.z);
-    			oshape.lineTo(ship_bottom_left.x, ship_bottom_left.y, ship_bottom_left.z);
-    			oshape.lineTo(ship_center_top.x, ship_center_top.y, ship_center_top.z);
-    			oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-            {
-                OutlineShape oshape;
-    			oshape.lineTo(ship_bottom_left.x, ship_bottom_left.y, ship_bottom_left.z);
-    			oshape.lineTo(ship_bottom_right.x, ship_bottom_right.y, ship_bottom_right.z);
-    			oshape.lineTo(ship_center_top.x, ship_center_top.y, ship_center_top.z);
-    			oshape.lineTo(ship_bottom_left.x, ship_bottom_left.y, ship_bottom_left.z);
-    			oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-            {
-                OutlineShape oshape;
-    			oshape.lineTo(ship_top_left.x, ship_top_left.y, ship_top_left.z);
-    			oshape.lineTo(ship_left.x, ship_left.y, ship_left.z);
-    			oshape.lineTo(ship_bottom_left.x, ship_bottom_left.y, ship_bottom_left.z);
-    			oshape.lineTo(ship_top_left.x, ship_top_left.y, ship_top_left.z);
-    			oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-            {
-                OutlineShape oshape;
-    			oshape.lineTo(ship_top_right.x, ship_top_right.y, ship_top_right.z);
-    			oshape.lineTo(ship_bottom_right.x, ship_bottom_right.y, ship_bottom_right.z);
-    			oshape.lineTo(ship_right.x, ship_right.y, ship_right.z);
-    			oshape.lineTo(ship_top_right.x, ship_top_right.y, ship_top_right.z);
-    			oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-            {
-                OutlineShape oshape;
-    			oshape.lineTo(ship_bottom_left.x, ship_bottom_left.y, ship_bottom_left.z);
-    			oshape.lineTo(ship_left.x, ship_left.y, ship_left.z);
-    			oshape.lineTo(ctrX-twh, ctrY-thh, ctrZ);
-    			oshape.lineTo(ship_bottom_left.x, ship_bottom_left.y, ship_bottom_left.z);
-    			oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-            {
-                OutlineShape oshape;
-    			oshape.lineTo(ship_bottom_right.x, ship_bottom_right.y, ship_bottom_right.z);
-    	   		oshape.lineTo(ctrX+twh, ctrY-thh, ctrZ);
-    			oshape.lineTo(ship_right.x, ship_right.y, ship_right.z);
-    			oshape.lineTo(ship_bottom_right.x, ship_bottom_right.y, ship_bottom_right.z);
-    			oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-
-			for(const OutlineShape& oshape : oshapes){
-    			OutlineShape back = oshape; // oshape.flipFace(); // -dz);
-    			{
-    				for(Outline& o : back.outlines()) {
-    				    for(Vertex& v : o.vertices()) {
-    				        v.coord().z = ( (v.coord().z-ctrZ) * -1.0f + ctrZ );// + dz;
-                            printf("Vertex coord %s\n\n", v.coord().toString().c_str());
-    				    }
-    				}
-                    back.normal() *= -1;
-    			}
-                oshapes.push_back(back);
-			}
-            {
-                OutlineShape oshape;
-                oshape.lineTo(ctrX+twh, ctrY-thh, ctrZ);
-                oshape.lineTo(ship_bottom_right.x, ship_bottom_right.y, ship_bottom_right.z);
-                oshape.lineTo(ship_bottom_left.x, ship_bottom_left.y, ship_bottom_left.z);
-                oshape.lineTo(ctrX-twh, ctrY-thh, ctrZ);
-                oshape.lineTo(ship_bottom_right.x, ship_bottom_right.y, underh);
-                oshape.lineTo(ship_bottom_left.x, ship_bottom_left.y, underh);
-                oshape.lineTo(ctrX+twh, ctrY-thh, ctrZ);
-                oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-            {
-                OutlineShape oshape;
-    			oshape.lineTo(ctrX-width/26, ctrY-thh, underh);
-    			oshape.lineTo(ctrX-width/26, ctrY-thh, overh);
-    			oshape.lineTo(ctrX-width/ 7, ctrY-thh, overh);
-    			oshape.lineTo(ctrX-width/ 7, ctrY-thh, ctrZ - tdh/2);
-    			oshape.lineTo(ctrX-width/26, ctrY-thh, underh);
-    			oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-            {
-                OutlineShape oshape;
-    			oshape.lineTo(ctrX+width/26, ctrY-thh, underh);
-    			oshape.lineTo(ctrX+width/ 7, ctrY-thh, ctrZ - tdh/2);
-    			oshape.lineTo(ctrX+width/ 7, ctrY-thh, overh);
-    			oshape.lineTo(ctrX+width/26, ctrY-thh, overh);
-    			oshape.lineTo(ctrX+width/26, ctrY-thh, underh);
-    			oshape.closePath();
-                oshapes.push_back(oshape);
-            }
-            printf("\n oshapes size: %zu\n\n", oshapes.size());
-
-            // shape1->seal(gl, true);
-			//frontShape->rotation().rotateByAngleZ(-M_PI);
-            frontShape->update(gl);
-            //frontShape->setColor(Vec4f(0.05f, 0.05f, 0.5f, 1));
-            frontShape->setColor(Vec4f(0.5f, 0.5f, 0.5f, 1));
-            frontShape->rotation().rotateByAngleX(-M_PI / 4.0f);
-        }
+        ShapeRef cobraMkIII_Shape = Shape::createShared(m_renderer);
+        models::appendCobraMkIII(cobraMkIII_Shape->outlineShapes());
+        cobraMkIII_Shape->setColor(Vec4f(0.05f, 0.05f, 0.5f, 1.0f));
+        cobraMkIII_Shape->update(gl);
+        m_shapes.push_back(cobraMkIII_Shape);
         if ( false ) {
             ShapeRef frontShape = Shape::createShared(m_renderer);
             m_shapes.push_back(frontShape);
@@ -706,7 +559,6 @@ class Primitives03 : public RenderListener {
             frontShape->scale().x *= 2.0f;
             frontShape->scale().y *= 2.0f;
         }
-
 		//::glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
         ::glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         ::glEnable(GL_DEPTH_TEST);
