@@ -31,7 +31,7 @@ namespace gamp::render::gl::data {
     class GLArrayDataProxy;
 
     template<typename Value_type>
-    using GLArrayDataProxyRef = std::shared_ptr<GLArrayDataProxy<Value_type>>;
+    using GLArrayDataProxySRef = std::shared_ptr<GLArrayDataProxy<Value_type>>;
 
     /**
      * Proxying a data buffer for GLArrayData usage of given template-type Value_type.
@@ -43,10 +43,10 @@ namespace gamp::render::gl::data {
       public:
         typedef Value_type value_type;
         typedef GLArrayDataProxy<value_type> proxy_t;
-        typedef std::shared_ptr<proxy_t> proxy_ref;
+        typedef std::shared_ptr<proxy_t> proxy_sref;
 
         typedef jau::darray<value_type, glmemsize_t> buffer_t;
-        typedef std::unique_ptr<buffer_t> buffer_ref;
+        typedef std::unique_ptr<buffer_t> buffer_sref;
 
         ~GLArrayDataProxy() noexcept override = default;
 
@@ -70,8 +70,8 @@ namespace gamp::render::gl::data {
          * @return the new create instance
          * @throws GLException
          */
-        static proxy_ref createGLSL(std::string_view name, GLsizei componentsPerElement, bool normalized, GLsizei stride,
-                                    buffer_t& buffer, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget) {
+        static proxy_sref createGLSL(std::string_view name, GLsizei componentsPerElement, bool normalized, GLsizei stride,
+                                     buffer_t& buffer, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget) {
             return std::make_shared<GLArrayDataProxy>(Private(),
                 name, componentsPerElement, normalized, stride, buffer,
                 /*isVertexAttribute=*/true, vboName, vboOffset, vboUsage, vboTarget);
@@ -97,8 +97,8 @@ namespace gamp::render::gl::data {
          * @return the new create instance
          * @throws GLException
          */
-        static proxy_ref createGLSL(std::string_view name, GLsizei componentsPerElement, bool normalized, GLsizei stride,
-                                    GLsizei mappedElementCount, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget) {
+        static proxy_sref createGLSL(std::string_view name, GLsizei componentsPerElement, bool normalized, GLsizei stride,
+                                     GLsizei mappedElementCount, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget) {
             return std::make_shared<GLArrayDataProxy>(Private(),
                 name, componentsPerElement, normalized, stride, mappedElementCount,
                 /*isVertexAttribute=*/true, vboName, vboOffset, vboUsage, vboTarget);
@@ -115,7 +115,7 @@ namespace gamp::render::gl::data {
             return jau::static_ctti<proxy_t>();
         }
 
-        const GLArrayDataProxyRef<value_type> shared() { return GLArrayData::shared_from_base<GLArrayDataProxy>(); }
+        const GLArrayDataProxySRef<value_type> shared() { return GLArrayData::shared_from_base<GLArrayDataProxy>(); }
 
         /** Returns client-data pointer at current position if usesClientMem(), otherwise nullptr */
         const void* data() const noexcept override { return usesClientMem() ? reinterpret_cast<const void*>(m_bufferptr->position_ptr()) : nullptr; }

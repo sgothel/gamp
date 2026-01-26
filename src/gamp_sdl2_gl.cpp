@@ -49,7 +49,7 @@ bool Surface::setSwapIntervalImpl(int v) noexcept {
     return false;
 }
 
-CapabilitiesPtr Surface::retrieveCaps(const wt::SurfaceRef& surface) noexcept {
+CapabilitiesPtr Surface::retrieveCaps(const wt::SurfaceSRef& surface) noexcept {
     if( !surface->isValid() ) {
         return nullptr;
     }
@@ -80,11 +80,11 @@ CapabilitiesPtr Surface::retrieveCaps(const wt::SurfaceRef& surface) noexcept {
     return caps;
 }
 
-gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceRef& surface,
+gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceSRef& surface,
                                           const gamp::render::RenderProfile& profile,
                                           const gamp::render::RenderContextFlags& contextFlags,
                                           gamp::render::RenderContext* shareWith) noexcept {
-    // const wt::SurfaceRef& surface, render::gl::GLProfileMask profile, render::gl::GLContextFlags contextFlags, render::gl::GL* shareWith
+    // const wt::SurfaceSRef& surface, render::gl::GLProfileMask profile, render::gl::GLContextFlags contextFlags, render::gl::GL* shareWith
     if( !surface->isValid() ) {
         printf("SDL: Error creating GL context: Invalid surface: %s\n", surface->toString().c_str());
         return nullptr;
@@ -227,7 +227,7 @@ void render::gl::GLContext::dispose() noexcept {
     disposedNotify();
 }
 
-bool gamp::render::gl::GLContext::makeCurrentImpl(const gamp::wt::SurfaceRef& surface, gamp::handle_t context) noexcept {
+bool gamp::render::gl::GLContext::makeCurrentImpl(const gamp::wt::SurfaceSRef& surface, gamp::handle_t context) noexcept {
     if( !surface || !surface->isValid() || !context) {
         printf("SDL: Error GLContext::makeCurrent: Invalid surface/context: surface %s, context %p\n",
             surface ? surface->toString().c_str() : "nil", (void*)context); // NOLINT
@@ -241,7 +241,7 @@ bool gamp::render::gl::GLContext::makeCurrentImpl(const gamp::wt::SurfaceRef& su
     return true;
 }
 
-void gamp::render::gl::GLContext::releaseContextImpl(const gamp::wt::SurfaceRef& surface) noexcept {
+void gamp::render::gl::GLContext::releaseContextImpl(const gamp::wt::SurfaceSRef& surface) noexcept {
     if( !surface || !surface->isValid() ) {
         printf("SDL: Error GLContext::release: Invalid surface: surface %s\n",
             surface ? surface->toString().c_str() : "nil");

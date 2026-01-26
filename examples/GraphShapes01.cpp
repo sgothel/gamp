@@ -132,8 +132,8 @@ class GraphRenderer {
         }
         fragmentShaderName.append(shader_basename).append("-segment-head");
 
-        ShaderCodeRef rsVp = ShaderCode::create(gl, GL_VERTEX_SHADER, source_dir, bin_dir, vertexShaderName);
-        ShaderCodeRef rsFp = ShaderCode::create(gl, GL_FRAGMENT_SHADER, source_dir, bin_dir, fragmentShaderName);
+        ShaderCodeSRef rsVp = ShaderCode::create(gl, GL_VERTEX_SHADER, source_dir, bin_dir, vertexShaderName);
+        ShaderCodeSRef rsFp = ShaderCode::create(gl, GL_FRAGMENT_SHADER, source_dir, bin_dir, fragmentShaderName);
         if( !rsVp || !rsFp ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d\n", E_FILE_LINE);
             return false;
@@ -241,7 +241,7 @@ class GraphRenderer {
             }
 
         }
-        ShaderProgramRef sp0 = ShaderProgram::create();
+        ShaderProgramSRef sp0 = ShaderProgram::create();
         if( !sp0->add(gl, rsVp, true) || !sp0->add(gl, rsFp, true) ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d\n", E_FILE_LINE);
             sp0->destroy(gl);
@@ -253,9 +253,9 @@ class GraphRenderer {
         pmv.getP().loadIdentity();
         pmv.getMv().loadIdentity();
 
-        m_st.pushUniform(gl, m_pmvMat);
-        m_st.pushUniform(gl, m_light0Pos);
-        m_st.pushUniform(gl, m_staticColor);
+        m_st.send(gl, m_pmvMat);
+        m_st.send(gl, m_light0Pos);
+        m_st.send(gl, m_staticColor);
 
         m_initialized = sp0->inUse();
         if( !m_initialized ) {
@@ -273,15 +273,15 @@ class GraphRenderer {
         m_st.useProgram(gl, on);
     }
 
-    void updateColor(GL& gl) noexcept {
-        m_st.pushUniform(gl, m_staticColor);
+    void updateColor(GL& gl) {
+        m_st.send(gl, m_staticColor);
     }
-    void updatePMV(GL& gl) noexcept {
-        m_st.pushUniform(gl, m_pmvMat);
+    void updatePMV(GL& gl) {
+        m_st.send(gl, m_pmvMat);
     }
-    void updateAll(GL& gl) noexcept {
-        m_st.pushUniform(gl, m_pmvMat);
-        m_st.pushUniform(gl, m_staticColor);
+    void updateAll(GL& gl) {
+        m_st.send(gl, m_pmvMat);
+        m_st.send(gl, m_staticColor);
     }
     PMVMat4f& pmv() noexcept { return m_pmvMat.pmv(); }
     const PMVMat4f& pmv() const noexcept { return m_pmvMat.pmv(); }
@@ -296,8 +296,8 @@ class GraphRegion {
     GraphRenderer& m_renderer;
     ShaderState& m_st;
     bool m_initialized;
-    GLFloatArrayDataServerRef m_array;
-    GLUIntArrayDataServerRef m_indices;
+    GLFloatArrayDataServerSRef m_array;
+    GLUIntArrayDataServerSRef m_indices;
     int m_num_vertices, m_num_indices;
 
   public:
@@ -616,7 +616,7 @@ class GraphShapes01 : public RenderListener {
     bool& animating() noexcept { return m_animating; }
     void setOneFrame() noexcept { m_animating=false; m_oneframe=true; }
 
-    bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
+    bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
         m_tlast = when;
 
@@ -779,7 +779,7 @@ class GraphShapes01 : public RenderListener {
         return m_initialized;
     }
 
-    void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
         GL& gl = GL::downcast(win->renderContext());
         jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", toString().c_str());
         for(ShapeRef& s : m_shapes) {
@@ -790,7 +790,7 @@ class GraphShapes01 : public RenderListener {
         m_initialized = false;
     }
 
-    void reshape(const WindowRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
+    void reshape(const WindowSRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
         GL& gl = GL::downcast(win->renderContext());
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
@@ -808,7 +808,7 @@ class GraphShapes01 : public RenderListener {
         // m_st.useProgram(gl, false);
     }
 
-    void display(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void display(const WindowSRef& win, const jau::fraction_timespec& when) override {
         // jau::fprintf_td(when.to_ms(), stdout, "RL::display: %s, %s\n", toString().c_str(), win->toString().c_str());
         if( !m_initialized ) {
             return;
@@ -852,7 +852,7 @@ class Example : public GraphShapes01 {
         void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
             jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
             if( e.keySym() == VKeyCode::VK_ESCAPE ) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 if( win ) {
                     win->dispose(e.when());
                 }
@@ -861,7 +861,7 @@ class Example : public GraphShapes01 {
             } else if( e.keySym() == VKeyCode::VK_PERIOD ) {
                 m_parent.setOneFrame();
             } else if( e.keySym() == VKeyCode::VK_W ) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
             }
         }
@@ -877,14 +877,14 @@ class Example : public GraphShapes01 {
     : GraphShapes01(),
       m_kl(std::make_shared<MyKeyListener>(*this)) {  }
 
-    bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
+    bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
         if( !GraphShapes01::init(win, when) ) {
             return false;
         }
         win->addKeyListener(m_kl);
         return true;
     }
-    void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
         win->removeKeyListener(m_kl);
         GraphShapes01::dispose(win, when);
     }

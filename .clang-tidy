@@ -1,7 +1,9 @@
 Checks:  'clang-diagnostic-*, clang-analyzer-*,
           modernize-*, bugprone-*, performance-*,
-          unused-*,misc-*,
+          misc-*,
           readability-redundant-*,
+          bugprone-exception-escape,
+          -bugprone-chained-comparison,
           -bugprone-reserved-identifier, -bugprone-easily-swappable-parameters, -bugprone-assignment-in-if-condition,
           -bugprone-misplaced-widening-cast, -bugprone-branch-clone,
           -clang-diagnostic-unknown-warning-option,
@@ -21,10 +23,13 @@ Checks:  'clang-diagnostic-*, clang-analyzer-*,
 CheckOptions:
   - key:             modernize-use-default-member-init.UseAssignment
     value:           'true'
+  - key:             modernize-use-scoped-lock.WarnOnSingleLocks
+    value:           'false'
 
 WarningsAsErrors: '*'
-HeaderFilterRegex: '(include/gamp/.*|jaulib/include/jau/.*)\.hpp'
+#HeaderFilterRegex: '(include/gamp/.*|jaulib/include/jau/.*)\.hpp'
+HeaderFilterRegex: '(include/gamp/|jaulib/include/jau/).*$'
+
 # AnalyzeTemporaryDtors: false
 FormatStyle:     none
 InheritParentConfig: false
-User:            sven

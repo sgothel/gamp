@@ -80,8 +80,8 @@ void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
         return;
     }
     const jau::math::Recti viewport(0, 0, surfaceSize().x, surfaceSize().y);
-    const WindowRef& self = shared();
-    for(const RenderListenerRef& l : *m_render_listener.snapshot()) {
+    const WindowSRef& self = shared();
+    for(const RenderListenerSRef& l : *m_render_listener.snapshot()) {
         std::exception_ptr eptr;
         try {
             const gamp::render::RenderContext* ctx = renderContext();
@@ -112,9 +112,9 @@ void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
         }
         if( eptr ) {
             try {
-                RenderListenerRef l2 = l;
+                RenderListenerSRef l2 = l;
                 m_render_listener.erase_if(false,
-                   [l](const RenderListenerRef& a) noexcept -> bool { return a.get() == l.get(); } );
+                   [l](const RenderListenerSRef& a) noexcept -> bool { return a.get() == l.get(); } );
                 l2->dispose(self, when);
             } catch (const std::exception &e) {
                 ERR_PRINT2("Caught exception %s", e.what());
@@ -127,8 +127,8 @@ void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
 }
 
 void gamp::wt::Window::disposeRenderListener(bool clearRenderListener, const jau::fraction_timespec& when) noexcept {
-    const WindowRef& self = shared();
-    for(const RenderListenerRef& l : *m_render_listener.snapshot()) {
+    const WindowSRef& self = shared();
+    for(const RenderListenerSRef& l : *m_render_listener.snapshot()) {
         try {
             l->dispose(self, when);
             write(l->pendingActions(), RenderActions::init, true);

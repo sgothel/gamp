@@ -24,9 +24,8 @@
 
 namespace gamp::wt {
     class Surface;
-    typedef std::shared_ptr<Surface> SurfaceRef;
+    typedef std::shared_ptr<Surface> SurfaceSRef;
 }
-
 namespace gamp::render {
 
     /** @defgroup Gamp_Render Gamp Rendering
@@ -53,7 +52,7 @@ namespace gamp::render {
     JAU_MAKE_BITFIELD_ENUM_STRING(RenderContextFlags, compatible, debug, robust, software, verbose);
 
     class RenderContext;
-    typedef std::shared_ptr<RenderContext> RenderContextRef;
+    typedef std::shared_ptr<RenderContext> RenderContextSRef;
 
     /**
      * Specifies the render profile.
@@ -118,7 +117,7 @@ namespace gamp::render {
 
       protected:
         struct Private { explicit Private() = default; };
-        gamp::wt::SurfaceRef m_surface;
+        gamp::wt::SurfaceSRef m_surface;
 
       public:
         /** Private: Create an invalid instance.*/
@@ -153,13 +152,13 @@ namespace gamp::render {
         }
 
         /// Make this context current (used for OpenGL, but a NOP on Vulkan)
-        virtual bool makeCurrent(const gamp::wt::SurfaceRef& s) noexcept { m_surface=s; return true; }
+        virtual bool makeCurrent(const gamp::wt::SurfaceSRef& s) noexcept { m_surface=s; return true; }
         /// Release this context (used for OpenGL, but a NOP on Vulkan)
         virtual void releaseContext() noexcept { m_surface = nullptr; }
-        const gamp::wt::SurfaceRef& boundSurface() const noexcept { return m_surface; }
+        const gamp::wt::SurfaceSRef& boundSurface() const noexcept { return m_surface; }
 
         /** Returns the attached user object for the given name. */
-        AttachableRef getAttachedObject(std::string_view key) const { return m_attachables.get(key); }
+        AttachableSRef getAttachedObject(std::string_view key) const { return m_attachables.get(key); }
 
         /** Clears the attachment map. */
         void clearAttachedObjects() { m_attachables.clear(); }
@@ -169,10 +168,10 @@ namespace gamp::render {
          * @param key persistent std::string_view key, must be valid through the lifecycle of this instance
          * @return previously set object or nullptr.
          */
-        AttachableRef attachObject(std::string_view key, const AttachableRef& obj) { return m_attachables.put1(key, obj); }
+        AttachableSRef attachObject(std::string_view key, const AttachableSRef& obj) { return m_attachables.put3(key, obj); }
 
         /** Removes attached object if exists and returns it, otherwise returns nullptr. */
-        AttachableRef detachObject(std::string_view key) { return m_attachables.remove1(key); }
+        AttachableSRef detachObject(std::string_view key) { return m_attachables.remove2(key); }
 
         virtual std::string toString() const;
     };

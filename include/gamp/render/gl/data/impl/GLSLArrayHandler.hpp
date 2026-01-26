@@ -84,7 +84,7 @@ namespace gamp::render::gl::data::impl {
                         m_ad->setVBOWritten(true);
                         st.vertexAttribPointer(gl, m_ad);
                         m_ad->glBindBuffer(gl, false);
-                    } else if( st.getAttribLocation(gl, m_ad) >= 0 ) {
+                    } else if( st.resolveLocation(gl, m_ad) >= 0 ) {
                         // didn't experience a performance hit on this query ..
                         // (using ShaderState's location query above to validate the location)
                         GLuint tempI;
@@ -98,9 +98,9 @@ namespace gamp::render::gl::data::impl {
                 } else if( m_ad->usesClientMem() ) {
                     st.vertexAttribPointer(gl, m_ad);
                 }
-                st.enableVertexAttribArray(gl, m_ad);
+                st.enableAttribute(gl, m_ad);
             } else {
-                st.disableVertexAttribArray(gl, m_ad);
+                st.disableAttribute(gl, m_ad);
             }
         }
 

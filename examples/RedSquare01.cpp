@@ -105,14 +105,14 @@ class MyKeyListener : public KeyListener {
     void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
         printf("KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
         if( e.keySym() == VKeyCode::VK_ESCAPE ) {
-            WindowRef win = e.source().lock();
+            WindowSRef win = e.source().lock();
             if( win ) {
                 win->dispose(e.when());
             }
         } else if( e.keySym() == VKeyCode::VK_PAUSE || e.keySym() == VKeyCode::VK_P ) {
             animating = !animating;
         } else if( e.keySym() == VKeyCode::VK_W ) {
-            WindowRef win = e.source().lock();
+            WindowSRef win = e.source().lock();
             printf("Source: %s\n", win ? win->toString().c_str() : "null");
         }
     }
@@ -147,7 +147,7 @@ class RedSquareES2 : public RenderListener {
     PMVMat4f& pmv() noexcept { return m_pmv; }
     const PMVMat4f& pmv() const noexcept { return m_pmv; }
 
-    bool init(const WindowRef&, const jau::fraction_timespec& when) override {
+    bool init(const WindowSRef&, const jau::fraction_timespec& when) override {
         printf("RL::init: %s\n", toString().c_str());
         m_tlast = when;
         // Create and compile vertex shader
@@ -202,12 +202,12 @@ class RedSquareES2 : public RenderListener {
         return m_initialized;
     }
 
-    void dispose(const WindowRef&, const jau::fraction_timespec& /*when*/) override {
+    void dispose(const WindowSRef&, const jau::fraction_timespec& /*when*/) override {
         printf("RL::dispose: %s\n", toString().c_str());
         m_initialized = false;
     }
 
-    void display(const WindowRef&, const jau::fraction_timespec& when) override {
+    void display(const WindowSRef&, const jau::fraction_timespec& when) override {
         // printf("RL::display: %s, %s\n", toString().c_str(), win->toString().c_str());
         if( !m_initialized ) {
             return;
@@ -229,7 +229,7 @@ class RedSquareES2 : public RenderListener {
         m_tlast = when;
     }
 
-    void reshape(const WindowRef&, const jau::math::Recti& viewport, const jau::fraction_timespec& /*when*/) override {
+    void reshape(const WindowSRef&, const jau::math::Recti& viewport, const jau::fraction_timespec& /*when*/) override {
         printf("RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
 
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
         printf("Exit (0)...");
         return 1;
     }
-    WindowRef main_win = Window::create(demo_name.c_str(), win_width, win_height, true /* verbose */);
+    WindowSRef main_win = Window::create(demo_name.c_str(), win_width, win_height, true /* verbose */);
     if( !main_win ) {
         printf("Exit (1): Failed to create window.\n");
         return 1;

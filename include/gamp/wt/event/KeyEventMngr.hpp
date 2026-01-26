@@ -42,7 +42,7 @@ namespace gamp::wt::event {
 
     class KeyEventManager : public KeyboardTracker {
       private:
-        jau::cow_darray<KeyListenerRef> m_keyListener;
+        jau::cow_darray<KeyListenerSRef> m_keyListener;
         PressedKeyCodes m_keybuffer;
         InputModifier m_modifiers;
 
@@ -74,7 +74,7 @@ namespace gamp::wt::event {
 
         const PressedKeyCodes& pressedKeyCodes() const noexcept override { return m_keybuffer; }
 
-        void dispatchPressed(const jau::fraction_timespec& when, const WindowRef& source,
+        void dispatchPressed(const jau::fraction_timespec& when, const WindowSRef& source,
                              VKeyCode keySym, InputModifier keySymMods, uint16_t keyChar) noexcept
         {
             const InputModifier clrRepeatMod =  is_set(m_modifiers, InputModifier::repeat) &&
@@ -83,7 +83,7 @@ namespace gamp::wt::event {
             m_modifiers &= ~clrRepeatMod;
             KeyEvent ke(EVENT_KEY_PRESSED, when, source, m_modifiers, keySym, keySymMods, keyChar);
             setPressed(keySym, true);
-            for(const KeyListenerRef& kl : *m_keyListener.snapshot()) {
+            for(const KeyListenerSRef& kl : *m_keyListener.snapshot()) {
                 try {
                     kl->keyPressed(ke, *this);
                 } catch (std::exception &err) {
@@ -92,7 +92,7 @@ namespace gamp::wt::event {
                 if( ke.consumed() ) { break; }
             }
         }
-        void dispatchReleased(const jau::fraction_timespec& when, const WindowRef& source,
+        void dispatchReleased(const jau::fraction_timespec& when, const WindowSRef& source,
                               VKeyCode keySym, InputModifier keySymMods, uint16_t keyChar) noexcept
         {
             const InputModifier clrRepeatMod =  is_set(m_modifiers, InputModifier::repeat) &&
@@ -101,7 +101,7 @@ namespace gamp::wt::event {
             KeyEvent ke(EVENT_KEY_RELEASED, when, source, m_modifiers, keySym, keySymMods, keyChar);
             m_modifiers &= ~keySymMods;
             setPressed(keySym, false);
-            for(const KeyListenerRef& kl : *m_keyListener.snapshot()) {
+            for(const KeyListenerSRef& kl : *m_keyListener.snapshot()) {
                 try {
                     kl->keyReleased(ke, *this);
                 } catch (std::exception &err) {
@@ -111,11 +111,11 @@ namespace gamp::wt::event {
             }
         }
 
-        void addListener(const KeyListenerRef& l) { m_keyListener.push_back(l); }
+        void addListener(const KeyListenerSRef& l) { m_keyListener.push_back(l); }
 
-        size_t removeListener(const KeyListenerRef& l) {
+        size_t removeListener(const KeyListenerSRef& l) {
             return m_keyListener.erase_matching(l, true,
-                [](const KeyListenerRef& a, const KeyListenerRef& b) noexcept -> bool { return a.get() == b.get(); } );
+                [](const KeyListenerSRef& a, const KeyListenerSRef& b) noexcept -> bool { return a.get() == b.get(); } );
         }
 
         size_t removeAllListener() {

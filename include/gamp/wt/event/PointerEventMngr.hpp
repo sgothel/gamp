@@ -45,7 +45,7 @@ namespace gamp::wt::event {
 
     class PointerEventManager {
       private:
-        jau::cow_darray<PointerListenerRef> m_pointerListener;
+        jau::cow_darray<PointerListenerSRef> m_pointerListener;
         std::vector<InputButton> m_buttonDown;
 
         // TODO
@@ -53,7 +53,7 @@ namespace gamp::wt::event {
         // - ENTERED/EXITED
 
       public:
-        void dispatch(uint16_t type, const jau::fraction_timespec& when, const WindowRef& source, InputModifier mods,
+        void dispatch(uint16_t type, const jau::fraction_timespec& when, const WindowSRef& source, InputModifier mods,
                       PointerType ptype, uint16_t id,
                       jau::math::Vec2i pos, uint16_t clickCount, InputButton button,
                       jau::math::Vec3f rotation, float rotationScale) noexcept {
@@ -68,7 +68,7 @@ namespace gamp::wt::event {
                 type = EVENT_POINTER_DRAGGED;
             }
             PointerEvent evt(type, when, source, mods, ptype, id, pos, clickCount, button, rotation, rotationScale);
-            for(const PointerListenerRef& kl : *m_pointerListener.snapshot()) {
+            for(const PointerListenerSRef& kl : *m_pointerListener.snapshot()) {
                 try {
                     switch(type) {
                         case EVENT_POINTER_CLICKED:
@@ -96,11 +96,11 @@ namespace gamp::wt::event {
             }
         }
 
-        void addListener(const PointerListenerRef& l) { m_pointerListener.push_back(l); }
+        void addListener(const PointerListenerSRef& l) { m_pointerListener.push_back(l); }
 
-        size_t removeListener(const PointerListenerRef& l) {
+        size_t removeListener(const PointerListenerSRef& l) {
             return m_pointerListener.erase_matching(l, true,
-                [](const PointerListenerRef& a, const PointerListenerRef& b) noexcept -> bool { return a.get() == b.get(); } );
+                [](const PointerListenerSRef& a, const PointerListenerSRef& b) noexcept -> bool { return a.get() == b.get(); } );
         }
 
         size_t removeAllListener() {

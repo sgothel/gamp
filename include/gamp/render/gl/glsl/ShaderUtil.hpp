@@ -157,15 +157,15 @@ namespace gamp::render::gl::glsl {
             name_list_t binFormats;
             const jau::type_info& signature() const noexcept override { return jau::static_ctti<CompilerInfo>(); }
         };
-        typedef std::shared_ptr<CompilerInfo> CompilerInfoRef;
+        typedef std::shared_ptr<CompilerInfo> CompilerInfoSRef;
 
-        static CompilerInfoRef getOrCreateCompilerInfo(GL& gl) noexcept {
-            AttachableRef o = gl.getAttachedObject(compilerInfoKey);
+        static CompilerInfoSRef getOrCreateCompilerInfo(GL& gl) noexcept {
+            AttachableSRef o = gl.getAttachedObject(compilerInfoKey);
             if( o ) {
-                CompilerInfoRef ci = std::static_pointer_cast<CompilerInfo>(o);
+                CompilerInfoSRef ci = std::static_pointer_cast<CompilerInfo>(o);
                 return ci;
             }
-            CompilerInfoRef ci = std::make_shared<CompilerInfo>();
+            CompilerInfoSRef ci = std::make_shared<CompilerInfo>();
             if (gl.glProfile().hasGLSL()) {
                 GLint param = 0;
                 glGetIntegerv(GL_NUM_SHADER_BINARY_FORMATS, &param);
@@ -203,13 +203,13 @@ namespace gamp::render::gl::glsl {
          * via {@link GL2ES2#glGetIntegerv(int, int[], int)}.
          */
         static name_list_t getShaderBinaryFormats(GL& gl) noexcept {
-            const CompilerInfoRef& ci = getOrCreateCompilerInfo(gl);
+            const CompilerInfoSRef& ci = getOrCreateCompilerInfo(gl);
             return ci->binFormats;
         }
 
         /** Returns true if a hader compiler is available, otherwise false. */
         static bool isShaderCompilerAvailable(GL& gl) noexcept {
-            const CompilerInfoRef& ci = getOrCreateCompilerInfo(gl);
+            const CompilerInfoSRef& ci = getOrCreateCompilerInfo(gl);
             return ci->shaderCompilerAvail;
         }
 

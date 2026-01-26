@@ -32,7 +32,7 @@ namespace gamp::render::gl::glsl {
      */
 
     class ShaderProgram;
-    typedef std::shared_ptr<ShaderProgram> ShaderProgramRef;
+    typedef std::shared_ptr<ShaderProgram> ShaderProgramSRef;
 
     class ShaderProgram {
       private:
@@ -44,7 +44,7 @@ namespace gamp::render::gl::glsl {
         : m_programLinked(false), m_programInUse(false), m_shaderProgram(0), m_id(0) {
             m_id = nextID();
         }
-        static ShaderProgramRef create() noexcept {
+        static ShaderProgramSRef create() noexcept {
             return std::make_shared<ShaderProgram>(Private());
         }
 
@@ -117,12 +117,12 @@ namespace gamp::render::gl::glsl {
          *
          * @return true if the shader was successfully added, otherwise false (duplicate)
          */
-        bool add(const ShaderCodeRef& shaderCode) noexcept {
+        bool add(const ShaderCodeSRef& shaderCode) noexcept {
             auto res = m_allShaderCode.insert(shaderCode);
             return res.second;
         }
 
-        bool contains(const ShaderCodeRef& shaderCode) const noexcept{
+        bool contains(const ShaderCodeSRef& shaderCode) const noexcept{
             return m_allShaderCode.contains(shaderCode);
         }
 
@@ -131,7 +131,7 @@ namespace gamp::render::gl::glsl {
          * @param id
          * @return
          */
-        ShaderCodeRef getShader(size_t id) noexcept {
+        ShaderCodeSRef getShader(size_t id) noexcept {
             for(const auto & shaderCode : m_allShaderCode) {
                  if(shaderCode->id() == id) {
                     return shaderCode;
@@ -165,7 +165,7 @@ namespace gamp::render::gl::glsl {
          *
          * @return true if the shader was successfully added, false if duplicate or compilation failed.
          */
-        bool add(GL& gl, const ShaderCodeRef& shaderCode, bool verbose=false) {
+        bool add(GL& gl, const ShaderCodeSRef& shaderCode, bool verbose=false) {
             if( !init(gl) ) { return false; }
             if( m_allShaderCode.insert(shaderCode).second ) {
                 if( !shaderCode->compile(gl, verbose) ) {
@@ -197,7 +197,7 @@ namespace gamp::render::gl::glsl {
          * @see ShaderState#glResetAllVertexAttributes
          * @see ShaderState#glResetAllVertexAttributes
          */
-        bool replaceShader(GL& gl, const ShaderCodeRef& oldShader, const ShaderCodeRef& newShader, bool verbose=false) {
+        bool replaceShader(GL& gl, const ShaderCodeSRef& oldShader, const ShaderCodeSRef& newShader, bool verbose=false) {
             if(!init(gl) || !newShader->compile(gl, verbose)) {
                 return false;
             }
@@ -338,7 +338,7 @@ namespace gamp::render::gl::glsl {
         bool m_programInUse;
         GLuint m_shaderProgram; // non zero is valid!
         size_t m_id;
-        std::unordered_set<ShaderCodeRef> m_allShaderCode, m_attachedShaderCode;
+        std::unordered_set<ShaderCodeSRef> m_allShaderCode, m_attachedShaderCode;
 
         static size_t nextID() { return m_nextID++; }
         static std::atomic<size_t> m_nextID;
@@ -363,8 +363,8 @@ namespace std
             return a.hash_code();
         }
     };
-    template<> struct hash<gamp::render::gl::glsl::ShaderProgramRef> {
-        std::size_t operator()(gamp::render::gl::glsl::ShaderProgramRef const& a) const noexcept {
+    template<> struct hash<gamp::render::gl::glsl::ShaderProgramSRef> {
+        std::size_t operator()(gamp::render::gl::glsl::ShaderProgramSRef const& a) const noexcept {
             return a->hash_code();
         }
     };

@@ -56,7 +56,7 @@ namespace gamp::wt::event {
         }
 
       public:
-        WindowEvent(uint16_t type, const jau::fraction_timespec& when, const WindowRef& source) noexcept
+        WindowEvent(uint16_t type, const jau::fraction_timespec& when, const WindowSRef& source) noexcept
         : WTEvent(type, when, source)
         { }
 
@@ -110,7 +110,7 @@ namespace gamp::wt::event {
         /** Window visibility changed. */
         virtual void windowVisibilityChanged(WindowEvent&, bool /*visible*/) {}
     };
-    typedef std::shared_ptr<WindowListener> WindowListenerRef;
+    typedef std::shared_ptr<WindowListener> WindowListenerSRef;
 
     /**@}*/
 }

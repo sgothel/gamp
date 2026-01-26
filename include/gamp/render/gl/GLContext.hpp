@@ -463,8 +463,8 @@ namespace gamp::render::gl {
         GLProfile m_glprofile;
         GLVersionNumber m_glversion;
 
-        static bool makeCurrentImpl(const gamp::wt::SurfaceRef& s, gamp::handle_t context) noexcept;
-        static void releaseContextImpl(const gamp::wt::SurfaceRef& s) noexcept;
+        static bool makeCurrentImpl(const gamp::wt::SurfaceSRef& s, gamp::handle_t context) noexcept;
+        static void releaseContextImpl(const gamp::wt::SurfaceSRef& s) noexcept;
 
       public:
         /** Private: Create an invalid instance.*/
@@ -477,7 +477,7 @@ namespace gamp::render::gl {
           m_glprofile(std::move(profile)), m_glversion(std::move(glVersion)) {}
 
         /** Private: Create a new instance of a current context. Given profile tag must be one of this class' constant `GL` profiles. */
-        GLContext(Private, const wt::SurfaceRef& surface, gamp::handle_t context, GLProfile&& profile,
+        GLContext(Private, const wt::SurfaceSRef& surface, gamp::handle_t context, GLProfile&& profile,
                   RenderContextFlags contextFlags, GLVersionNumber&& glVersion) noexcept
         : RenderContext(RenderContext::Private(), context, contextFlags, glVersion),
           m_glprofile(std::move(profile)), m_glversion(std::move(glVersion))
@@ -499,7 +499,7 @@ namespace gamp::render::gl {
             return std::make_unique<GLContext>(Private(), context, std::move(profile), contextFlags, GLVersionNumber::create(gl_version_cstr));
         }
         /** Create a new instance of a current. Given profile tag must be one of this class' constant `GL` profiles. */
-        static RenderContextPtr create(const wt::SurfaceRef& surface, gamp::handle_t context, GLProfile&& profile,
+        static RenderContextPtr create(const wt::SurfaceSRef& surface, gamp::handle_t context, GLProfile&& profile,
                                        RenderContextFlags contextFlags, const char* gl_version_cstr) noexcept
         {
             return std::make_unique<GLContext>(Private(), surface, context, std::move(profile), contextFlags, GLVersionNumber::create(gl_version_cstr));
@@ -536,7 +536,7 @@ namespace gamp::render::gl {
             }
             return getInvalid();
         }
-        bool makeCurrent(const gamp::wt::SurfaceRef& s) noexcept override {
+        bool makeCurrent(const gamp::wt::SurfaceSRef& s) noexcept override {
             if( makeCurrentImpl(s, context()) ) {
                 RenderContext::makeCurrent(s); // -> m_surface
                 m_current = this;

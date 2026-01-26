@@ -37,10 +37,10 @@ namespace gamp::render::gl::data {
     class GLArrayDataClient;
 
     template<typename Value_type>
-    using GLArrayDataClientRef = std::shared_ptr<GLArrayDataClient<Value_type>>;
+    using GLArrayDataClientSRef = std::shared_ptr<GLArrayDataClient<Value_type>>;
 
-    typedef GLArrayDataClient<float> GLFloatArrayDataClient;
-    typedef GLArrayDataClientRef<float> GLFloatArrayDataClientRef;
+    typedef GLArrayDataClient<float>     GLFloatArrayDataClient;
+    typedef GLArrayDataClientSRef<float> GLFloatArrayDataClientSRef;
 
     /**
      * Client data buffer for non VBO GLArrayData usage of given template-type Value_type.
@@ -53,10 +53,10 @@ namespace gamp::render::gl::data {
         typedef Value_type value_type;
         typedef GLArrayDataProxy<value_type> proxy_t;
         using typename proxy_t::buffer_t;
-        using typename proxy_t::buffer_ref;
+        using typename proxy_t::buffer_sref;
 
         typedef GLArrayDataClient<value_type> client_t;
-        typedef std::shared_ptr<client_t> client_ref;
+        typedef std::shared_ptr<client_t> client_sref;
 
         /** Default growth factor using the golden ratio 1.618 */
         inline static constexpr float DEFAULT_GROWTH_FACTOR = std::numbers::phi_v<float>;
@@ -71,10 +71,10 @@ namespace gamp::render::gl::data {
          * @param normalized Whether the data shall be normalized
          * @param initialElementCount
          */
-        static client_ref createGLSL(std::string_view name, GLsizei compsPerElement,
+        static client_sref createGLSL(std::string_view name, GLsizei compsPerElement,
                                      bool normalized, size_t initialElementCount)
         {
-            client_ref r = std::make_shared<GLArrayDataClient>(Private(),
+            client_sref r = std::make_shared<GLArrayDataClient>(Private(),
                 name, compsPerElement,
                 normalized, /*stride=*/0, initialElementCount, DEFAULT_GROWTH_FACTOR,
                 /*isVertexAttribute=*/true, std::move(std::make_unique<impl::GLSLArrayHandler<value_type>>()),
@@ -94,10 +94,10 @@ namespace gamp::render::gl::data {
          * @param stride
          * @param buffer the user define data, taking ownership
          */
-        static client_ref createGLSL(std::string_view name, GLsizei compsPerElement,
+        static client_sref createGLSL(std::string_view name, GLsizei compsPerElement,
                                      bool normalized, GLsizei stride, buffer_t&& buffer)
         {
-            client_ref r = std::make_shared<GLArrayDataClient>(Private(),
+            client_sref r = std::make_shared<GLArrayDataClient>(Private(),
                 name, compsPerElement,
                 normalized, stride, std::move(buffer), DEFAULT_GROWTH_FACTOR, 0 /* mappedElementCount */,
                 /*isVertexAttribute=*/true, std::move(std::make_unique<impl::GLSLArrayHandler<value_type>>()),
@@ -112,7 +112,7 @@ namespace gamp::render::gl::data {
             return jau::static_ctti<client_t>();
         }
 
-        const GLArrayDataClientRef<value_type> shared() { return GLArrayData::shared_from_base<GLArrayDataClient>(); }
+        const GLArrayDataClientSRef<value_type> shared() { return GLArrayData::shared_from_base<GLArrayDataClient>(); }
 
         void associate(ShaderState& st, bool enable) override {
             if( enable ) {

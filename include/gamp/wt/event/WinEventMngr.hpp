@@ -42,12 +42,12 @@ namespace gamp::wt::event {
 
     class WindowEventManager {
       private:
-        jau::cow_darray<WindowListenerRef> m_windowListener;
+        jau::cow_darray<WindowListenerSRef> m_windowListener;
 
       public:
-        void dispatch(uint16_t type, const jau::fraction_timespec& when, const WindowRef& source, bool value=true) noexcept {
+        void dispatch(uint16_t type, const jau::fraction_timespec& when, const WindowSRef& source, bool value=true) noexcept {
             WindowEvent evt(type, when, source);
-            for(const WindowListenerRef& kl : *m_windowListener.snapshot()) {
+            for(const WindowListenerSRef& kl : *m_windowListener.snapshot()) {
                 try {
                     switch(evt.type()) {
                         case EVENT_WINDOW_DESTROY_NOTIFY: kl->windowDestroyNotify(evt); break;
@@ -63,10 +63,10 @@ namespace gamp::wt::event {
                 if( evt.consumed() ) { break; }
             }
         }
-        void dispatchResize(const jau::fraction_timespec& when, const WindowRef& source,
+        void dispatchResize(const jau::fraction_timespec& when, const WindowSRef& source,
                             const jau::math::Vec2i& winSize, const jau::math::Vec2i& surfSize) noexcept {
             WindowEvent evt(EVENT_WINDOW_RESIZED, when, source);
-            for(const WindowListenerRef& kl : *m_windowListener.snapshot()) {
+            for(const WindowListenerSRef& kl : *m_windowListener.snapshot()) {
                 try {
                     kl->windowResized(evt, winSize, surfSize); break;
                 } catch (std::exception &err) {
@@ -75,10 +75,10 @@ namespace gamp::wt::event {
                 if( evt.consumed() ) { break; }
             }
         }
-        void dispatchMoved(const jau::fraction_timespec& when, const WindowRef& source,
+        void dispatchMoved(const jau::fraction_timespec& when, const WindowSRef& source,
                            const jau::math::Vec2i& winPos) noexcept {
             WindowEvent evt(EVENT_WINDOW_MOVED, when, source);
-            for(const WindowListenerRef& kl : *m_windowListener.snapshot()) {
+            for(const WindowListenerSRef& kl : *m_windowListener.snapshot()) {
                 try {
                     kl->windowMoved(evt, winPos); break;
                 } catch (std::exception &err) {
@@ -88,11 +88,11 @@ namespace gamp::wt::event {
             }
         }
 
-        void addListener(const WindowListenerRef& l) { m_windowListener.push_back(l); }
+        void addListener(const WindowListenerSRef& l) { m_windowListener.push_back(l); }
 
-        size_t removeListener(const WindowListenerRef& l) {
+        size_t removeListener(const WindowListenerSRef& l) {
             return m_windowListener.erase_matching(l, true,
-                [](const WindowListenerRef& a, const WindowListenerRef& b) noexcept -> bool { return a.get() == b.get(); } );
+                [](const WindowListenerSRef& a, const WindowListenerSRef& b) noexcept -> bool { return a.get() == b.get(); } );
         }
 
         size_t removeAllListener() {

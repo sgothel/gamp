@@ -54,16 +54,16 @@ class RedSquareES2 : public RenderListener {
     bool animating() const noexcept { return m_animating; }
     bool& animating() noexcept { return m_animating; }
 
-    bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
+    bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
         ShaderCode::DEBUG_CODE = true;
 
         jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
         m_tlast = when;
 
         GL& gl = GL::downcast(win->renderContext());
-        ShaderCodeRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
+        ShaderCodeSRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
                 "demos/glsl/bin", "RedSquareShader");
-        ShaderCodeRef fp0 = ShaderCode::create(gl, GL_FRAGMENT_SHADER, "demos/glsl",
+        ShaderCodeSRef fp0 = ShaderCode::create(gl, GL_FRAGMENT_SHADER, "demos/glsl",
                 "demos/glsl/bin", "RedSquareShader");
         if( !vp0 || !fp0 ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
@@ -72,7 +72,7 @@ class RedSquareES2 : public RenderListener {
         }
         vp0->defaultShaderCustomization(gl, true, true);
         fp0->defaultShaderCustomization(gl, true, true);
-        ShaderProgramRef sp0 = ShaderProgram::create();
+        ShaderProgramSRef sp0 = ShaderProgram::create();
         if( !sp0->add(gl, vp0, true) || !sp0->add(gl, fp0, true) ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
             sp0->destroy(gl);
@@ -87,7 +87,7 @@ class RedSquareES2 : public RenderListener {
         pmv.getMv().loadIdentity();
 
         // Allocate Vertex Array
-        GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("gca_Vertex", 3, false, 4, GL_STATIC_DRAW);
+        GLFloatArrayDataServerSRef vertices = GLFloatArrayDataServer::createGLSL("gca_Vertex", 3, false, 4, GL_STATIC_DRAW);
         vertices->reserve(4); // reserve 4 elements (4x3 components) upfront, otherwise growIfNeeded is used
         vertices->put( { -2,  2, 0, // 1st vertex
                           2,  2, 0, // burst transfer, instead of 4x `put3f` for single vertice-value
@@ -97,7 +97,7 @@ class RedSquareES2 : public RenderListener {
         vertices->seal(gl, true);
 
         // Allocate Color Array
-        GLFloatArrayDataServerRef colors = GLFloatArrayDataServer::createGLSL("gca_Color", 4, false, 4, GL_STATIC_DRAW);
+        GLFloatArrayDataServerSRef colors = GLFloatArrayDataServer::createGLSL("gca_Color", 4, false, 4, GL_STATIC_DRAW);
         assert(GL_FLOAT == vertices->compType()); // determined via template type jau::float32_t
         colors->put( { 1, 0, 0, 1,  // uses implied growIfNeeded
                        0, 0, 1, 1,  // burst transfer, instead of 4x `put4f` for single color-value
@@ -115,16 +115,18 @@ class RedSquareES2 : public RenderListener {
             m_st.destroy(gl);
             win->dispose(when);
         }
+        std::cout << "Init:\n";
+        std::cout << m_st.toString(true) << "\n";
         return m_initialized;
     }
 
-    void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", toString().c_str());
         m_st.destroy(GL::downcast(win->renderContext()));
         m_initialized = false;
     }
 
-    void reshape(const WindowRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
+    void reshape(const WindowSRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
         GL& gl = GL::downcast(win->renderContext());
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
@@ -139,11 +141,11 @@ class RedSquareES2 : public RenderListener {
         const float zFar=100.0f;
         pmv.perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
         m_st.useProgram(gl, true);
-        m_st.pushAllUniforms(gl);
+        m_st.send(gl, m_pmvMatUni);
         m_st.useProgram(gl, false);
     }
 
-    void display(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void display(const WindowSRef& win, const jau::fraction_timespec& when) override {
         // jau::fprintf_td(when.to_ms(), stdout, "RL::display: %s, %s\n", toString().c_str(), win->toString().c_str());
         if( !m_initialized ) {
             return;
@@ -162,7 +164,7 @@ class RedSquareES2 : public RenderListener {
         const float ang = jau::adeg_to_rad(t_sum_ms * 360.0f) / 4000.0f;
         pmv.rotateMv(ang, 0, 0, 1);
         pmv.rotateMv(ang, 0, 1, 0);
-        m_st.pushAllUniforms(gl);
+        m_st.send(gl, m_pmvMatUni);
 
         // Draw a square
         ::glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

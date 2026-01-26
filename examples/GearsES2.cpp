@@ -44,14 +44,14 @@ class Example : public GearsES2 {
         void keyPressed(KeyEvent& e, const KeyboardTracker&) override {
             const VKeyCode kc = e.keySym();
             if( e.keySym() == VKeyCode::VK_ESCAPE ) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 if( win ) {
                     win->dispose(e.when());
                 }
             } else if( kc == VKeyCode::VK_PAUSE || kc == VKeyCode::VK_P ) {
                 m_parent.setDoRotate(!m_parent.doRotate());
             } else if( kc == VKeyCode::VK_W ) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
             } else if( VKeyCode::VK_LEFT == kc ) {
                 m_parent.rotEuler().y -= jau::adeg_to_rad(1.0f);
@@ -90,7 +90,7 @@ class Example : public GearsES2 {
             return Mat4f::mapWinToAnyRay((float)pos.x, (float)pos.y, winZ0, winZ1, mPmvi, m_parent.viewport(), ray);
         }
 
-        bool pick(const PointerEvent& e, const WindowRef&, GearsObjectES2& shape) noexcept {
+        bool pick(const PointerEvent& e, const WindowSRef&, GearsObjectES2& shape) noexcept {
             // While being processed fast w/o matrix traversal of shapes,
             // we still need to use the cached PMvi matrix for win->obj ray for accuracy.
             // A win->view ray fails in certain angles in edge cases!
@@ -115,7 +115,7 @@ class Example : public GearsES2 {
             return true;
         }
 
-        bool navigate(const PointerEvent& e, const WindowRef& win, GearsObjectES2& shape) noexcept {
+        bool navigate(const PointerEvent& e, const WindowSRef& win, GearsObjectES2& shape) noexcept {
             jau::math::Vec3f objPos;
             const jau::math::Vec2i& winPos = e.position();
             if( !mapWinToObj(shape, winPos, objPos) ) {
@@ -152,7 +152,7 @@ class Example : public GearsES2 {
         }
         void pointerPressed(PointerEvent& e) override {
             if( e.pointerCount() == 1 ) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 if( !win ) {
                     return;
                 }
@@ -168,7 +168,7 @@ class Example : public GearsES2 {
         }
         void pointerDragged(PointerEvent& e) override {
             if( m_picked ) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 if( !win ) {
                     return;
                 }
@@ -214,7 +214,7 @@ class Example : public GearsES2 {
       m_pl(std::make_shared<MyPointerListener>(*this))
     { }
 
-    bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
+    bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
         if( !GearsES2::init(win, when) ) {
             return false;
         }
@@ -222,7 +222,7 @@ class Example : public GearsES2 {
         win->addPointerListener(m_pl);
         return true;
     }
-    void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
         win->removeKeyListener(m_kl);
         win->removePointerListener(m_pl);
         GearsES2::dispose(win, when);

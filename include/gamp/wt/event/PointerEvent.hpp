@@ -134,7 +134,7 @@ namespace gamp::wt::event {
          * @param rotation Rotation of all axis
          * @param rotationScale Rotation scale
          */
-        PointerEvent(uint16_t type, const jau::fraction_timespec& when, const WindowRef& source, InputModifier mods,
+        PointerEvent(uint16_t type, const jau::fraction_timespec& when, const WindowSRef& source, InputModifier mods,
                      PointerType ptype, uint16_t id,
                      jau::math::Vec2i pos, uint16_t clickCount, InputButton button,
                      jau::math::Vec3f rotation, float rotationScale)
@@ -180,7 +180,7 @@ namespace gamp::wt::event {
          * @param rotation Rotation of all axis
          * @param rotationScale Rotation scale
          */
-        PointerEvent(uint16_t type, const jau::fraction_timespec& when, const WindowRef& source, InputModifier mods,
+        PointerEvent(uint16_t type, const jau::fraction_timespec& when, const WindowSRef& source, InputModifier mods,
                      const std::vector<PointerType>& pointerType, const std::vector<uint16_t>& pointerID,
                      const std::vector<jau::math::Vec2i>& pos, const std::vector<float>& pressure, float maxPressure,
                      uint16_t clickCount, InputButton button,
@@ -207,7 +207,7 @@ namespace gamp::wt::event {
         }
 
         PointerEvent createVariant(uint16_t newEventType) {
-            WindowRef s = source().lock();
+            WindowSRef s = source().lock();
             return PointerEvent(newEventType, when(), s, modifier(), allPointerTypes(), allPointerIDs(),
                                 m_pos, m_pressure, m_maxPressure, m_clickCount, m_button, m_rotation, m_rotationScale);
         }
@@ -501,7 +501,7 @@ namespace gamp::wt::event {
          */
         virtual void pointerWheelMoved(PointerEvent&) { }
     };
-    typedef std::shared_ptr<PointerListener> PointerListenerRef;
+    typedef std::shared_ptr<PointerListener> PointerListenerSRef;
 
     /**@}*/
 

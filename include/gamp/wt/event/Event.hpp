@@ -33,7 +33,7 @@
 
 namespace gamp::wt {
     class Window;
-    typedef std::shared_ptr<Window> WindowRef;
+    typedef std::shared_ptr<Window> WindowSRef;
     typedef std::weak_ptr<Window> WindowWeakPtr;
 }
 
@@ -77,7 +77,7 @@ namespace gamp::wt::event {
         bool m_consumed;
 
       public:
-        WTEvent(uint16_t type, const jau::fraction_timespec& when, const WindowRef& source) noexcept
+        WTEvent(uint16_t type, const jau::fraction_timespec& when, const WindowSRef& source) noexcept
         : m_type(type), m_when(when), m_source(source), m_consumed(false) {}
 
         constexpr uint16_t type() const noexcept { return m_type; }
@@ -204,7 +204,7 @@ namespace gamp::wt::event {
              return InputModifier::none;
          }
 
-        InputEvent(uint16_t type, const jau::fraction_timespec& when, const WindowRef& source, InputModifier mods) noexcept
+        InputEvent(uint16_t type, const jau::fraction_timespec& when, const WindowSRef& source, InputModifier mods) noexcept
         : WTEvent(type, when, source), m_mods(mods) {}
 
         constexpr InputModifier modifier() const noexcept { return m_mods; }

@@ -33,7 +33,7 @@ namespace gamp::render::gl::glsl {
      */
 
     class ShaderCode;
-    typedef std::shared_ptr<ShaderCode> ShaderCodeRef;
+    typedef std::shared_ptr<ShaderCode> ShaderCodeSRef;
 
     /**
      * Convenient shader code class to use and instantiate vertex or fragment programs.
@@ -139,8 +139,8 @@ namespace gamp::render::gl::glsl {
          * @param sources shader sources, organized as <code>source[count][strings-per-shader]</code>.
          * @return successfully created valid ShaderCodeRef or nullptr on failure
          */
-        static ShaderCodeRef create(GLenum type, size_t count, const source_list_t& sources) noexcept {
-            ShaderCodeRef res = std::make_shared<ShaderCode>(Private(), type, count, sources);
+        static ShaderCodeSRef create(GLenum type, size_t count, const source_list_t& sources) noexcept {
+            ShaderCodeSRef res = std::make_shared<ShaderCode>(Private(), type, count, sources);
             if( res->isValid() ) {
                 return res;
             }
@@ -170,8 +170,8 @@ namespace gamp::render::gl::glsl {
          * @param binary binary buffer containing the shader binaries,
          * @return successfully created valid ShaderCodeRef or nullptr on failure
          */
-        static ShaderCodeRef create(GLenum type, size_t count, GLenum binFormat, const bytes_t& binary) noexcept {
-            ShaderCodeRef res = std::make_shared<ShaderCode>(Private(), type, count, binFormat, binary);
+        static ShaderCodeSRef create(GLenum type, size_t count, GLenum binFormat, const bytes_t& binary) noexcept {
+            ShaderCodeSRef res = std::make_shared<ShaderCode>(Private(), type, count, binFormat, binary);
             if( res->isValid() ) {
                 return res;
             }
@@ -192,7 +192,7 @@ namespace gamp::render::gl::glsl {
          *
          * @see #readShaderSource()
          */
-        static ShaderCodeRef create(GL& gl, GLenum type, size_t count, const string_list_t& sourceFiles) noexcept {
+        static ShaderCodeSRef create(GL& gl, GLenum type, size_t count, const string_list_t& sourceFiles) noexcept {
             if(!ShaderUtil::isShaderCompilerAvailable(gl)) {
                 ERR_PRINT("No shader compiler available for %s", gl.toString().c_str());
                 return nullptr;
@@ -216,7 +216,7 @@ namespace gamp::render::gl::glsl {
                 }
             }
             if( ok ) {
-                ShaderCodeRef res = create(type, count, shaderSources);
+                ShaderCodeSRef res = create(type, count, shaderSources);
                 if( res->isValid() ) {
                     return res;
                 }
@@ -447,10 +447,10 @@ namespace gamp::render::gl::glsl {
          *
          * @since 2.3.2
          */
-        static ShaderCodeRef create(GL& gl, GLenum type, size_t count,
+        static ShaderCodeSRef create(GL& gl, GLenum type, size_t count,
                                     stringview_t srcRoot, const string_list_t& srcBasenames, stringview_t srcSuffixOpt,
                                     stringview_t binRoot, stringview_t binBasename, stringview_t binSuffixOpt) noexcept {
-            ShaderCodeRef res;
+            ShaderCodeSRef res;
             string_t srcPathsString;
             string_t binFileName;
 
@@ -567,7 +567,7 @@ namespace gamp::render::gl::glsl {
          * @see ShaderUtil#getShaderBinaryFormats(GL)
          * @see #getBinarySubPath(int)
          */
-        static ShaderCodeRef create(GL& gl, GLenum type, size_t count,
+        static ShaderCodeSRef create(GL& gl, GLenum type, size_t count,
                                     stringview_t srcRoot, const string_list_t& srcBasenames,
                                     stringview_t binRoot, stringview_t binBasename) noexcept {
                 return create(gl, type, count, srcRoot, srcBasenames, "", binRoot, binBasename, "");
@@ -626,7 +626,7 @@ namespace gamp::render::gl::glsl {
          * @see #create(GL2ES2, int, int, Class, String, String[], String, String, String, String, boolean)
          * @since 2.3.2
          */
-        static ShaderCodeRef create(GL& gl, GLenum type, stringview_t srcRoot, stringview_t binRoot,
+        static ShaderCodeSRef create(GL& gl, GLenum type, stringview_t srcRoot, stringview_t binRoot,
                                     stringview_t basename, stringview_t srcSuffixOpt, stringview_t binSuffixOpt) noexcept {
             string_list_t srcBasenames = { string_t(basename) };
             return create(gl, type, 1, srcRoot, srcBasenames, srcSuffixOpt, binRoot, basename, binSuffixOpt);
@@ -678,7 +678,7 @@ namespace gamp::render::gl::glsl {
          *                  for the shader's source and binary code.
          * @return successfully created valid ShaderCodeRef or nullptr on failure
          */
-        static ShaderCodeRef create(GL& gl, GLenum type,
+        static ShaderCodeSRef create(GL& gl, GLenum type,
                                     stringview_t srcRoot, stringview_t binRoot, stringview_t basename) noexcept {
             return create(gl, type, srcRoot, binRoot, basename, "", "");
         }
@@ -1353,8 +1353,8 @@ namespace std
             return a.hash_code();
         }
     };
-    template<> struct hash<gamp::render::gl::glsl::ShaderCodeRef> {
-        std::size_t operator()(gamp::render::gl::glsl::ShaderCodeRef const& a) const noexcept {
+    template<> struct hash<gamp::render::gl::glsl::ShaderCodeSRef> {
+        std::size_t operator()(gamp::render::gl::glsl::ShaderCodeSRef const& a) const noexcept {
             return a->hash_code();
         }
     };

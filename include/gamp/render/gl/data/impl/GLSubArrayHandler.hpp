@@ -46,7 +46,7 @@ namespace gamp::render::gl::data::impl {
          */
         virtual void enableState(const GL &gl, bool enable, ShaderState* st) = 0;
 
-        virtual const GLArrayDataRef& data() = 0;
+        virtual const GLArrayDataSRef& data() = 0;
     };
 
     /**@}*/

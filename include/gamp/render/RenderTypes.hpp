@@ -25,7 +25,7 @@
 
 namespace gamp::wt {
     class Surface;
-    typedef std::shared_ptr<Surface> SurfaceRef;
+    typedef std::shared_ptr<Surface> SurfaceSRef;
 }
 
 namespace gamp::render {

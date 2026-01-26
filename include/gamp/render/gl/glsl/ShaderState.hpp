@@ -24,6 +24,8 @@
 #include <gamp/render/gl/data/GLUniformData.hpp>
 #include <gamp/render/gl/glsl/ShaderProgram.hpp>
 #include <gamp/render/gl/glsl/ShaderUtil.hpp>
+
+#include <functional>
 #include <string_view>
 
 namespace gamp::render::gl::glsl {
@@ -34,6 +36,54 @@ namespace gamp::render::gl::glsl {
      *
      *  @{
      */
+
+    namespace impl {
+        struct DataLocNone {
+        };
+        struct DataLoc {
+          private:
+            stringview_t m_name;
+            GLArrayDataSRef m_data;
+            GLint m_location;
+            bool m_enabled;
+
+          public:
+            constexpr DataLoc(DataLocNone) noexcept
+            : m_name(), m_data(nullptr), m_location(-1), m_enabled(false)
+            { }
+
+            constexpr DataLoc(stringview_t name, GLint loc) noexcept
+            : m_name(name), m_data(nullptr), m_location(loc), m_enabled(false)
+            { }
+
+            DataLoc(const GLArrayDataSRef& d) noexcept
+            : m_name(d->name()), m_data(d), m_location(d->location()), m_enabled(false)
+            { }
+
+            constexpr bool valid() const noexcept { return !m_name.empty(); }
+            constexpr operator bool() const noexcept { return valid(); }
+
+            constexpr stringview_t name() const noexcept { return m_name; }
+            constexpr const GLArrayDataSRef& data() const noexcept { return m_data; }
+            constexpr GLArrayDataSRef& data() noexcept { return m_data; }
+            constexpr GLint location() const noexcept { return m_location; }
+            constexpr bool enabled() const noexcept { return m_enabled; }
+
+            void setData(const GLArrayDataSRef &d) noexcept { if( valid() ) { m_data = d; } }
+            void setLocation(GLint l) noexcept { if( valid() ) { m_location = l; } }
+            void setEnabled(bool v) noexcept {
+                if( valid() ) {
+                    m_enabled = v;
+                }
+            }
+            std::string toString() const noexcept {
+                return "name: "+std::string(m_name)+", valid "+jau::to_string(valid())+
+                       ", loc "+std::to_string(m_location)+", enabled "+jau::to_string(m_enabled)+
+                       ", addr "+jau::to_string(this);
+            }
+        };
+        typedef std::reference_wrapper<DataLoc> DataLocRef;
+    }
 
     /**
      * ShaderState allows to sharing data between shader programs,
@@ -60,7 +110,7 @@ namespace gamp::render::gl::glsl {
         void setVerbose(bool v) noexcept { m_verbose = v; }
 
         /** Returns the attached user object for the given name. */
-        AttachableRef getAttachedObject(std::string_view key) const { return m_attachables.get(key); }
+        AttachableSRef getAttachedObject(std::string_view key) const { return m_attachables.get(key); }
 
         /** Clears the attachment map. */
         void clearAttachedObjects() { m_attachables.clear(); }
@@ -70,17 +120,17 @@ namespace gamp::render::gl::glsl {
          * @param key persistent std::string_view key, must be valid through the lifecycle of this instance
          * @return previously set object or nullptr.
          */
-        AttachableRef attachObject(std::string_view key, const AttachableRef& obj) { return m_attachables.put1(key, obj); }
+        AttachableSRef attachObject(std::string_view key, const AttachableSRef& obj) { return m_attachables.put3(key, obj); }
 
         /** Removes attached object if exists and returns it, otherwise returns nullptr. */
-        AttachableRef detachObject(std::string_view key) { return m_attachables.remove1(key); }
+        AttachableSRef detachObject(std::string_view key) { return m_attachables.remove2(key); }
 
         /**
          * Turns the shader program on or off
          *
-         * @throws GLException if no program is attached, linkage or useProgram fails
+         * @throws RenderException if no program is attached, linkage or useProgram fails
          *
-         * @see com.jogamp.opengl.util.glsl.ShaderState#useProgram(GL, bool)
+         * @see useProgram(GL, bool)
          */
         void useProgram(GL& gl, bool on) {
             if(!m_shaderProgram) { throw RenderException("No program is attached", E_FILE_LINE); }
@@ -133,9 +183,9 @@ namespace gamp::render::gl::glsl {
          *
          * @return true if shader program was attached, otherwise false (already attached)
          *
-         * @throws GLException if program was not linked and linking fails
+         * @throws RenderException if program was not linked and linking fails
          */
-        bool attachShaderProgram(GL& gl, const ShaderProgramRef& prog, bool enable) {
+        bool attachShaderProgram(GL& gl, const ShaderProgramSRef& prog, bool enable) {
             if(debug()) {
                 const size_t curId = m_shaderProgram ? m_shaderProgram->id() : 0;
                 const size_t newId = prog ? prog->id() : 0;
@@ -187,14 +237,14 @@ namespace gamp::render::gl::glsl {
         }
 
         /** Returns the attachedShaderProgram() or nullptr. */
-        const ShaderProgramRef& shaderProgram() const noexcept { return m_shaderProgram; }
+        const ShaderProgramSRef& shaderProgram() const noexcept { return m_shaderProgram; }
 
         /**
          * Calls {@link #release(GL, bool, bool, bool) release(gl, false, true, true)}
          *
-         * @see #releaseAllAttributes
-         * @see #releaseAllUniforms
-         * @see #release(GL, bool, bool, bool)
+         * @see releaseAllAttributes
+         * @see releaseAllUniforms
+         * @see release(GL, bool, bool, bool)
          */
         void destroyShaderProgram(GL& gl) {
             release(gl, false, true, true);
@@ -203,9 +253,9 @@ namespace gamp::render::gl::glsl {
         /**
          * Calls {@link #release(GL, bool, bool, bool) release(gl, true, false, false)}
          *
-         * @see #releaseAllAttributes
-         * @see #releaseAllUniforms
-         * @see #release(GL, bool, bool, bool)
+         * @see releaseAllAttributes
+         * @see releaseAllUniforms
+         * @see release(GL, bool, bool, bool)
          */
         void destroyAllData(GL& gl) {
             release(gl, true, false, false);
@@ -214,9 +264,9 @@ namespace gamp::render::gl::glsl {
         /**
          * Calls {@link #release(GL, bool, bool, bool) release(gl, true, true, true)}
          *
-         * @see #releaseAllAttributes
-         * @see #releaseAllUniforms
-         * @see #release(GL, bool, bool, bool)
+         * @see releaseAllAttributes
+         * @see releaseAllUniforms
+         * @see release(GL, bool, bool, bool)
          */
         void destroy(GL& gl) {
             release(gl, true, true, true);
@@ -226,17 +276,17 @@ namespace gamp::render::gl::glsl {
         /**
          * Calls release(GL, bool, bool, bool) release(gl, false, false, false)}
          *
-         * @see #releaseAllAttributes
-         * @see #releaseAllUniforms
-         * @see #release(GL, bool, bool, bool)
+         * @see releaseAllAttributes
+         * @see releaseAllUniforms
+         * @see release(GL, bool, bool, bool)
          */
         void releaseAllData(GL& gl) {
             release(gl, false, false, false);
         }
 
         /**
-         * @see #glReleaseAllVertexAttributes
-         * @see #glReleaseAllUniforms
+         * @see releaseAllAttributes
+         * @see releaseAllUniforms
          * @see ShaderProgram#release(GL, bool)
          */
         void release(GL& gl, bool destroyBoundAttributes, bool destroyShaderProgram, bool destroyShaderCode) {
@@ -244,7 +294,7 @@ namespace gamp::render::gl::glsl {
                 m_shaderProgram->useProgram(gl, false);
             }
             if(destroyBoundAttributes) {
-                for(GLArrayDataRef& iter : m_managedAttributes) {
+                for(GLArrayDataSRef& iter : m_managedAttributes) {
                     iter->destroy(gl);
                 }
             }
@@ -260,47 +310,76 @@ namespace gamp::render::gl::glsl {
         //
 
         /**
-         * Gets the cached location of a shader attribute.
-         *
-         * @return -1 if there is no such attribute available,
-         *         otherwise >= 0
-         *
-         * @see #bindAttribLocation(GL, int, String)
-         * @see #bindAttribLocation(GL, int, GLArrayData)
-         * @see #getAttribLocation(GL, String)
-         * @see glGetAttribLocation(int, String)
-         */
-        GLint getCachedAttribLocation(const stringview_t name) const {
-            return m_activeAttribLocationMap.get(name);
-        }
-
-        /**
          * Get the previous cached vertex attribute data.
          *
          * @return the GLArrayData object, null if not previously set.
          *
-         * @see #ownAttribute(GLArrayData, bool)
+         * @see ownAttribute(GLArrayData, bool)
          *
-         * @see #glEnableVertexAttribArray
-         * @see #glDisableVertexAttribArray
-         * @see #glVertexAttribPointer
-         * @see #getVertexAttribPointer
-         * @see #glReleaseAllVertexAttributes
-         * @see #glResetAllVertexAttributes
+         * @see enableAttribute
+         * @see disableAttribute
+         * @see vertexAttribPointer
+         * @see releaseAllAttributes
+         * @see resetAllAttributes
          * @see ShaderProgram#glReplaceShader
          */
-        GLArrayDataRef getAttribute(const stringview_t name) const {
-            return m_activeAttribMap.get(name);
+        GLArrayDataSRef getAttribute(const stringview_t name) const {
+            return m_activeAttribMap.get(name).data();
         }
 
-        bool isActive(const GLArrayDataRef& attribute) const {
-            return attribute == m_activeAttribMap.get(attribute->name());
+        /**
+         * Get the previous cached vertex attribute location.
+         *
+         * @return the location or -1 if not previously set.
+         *
+         * @see manage(GLArrayData, boolean)
+         * @see enableVertexAttribArray
+         * @see disableVertexAttribArray
+         * @see vertexAttribPointer
+         * @see releaseAllVertexAttributes
+         * @see resetAllAttributes
+         * @see ShaderProgram#replaceShader(GL2ES2, ShaderCode, ShaderCode, java.io.PrintStream)
+         */
+        GLint getAttributeLocation(stringview_t name) {
+            return m_activeAttribMap.get(name).location();
+        }
+
+      private:
+        impl::DataLoc& updateAttributeCache(const GLArrayDataSRef &data) {
+            return updateDataLoc(m_activeAttribMap.get(data->name()), data, true);
+        }
+        impl::DataLoc& updateDataLoc(impl::DataLoc &dl, const GLArrayDataSRef &data, bool mapNewInstance) {
+            if( dl.valid() ) {
+                if( !dl.data() || dl.data() != data ) {
+                    // no or different previous data object
+                    dl.setData(data);
+                }
+                dl.setLocation(data->location());
+                return dl;
+            } else {
+                // new instance
+                if( mapNewInstance) {
+                    return m_activeAttribMap.put2(data->name(), impl::DataLoc(data));
+                }
+                return m_activeAttribMap.novalue();
+            }
+        }
+        void updateDataLoc(impl::DataLoc &dl, GLint location) {
+            if( dl.data() ) {
+                dl.data()->setLocation(location);
+            }
+            dl.setLocation(location);
+        }
+
+      public:
+        bool isActive(const GLArrayDataSRef& attribute) const {
+            return attribute == m_activeAttribMap.get(attribute->name()).data();
         }
 
         /**
          * Binds or unbinds the {@link GLArrayData} lifecycle to this ShaderState.
          *
-         * If an attribute location is cached (ie {@link #bindAttribLocation(GL, int, String)})
+         * If an attribute location is cached, ie bindAttributeLocation(),
          * it is promoted to the {@link GLArrayData} instance.</p>
          *
          * The attribute will be destroyed with {@link #destroy(GL)}
@@ -310,22 +389,18 @@ namespace gamp::render::gl::glsl {
          *
          * The data will also be {@link GLArrayData#associate(Object, bool) associated} with this ShaderState.
          *
-         * Always issue ownAttribute() before GLArrayDataClient::seal() or GLArrayDataClient::enableBuffer(),
+         * Always issue manage() before GLArrayDataClient::seal() or GLArrayDataClient::enableBuffer(),
          * allowing it to fetch the attribute location via this ShaderState instance to render it functional.
          *
          * @param attribute the {@link GLArrayData} which lifecycle shall be managed
          * @param own true if <i>owning</i> shall be performs, false if <i>disowning</i>.
          *
-         * @see #bindAttribLocation(GL, int, String)
-         * @see #getAttribute(String)
+         * @see bindAttributeLocation
+         * @see getAttribute(String)
          * @see GLArrayData#associate(Object, bool)
          */
-        void manage(const GLArrayDataRef& attr, bool enable = true) {
+        void manage(const GLArrayDataSRef& attr, bool enable = true) {
             if(enable) {
-                const GLint location = getCachedAttribLocation(attr->name());
-                if(0<=location) {
-                    attr->setLocation(location);
-                }
                 m_managedAttributes.push_back(attr);
             } else {
                 std::erase(m_managedAttributes, attr);
@@ -334,28 +409,8 @@ namespace gamp::render::gl::glsl {
         }
 
         /// Returns true if given attribute is managed via manage()
-        bool isManaged(const GLArrayDataRef& attribute) const {
+        bool isManaged(const GLArrayDataSRef& attribute) const {
             return m_managedAttributes.end() != std::find(m_managedAttributes.begin(), m_managedAttributes.end(), attribute); // NOLINT(modernize-use-ranges)
-        }
-
-        /**
-         * Binds a shader attribute to a location.
-         * Multiple names can be bound to one location.
-         * The value will be cached and can be retrieved via {@link #getCachedAttribLocation(String)}
-         * before or after linking.
-         *
-         * @param name Persistent attribute name, must be valid through the lifecycle of this instance
-         * @throws GLException if no program is attached or program is already linked
-         *
-         * @see glBindAttribLocation(int, int, String)
-         * @see #getAttribLocation(GL, String)
-         * @see #getCachedAttribLocation(String)
-         */
-        void bindAttribLocation(const GL&, GLint location, const stringview_t name) {
-            if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
-            if(m_shaderProgram->linked()) throw RenderException("Program is already linked", E_FILE_LINE);
-            m_activeAttribLocationMap.put1(name, location);
-            ::glBindAttribLocation(m_shaderProgram->program(), location, string_t(name).c_str());
         }
 
         /**
@@ -365,99 +420,123 @@ namespace gamp::render::gl::glsl {
          * and {@link #getAttribute(String)}before or after linking.
          * The {@link GLArrayData}'s location will be set as well.
          *
-         * @throws GLException if no program is attached or program is already linked
+         * @throws RenderException if no program is attached or program is already linked
          *
-         * @see glBindAttribLocation(int, int, String)
-         * @see #getAttribLocation(GL, String)
-         * @see #getCachedAttribLocation(String)
-         * @see #getAttribute(String)
+         * @see bindAttributeLocation
+         * @see getAttribute(GL, String)
+         * @see getAttributeLocation(String)
          */
-        void bindAttribLocation(const GL& gl, GLint location, const GLArrayDataRef& attr) {
+        void bindAttributeLocation(const GL& gl, GLint location, const GLArrayDataSRef& attr) {
             if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
             if(m_shaderProgram->linked()) throw RenderException("Program is already linked", E_FILE_LINE);
             const stringview_t name = attr->name();
-            m_activeAttribLocationMap.put1(name, location);
             attr->setLocation(gl, m_shaderProgram->program(), location);
-            m_activeAttribMap.put1(name, attr);
+            updateAttributeCache(attr);
             ::glBindAttribLocation(m_shaderProgram->program(), location, string_t(name).c_str());
         }
 
         /**
-         * Gets the location of a shader attribute with given <code>name</code>.<br>
-         * Uses either the cached value {@link #getCachedAttribLocation(String)} if valid,
-         * or the GLSL queried via {@link glGetAttribLocation(int, String)}.<br>
+         * Validates the location of a shader attribute.
+         *
+         * If the cashed {@link #getAttributeLocation(String)} is invalid,
+         * it is queried via {@link GL2ES2#glGetAttribLocation(int, String)} (GLSL).
+         *
          * The location will be cached.
          *
-         * @param name Persistent attribute name, must be valid through the lifecycle of this instance
          * @return -1 if there is no such attribute available,
          *         otherwise >= 0
-         * @throws GLException if no program is attached
-         * @throws GLException if the program is not linked and no location was cached.
+         * @throws RenderException if no program is attached
+         * @throws RenderException if the program is not linked and no location was cached.
          *
-         * @see #getCachedAttribLocation(String)
-         * @see #bindAttribLocation(GL, int, GLArrayData)
-         * @see #bindAttribLocation(GL, int, String)
-         * @see glGetAttribLocation(int, String)
+         * @see getAttributeLocation(String)
+         * @see bindAttributeLocation
+         * @see GL2ES2#glGetAttribLocation(int, String)
          */
-        GLint getAttribLocation(const GL&, const stringview_t name) {
-            if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
-            GLint location = getCachedAttribLocation(name);
-            if(0>location) {
-                if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
-                location = ::glGetAttribLocation(m_shaderProgram->program(), string_t(name).c_str());
-                if(0<=location) {
-                    m_activeAttribLocationMap.put1(name, location);
-                    if(debug()) {
-                        jau::INFO_PRINT("ShaderState: glGetAttribLocation: %s, loc: %d", string_t(name).c_str(), location);
-                    }
-                } else if(verbose()) {
-                    jau::INFO_PRINT("ShaderState: glGetAttribLocation failed, no location for: %s, loc: %d", string_t(name).c_str(), location);
-                }
-            }
-            return location;
+        GLint resolveLocation(const GL& gl, stringview_t name) {
+            return resolveLocation2(gl, name, false).location();
         }
 
+      private:
+        impl::DataLoc& resolveLocation2(const GL&, stringview_t name, bool forceMap) {
+            impl::DataLoc *dl = &m_activeAttribMap.get(name);
+            GLint location = dl->location();
+            if( 0 > location ) {
+                if (!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
+                if (!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
+                location = ::glGetAttribLocation(m_shaderProgram->program(), string_t(name).c_str());
+                impl::DataLoc dl_new(name, location);
+                if( dl->valid() ) {
+                    updateDataLoc(*dl, location);
+                } else {
+                    dl = &dl_new;
+                }
+                if( 0 <= location ) {
+                    dl = &m_activeAttribMap.put2(name, *dl);
+                    if (debug()) {
+                        jau::INFO_PRINT("ShaderState: resolveLocation(1) failed, no location for: %s", string_t(name).c_str());
+                    }
+                } else {
+                    if( forceMap ) {
+                        dl = &m_activeAttribMap.put2(name, *dl);
+                    } else {
+                        dl = &m_activeAttribMap.novalue();
+                    }
+                    if(verbose()) {
+                        jau::INFO_PRINT("ShaderState: resolveLocation(1) failed, no location for: %s", string_t(name).c_str());
+                    }
+                }
+            }
+            return *dl;
+        }
+
+      public:
         /**
-         * Validates and returns the location of a shader attribute.<br>
-         * Uses either the cached value {@link #getCachedAttribLocation(String)} if valid,
-         * or the GLSL queried via {@link glGetAttribLocation(int, String)}.<br>
-         * The location will be cached and set in the
-         * {@link GLArrayData} object.
+         * Validates the location of a shader attribute.
          *
-         * @return -1 if there is no such attribute available,
-         *         otherwise >= 0
+         * If GLArrayData::location() is invalid, it is queried via GLArrayDara::resolveLocation() (GLSL).
          *
-         * @throws GLException if no program is attached
-         * @throws GLException if the program is not linked and no location was cached.
+         * @return true if successful, otherwise false
          *
-         * @see #getCachedAttribLocation(String)
-         * @see #bindAttribLocation(GL, int, GLArrayData)
-         * @see #bindAttribLocation(GL, int, String)
-         * @see glGetAttribLocation(int, String)
-         * @see #getAttribute(String)
+         * @throws RenderException if no program is attached
+         * @throws RenderException if the program is not linked and no location was cached.
+         *
+         * @see bindAttributeLocation
+         * @see getAttributeLocation(int, String)
+         * @see getAttribute(String)
          */
-        GLint getAttribLocation(const GL& gl, const GLArrayDataRef& data) {
-            if(!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
-            const stringview_t name = data->name();
-            GLint location = getCachedAttribLocation(name);
-            if(0<=location) {
+        bool resolveLocation(const GL& gl, const GLArrayDataSRef& data) {
+            resolveLocation2(gl, data, false);
+            return data->hasLocation();
+        }
+
+      private:
+        impl::DataLoc& resolveLocation2(const GL& gl, const GLArrayDataSRef& data, bool forceMap) {
+            if ( data->hasLocation() ) {
+                return updateAttributeCache(data);
+            }
+            impl::DataLoc *dl = &m_activeAttribMap.get(data->name());
+            GLint location = dl->location();
+            if( 0 <= location ) {
                 data->setLocation(location);
             } else {
-                if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
-                location = data->setLocation(gl, m_shaderProgram->program());
-                if(0<=location) {
-                    m_activeAttribLocationMap.put1(name, location);
-                    if(debug()) {
-                        jau::INFO_PRINT("ShaderState: glGetAttribLocation: %s, loc: %d", string_t(data->name()).c_str(), location);
+                if (!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
+                if (!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
+                if ( data->resolveLocation(gl, m_shaderProgram->program()) ) {
+                    dl = &updateDataLoc(*dl, data, true);
+                    if (debug()) {
+                        jau::INFO_PRINT("ShaderState: resolveLocation(2): %s, loc: %d", string_t(data->name()).c_str(), data->location());
                     }
-                } else if(verbose()) {
-                    jau::INFO_PRINT("ShaderState: glGetAttribLocation failed, no location for: %s", string_t(data->name()).c_str());
+                } else {
+                    dl = &updateDataLoc(*dl, data, forceMap);
+                    if(verbose()) {
+                        jau::INFO_PRINT("ShaderState: resolveLocation(2) failed, no location for: %s", string_t(data->name()).c_str());
+                    }
                 }
             }
-            m_activeAttribMap.put1(data->name(), data);
-            return location;
+            return *dl;
         }
 
+      public:
         //
         // Enabled Vertex Arrays and its data
         //
@@ -465,35 +544,15 @@ namespace gamp::render::gl::glsl {
         /**
          * @return true if the named attribute is enable
          */
-        bool isVertexAttribArrayEnabled(const stringview_t name) const {
-            return m_enabledAttribDataMap.get(name);
+        bool isAttributeEnabled(const stringview_t name) const {
+            return m_activeAttribMap.get(name).enabled();
         }
 
         /**
          * @return true if the {@link GLArrayData} attribute is enable
          */
-        bool isVertexAttribArrayEnabled(const GLArrayDataRef& data) const {
-            return isVertexAttribArrayEnabled(data->name());
-        }
-
-      private:
-        /// @param name Persistent attribute name, must be valid through the lifecycle of this instance
-        bool enableVertexAttribArray(const GL& gl, const stringview_t name, GLint location) {
-            m_enabledAttribDataMap.put1(name, true);
-            if(0>location) {
-                location = getAttribLocation(gl, name);
-                if(0>location) {
-                    if(verbose()) {
-                        jau::INFO_PRINT("ShaderState: glEnableVertexAttribArray failed, no location for: %s", string_t(name).c_str());
-                    }
-                    return false;
-                }
-            }
-            if(debug()) {
-                jau::INFO_PRINT("ShaderState: glEnableVertexAttribArray: %s, loc: %d", string_t(name).c_str(), location);
-            }
-            ::glEnableVertexAttribArray(location);
-            return true;
+        bool isAttributeEnabled(const GLArrayDataSRef& data) const {
+            return isAttributeEnabled(data->name());
         }
 
       public:
@@ -509,15 +568,30 @@ namespace gamp::render::gl::glsl {
          * @param name Persistent attribute name, must be valid through the lifecycle of this instance
          * @return false, if the name is not found, otherwise true
          *
-         * @throws GLException if the program is not linked and no location was cached.
+         * @throws RenderException if the program is not linked and no location was cached.
          *
-         * @see #glEnableVertexAttribArray
-         * @see #glDisableVertexAttribArray
-         * @see #glVertexAttribPointer
-         * @see #getVertexAttribPointer
+         * @see glEnableVertexAttribArray
+         * @see glDisableVertexAttribArray
+         * @see glVertexAttribPointer
+         * @see getVertexAttribPointer
          */
-        bool enableVertexAttribArray(const GL& gl, const stringview_t name) {
-            return enableVertexAttribArray(gl, name, -1);
+        bool enableAttribute(const GL& gl, const stringview_t name) {
+            impl::DataLoc &dl = resolveLocation2(gl, name, true);
+            if( dl.valid() ) {
+                dl.setEnabled(true);
+            }
+            const GLint location = dl.location();
+            if( 0 > location ) {
+                if(verbose()) {
+                    jau::INFO_PRINT("ShaderState: enableAttribute(1) failed, no data for: %s", string_t(name).c_str());
+                }
+                return false;
+            }
+            if (debug()) {
+                jau::INFO_PRINT("ShaderState: enableAttribute(1): %s, loc: %d", string_t(name).c_str(), location);
+            }
+            ::glEnableVertexAttribArray(location);
+            return true;
         }
 
 
@@ -534,45 +608,33 @@ namespace gamp::render::gl::glsl {
          *
          * @return false, if the name is not found, otherwise true
          *
-         * @throws GLException if the program is not linked and no location was cached.
+         * @throws RenderException if the program is not linked and no location was cached.
          *
-         * @see #glEnableVertexAttribArray
-         * @see #glDisableVertexAttribArray
-         * @see #glVertexAttribPointer
-         * @see #getVertexAttribPointer
+         * @see glEnableVertexAttribArray
+         * @see glDisableVertexAttribArray
+         * @see glVertexAttribPointer
+         * @see getVertexAttribPointer
          * @see GLArrayDataEditable#enableBuffer(GL, bool)
          */
-        bool enableVertexAttribArray(const GL& gl, const GLArrayDataRef& data) {
-            if(0 > data->location()) {
-                getAttribLocation(gl, data);
-            } else {
-                // ensure data is the current bound one
-                m_activeAttribMap.put1(data->name(), data);
+        bool enableAttribute(const GL& gl, const GLArrayDataSRef& data) {
+            impl::DataLoc &dl = resolveLocation2(gl, data, true);
+            if( dl.valid() ) {
+                dl.setEnabled(true);
             }
-            return enableVertexAttribArray(gl, data->name(), data->location());
-        }
-
-      private:
-        /// @param name Persistent attribute name, must be valid through the lifecycle of this instance
-        bool disableVertexAttribArray(const GL& gl, const stringview_t name, GLint location) {
-            m_enabledAttribDataMap.put1(name, false);
-            if(0>location) {
-                location = getAttribLocation(gl, name);
-                if(0>location) {
-                    if(verbose()) {
-                        jau::INFO_PRINT("ShaderState: glDisableVertexAttribArray failed, no location for: %s", string_t(name).c_str());
-                    }
-                    return false;
+            const GLint location = dl.location();
+            if( 0 > location ) {
+                if(verbose()) {
+                    jau::INFO_PRINT("ShaderState: enableAttribute(2) failed, no data for: %s", string_t(data->name()).c_str());
                 }
+                return false;
             }
-            if(debug()) {
-                jau::INFO_PRINT("ShaderState: glDisableVertexAttribArray: %s, %d", string_t(name).c_str(), location);
+            if (debug()) {
+                jau::INFO_PRINT("ShaderState: enableAttribute(2): %s, loc: %d", string_t(data->name()).c_str(), location);
             }
-            ::glDisableVertexAttribArray(location);
+            ::glEnableVertexAttribArray(data->location());
             return true;
         }
 
-      public:
         /**
          * Disables a vertex attribute array
          *
@@ -584,16 +646,31 @@ namespace gamp::render::gl::glsl {
          *
          * @return false, if the name is not found, otherwise true
          *
-         * @throws GLException if no program is attached
-         * @throws GLException if the program is not linked and no location was cached.
+         * @throws RenderException if no program is attached
+         * @throws RenderException if the program is not linked and no location was cached.
          *
-         * @see #glEnableVertexAttribArray
-         * @see #glDisableVertexAttribArray
-         * @see #glVertexAttribPointer
-         * @see #getVertexAttribPointer
+         * @see glEnableVertexAttribArray
+         * @see glDisableVertexAttribArray
+         * @see glVertexAttribPointer
+         * @see getVertexAttribPointer
          */
-        bool disableVertexAttribArray(const GL& gl, const string_t& name) {
-            return disableVertexAttribArray(gl, name, -1);
+        bool disableAttribute(const GL& gl, const string_t& name) {
+            impl::DataLoc &dl = resolveLocation2(gl, name, false);
+            if( dl.valid() ) {
+                dl.setEnabled(false);
+            }
+            const GLint location = dl.location();
+            if( 0 > location ) {
+                if(verbose()) {
+                    jau::INFO_PRINT("ShaderState: disableAttribute(1) failed, no data for: %s", string_t(name).c_str());
+                }
+                return false;
+            }
+            if (debug()) {
+                jau::INFO_PRINT("ShaderState: disableAttribute(1): %s, loc: %d", string_t(name).c_str(), location);
+            }
+            ::glDisableVertexAttribArray(location);
+            return true;
         }
 
         /**
@@ -609,19 +686,31 @@ namespace gamp::render::gl::glsl {
          *
          * @return false, if the name is not found, otherwise true
          *
-         * @throws GLException if no program is attached
-         * @throws GLException if the program is not linked and no location was cached.
+         * @throws RenderException if no program is attached
+         * @throws RenderException if the program is not linked and no location was cached.
          *
-         * @see #glEnableVertexAttribArray
-         * @see #glDisableVertexAttribArray
-         * @see #glVertexAttribPointer
-         * @see #getVertexAttribPointer
+         * @see glEnableVertexAttribArray
+         * @see glDisableVertexAttribArray
+         * @see glVertexAttribPointer
+         * @see getVertexAttribPointer
          */
-        bool disableVertexAttribArray(const GL& gl, const GLArrayDataRef& data) {
-            if(0 > data->location()) {
-                getAttribLocation(gl, data);
+        bool disableAttribute(const GL& gl, const GLArrayDataSRef& data) {
+            impl::DataLoc &dl = resolveLocation2(gl, data, false);
+            if( dl.valid() ) {
+                dl.setEnabled(false);
             }
-            return disableVertexAttribArray(gl, data->name(), data->location());
+            const GLint location = dl.location();
+            if( 0 > location ) {
+                if(verbose()) {
+                    jau::INFO_PRINT("ShaderState: disableAttribute(2) failed, no data for: %s", string_t(data->name()).c_str());
+                }
+                return false;
+            }
+            if (debug()) {
+                jau::INFO_PRINT("ShaderState: disableAttribute(2): %s, loc: %d", string_t(data->name()).c_str(), location);
+            }
+            ::glDisableVertexAttribArray(data->location());
+            return true;
         }
 
         /**
@@ -634,28 +723,18 @@ namespace gamp::render::gl::glsl {
          *
          * @return false, if the location could not be determined, otherwise true
          *
-         * @throws GLException if no program is attached
-         * @throws GLException if the program is not linked and no location was cached.
+         * @throws RenderException if no program is attached
+         * @throws RenderException if the program is not linked and no location was cached.
          *
-         * @see #glEnableVertexAttribArray
-         * @see #glDisableVertexAttribArray
-         * @see #glVertexAttribPointer
-         * @see #getVertexAttribPointer
+         * @see glEnableVertexAttribArray
+         * @see glDisableVertexAttribArray
+         * @see glVertexAttribPointer
+         * @see getVertexAttribPointer
          */
-        bool vertexAttribPointer(const GL& gl, const GLArrayDataRef& data) {
-            GLint location = data->location();
-            if(0 > location) {
-                location = getAttribLocation(gl, data);
-            }
-            if(0>location) {
-                if(verbose()) {
-                    jau::INFO_PRINT("ShaderState: glVertexAttribPointer failed, no location for: %s", string_t(data->name()).c_str());
-                }
+        bool vertexAttribPointer(const GL& gl, const GLArrayDataSRef& data) {
+            resolveLocation2(gl, data, true); // always map
+            if(!data->hasLocation()) {
                 return false;
-            }
-            // only pass the data, if the attribute exists in the current shader
-            if(debug()) {
-                jau::INFO_PRINT("ShaderState: glVertexAttribPointer: %s, location %d", string_t(data->name()).c_str(), location);
             }
             data->glVertexAttribPointer(gl);
             return true;
@@ -665,24 +744,29 @@ namespace gamp::render::gl::glsl {
          * Releases all mapped vertex attribute data,
          * disables all enabled attributes and loses all indices
          *
-         * @see #glEnableVertexAttribArray
-         * @see #glDisableVertexAttribArray
-         * @see #glVertexAttribPointer
-         * @see #getVertexAttribPointer
-         * @see #glReleaseAllVertexAttributes
-         * @see #glResetAllVertexAttributes
-         * @see #glResetAllVertexAttributes
+         * @see glEnableVertexAttribArray
+         * @see glDisableVertexAttribArray
+         * @see glVertexAttribPointer
+         * @see getVertexAttribPointer
+         * @see glReleaseAllVertexAttributes
+         * @see glResetAllVertexAttributes
+         * @see glResetAllVertexAttributes
          * @see ShaderProgram#glReplaceShader
          */
         void releaseAllAttributes(const GL& gl) {
-            if(m_shaderProgram) {
-                for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribMap.map()) {
-                    disableVertexAttribArray(gl, n.second);
+            for (std::pair<const std::string_view, impl::DataLoc>& n : m_activeAttribMap.map()) {
+                impl::DataLoc& dl = n.second;
+                const GLArrayDataSRef &data = dl.data();
+                if( data ) {
+                    if ( resolveLocation(gl, data) ) {
+                        ::glDisableVertexAttribArray(data->location());
+                        data->setLocation(-1);
+                    }
+                } else if( dl.location() >= 0 ) {
+                    ::glDisableVertexAttribArray(dl.location());
                 }
             }
             m_activeAttribMap.clear();
-            m_enabledAttribDataMap.clear();
-            m_activeAttribLocationMap.clear();
             m_managedAttributes.clear();
         }
 
@@ -694,51 +778,54 @@ namespace gamp::render::gl::glsl {
          *
          * This method purpose is more for debugging.
          *
-         * @see #glEnableVertexAttribArray
-         * @see #glDisableVertexAttribArray
-         * @see #glVertexAttribPointer
-         * @see #getVertexAttribPointer
-         * @see #glReleaseAllVertexAttributes
-         * @see #glResetAllVertexAttributes
-         * @see #glResetAllVertexAttributes
+         * @see glEnableVertexAttribArray
+         * @see glDisableVertexAttribArray
+         * @see glVertexAttribPointer
+         * @see getVertexAttribPointer
+         * @see glReleaseAllVertexAttributes
+         * @see glResetAllVertexAttributes
+         * @see glResetAllVertexAttributes
          * @see ShaderProgram#glReplaceShader
          */
-        void disableAllVertexAttributeArrays(const GL& gl, bool removeFromState) {
-            for (const std::pair<const std::string_view, bool>& n : m_enabledAttribDataMap.map()) {
-                const stringview_t name = n.first;
-                if(removeFromState) {
-                    m_enabledAttribDataMap.remove1(name);
+        void disableAllAttributes(const GL& gl, bool removeFromState) {
+            for (std::pair<const std::string_view, impl::DataLoc>& n : m_activeAttribMap.map()) {
+                impl::DataLoc& dl = n.second;
+                const GLArrayDataSRef &data = dl.data();
+                if( data ) {
+                    if ( resolveLocation(gl, data) ) {
+                        ::glDisableVertexAttribArray(data->location());
+                    }
+                } else if( dl.location() >= 0 ) {
+                    ::glDisableVertexAttribArray(dl.location());
                 }
-                const GLint index = getAttribLocation(gl, name);
-                if(0<=index) {
-                    ::glDisableVertexAttribArray(index);
+                if( removeFromState ) {
+                    dl.setEnabled(false);
                 }
             }
         }
 
       private:
-        void relocateAttribute(const GL& gl, GLArrayData& attribute) {
-            // get new location .. note: 'activeAttribLocationMap' is cleared before
-            const stringview_t name = attribute.name();
-            const GLint loc = attribute.setLocation(gl, m_shaderProgram->program());
-            if(0<=loc) {
-                m_activeAttribLocationMap.put1(name, loc);
+        bool relocateAttribute(const GL &gl, impl::DataLoc &dl) {
+            GLArrayDataSRef &data = dl.data();
+            if( data->resolveLocation(gl, m_shaderProgram->program()) ) {
                 if(debug()) {
-                    jau::INFO_PRINT("ShaderState: relocateAttribute: %s, loc: %d", attribute.toString().c_str(), loc);
+                    jau::INFO_PRINT("ShaderState: relocateAttribute: %s, loc: %d", std::string(data->name()).c_str(), data->location());
                 }
-                if(isVertexAttribArrayEnabled(name)) {
+                if(dl.enabled()) {
                     // enable attrib, VBO and pass location/data
-                    ::glEnableVertexAttribArray(loc);
+                    ::glEnableVertexAttribArray(data->location());
                 }
 
-                if( attribute.isVBO() ) {
-                    ::glBindBuffer(GL_ARRAY_BUFFER, attribute.vboName());
-                    attribute.glVertexAttribPointer(gl);
+                if( data->isVBO() ) {
+                    ::glBindBuffer(GL_ARRAY_BUFFER, data->vboName());
+                    data->glVertexAttribPointer(gl);
                     ::glBindBuffer(GL_ARRAY_BUFFER, 0);
                 } else {
-                    attribute.glVertexAttribPointer(gl);
+                    data->glVertexAttribPointer(gl);
                 }
+                return true;
             }
+            return false;
         }
 
         /**
@@ -758,41 +845,51 @@ namespace gamp::render::gl::glsl {
          * if tracking am attribute/program dirty flag.
          * </p>
          *
-         * @throws GLException is the program is not linked
+         * @throws RenderException is the program is not linked
          *
-         * @see #attachShaderProgram(GL, ShaderProgram)
+         * @see attachShaderProgram(GL, ShaderProgram)
          */
         void resetAllAttributes(const GL& gl) {
             if(!m_shaderProgram->linked()) throw RenderException("Program is not linked", E_FILE_LINE);
-            m_activeAttribLocationMap.clear();
 
-            for(GLArrayDataRef& ad : m_managedAttributes) {
+            for(GLArrayDataSRef& ad : m_managedAttributes) {
                 ad->setLocation(-1);
             }
-            for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribMap.map()) {
-                relocateAttribute(gl, *n.second);
+            for (std::pair<const std::string_view, impl::DataLoc>& n : m_activeAttribMap.map()) {
+                impl::DataLoc& dl = n.second;
+                GLArrayDataSRef &data = dl.data();
+                if( data ) {
+                    if( relocateAttribute(gl, dl) ) {
+                        dl.setLocation(data->location());
+                    } else {
+                        dl.setLocation(-1);
+                    }
+                } else {
+                    dl.setLocation(-1);
+                }
             }
         }
 
-        void setAttribute(const GL& gl, const GLArrayData& attribute) {
+        void setAttribute(const GL& gl, impl::DataLoc &dl) {
             // get new location ..
-            const stringview_t name = attribute.name();
-            const GLint loc = attribute.location();
+            GLArrayDataSRef &data = dl.data();
+            const stringview_t name = data->name();
+            const GLint loc = data->location();
 
             if(0<=loc) {
-                bindAttribLocation(gl, loc, name);
+                ::glBindAttribLocation(m_shaderProgram->program(), loc, string_t(name).c_str());
 
-                if(isVertexAttribArrayEnabled(name)) {
+                if(dl.enabled()) {
                     // enable attrib, VBO and pass location/data
                     ::glEnableVertexAttribArray(loc);
                 }
 
-                if( attribute.isVBO() ) {
-                    ::glBindBuffer(GL_ARRAY_BUFFER, attribute.vboName());
-                    attribute.glVertexAttribPointer(gl);
+                if( data->isVBO() ) {
+                    ::glBindBuffer(GL_ARRAY_BUFFER, data->vboName());
+                    data->glVertexAttribPointer(gl);
                     ::glBindBuffer(GL_ARRAY_BUFFER, 0);
                 } else {
-                    attribute.glVertexAttribPointer(gl);
+                    data->glVertexAttribPointer(gl);
                 }
             }
         }
@@ -801,8 +898,8 @@ namespace gamp::render::gl::glsl {
          * preserves the attribute location .. (program not linked)
          */
         void setAllAttributes(const GL& gl) {
-            for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribMap.map()) {
-                setAttribute(gl, *n.second);
+            for (std::pair<const std::string_view, impl::DataLoc>& n : m_activeAttribMap.map()) {
+                setAttribute(gl, n.second);
             }
         }
 
@@ -817,16 +914,16 @@ namespace gamp::render::gl::glsl {
          * The uniform will be destroyed with {@link #destroy(GL)}
          * and it's location will be reset when switching shader with {@link #attachShaderProgram(GL, ShaderProgram)}.
          *
-         * The data will not be transfered to the GPU, use pushUniform() additionally.
+         * The data will not be transfered to the GPU, use send() additionally.
          *
          * @param uniform the {@link GLUniformData} which lifecycle shall be managed
          */
         void manage(GLUniformData& data, bool enable=true) {
             if(enable) {
                 m_managedUniforms.push_back(&data);
-                m_activeUniformMap.put1(data.name(), &data);
+                m_activeUniformMap.put(data.name(), &data);
             } else {
-                m_activeUniformMap.remove1(data.name());
+                m_activeUniformMap.remove(data.name());
                 std::erase(m_managedUniforms, &data);
             }
         }
@@ -834,6 +931,28 @@ namespace gamp::render::gl::glsl {
         /// Returns true if given uniform is managed via manage()
         bool isManaged(const GLUniformData& uniform) const {
             return m_managedUniforms.end() != std::find(m_managedUniforms.begin(), m_managedUniforms.end(), &uniform); // NOLINT(modernize-use-ranges)
+        }
+
+        /**
+         * Activate or de-activate a managed {@link GLUniform}.
+         *
+         * @param uniform the {@link GLUniformData} which lifecycle shall be managed
+         * @param active true to activate uniform, otherwise de-activate it.
+         * @return false if !isManaged() or de-activating a non-active uniform, otherwise true.
+         *
+         * @see manage(GLUniformData, boolean)
+         * @see getActiveUniform(String)
+         */
+        bool setActive(GLUniformData &data, bool active) {
+            if( !isManaged(data) ) {
+                return false;
+            }
+            if(active) {
+                m_activeUniformMap.put(data.name(), &data);
+                return true;
+            } else {
+                return m_activeUniformMap.remove(data.name());
+            }
         }
 
         /**
@@ -845,16 +964,13 @@ namespace gamp::render::gl::glsl {
          * must be in use ({@link #useProgram(GL, bool) }) !
          *
          * @return true if successful, otherwise false
+         * @throws RenderException if no program is attached or in use
          * @see ShaderProgram#glReplaceShader
          */
-        bool resolveUniform(const GL &gl, GLUniformData &data) {
+        bool resolveLocation(const GL &gl, GLUniformData &data) {
             if (!data.hasLocation()) {
-                if (!m_shaderProgram->inUse()) {
-                    if (verbose()) {
-                        jau::INFO_PRINT("ShaderState: program not in use: %s", m_shaderProgram->toString().c_str());
-                    }
-                    return false;
-                }
+                if (!m_shaderProgram) throw RenderException("No program is attached", E_FILE_LINE);
+                if (!m_shaderProgram->inUse()) throw RenderException("Program is not in use", E_FILE_LINE);
                 if (!data.resolveLocation(gl, m_shaderProgram->program())) {
                     if (verbose()) {
                         jau::INFO_PRINT("ShaderState: resolving uniform failed, no location/index for: %s", string_t(data.name()).c_str());
@@ -862,71 +978,69 @@ namespace gamp::render::gl::glsl {
                     return false;
                 }
             }
-            m_activeUniformMap.put1(data.name(), &data);
+            m_activeUniformMap.put(data.name(), &data);
             return true;
         }
 
         /**
-         * Set the uniform data, if it's location is valid, i.e. >= 0.
+         * Sends the uniform data to the GPU if it's location is valid, i.e. >= 0.
          *
          * This method uses the {@link GLUniformData}'s location if valid, i.e. >= 0.
-         * If data's location is invalid, it will be retrieved via getUniformLocation(GL, GLUniformData),
+         * If data's location is invalid, it will be retrieved via resolveLocation(GL, GLUniformData),
          * set and cached in this state.
          *
+         * @param gl the current GL context
+         * @param data the uniform to send
+         * @param deactivateUnresolved pass true to de-activate if uniform is unresolved, defaults to false
          * @return false, if the location could not be determined, otherwise true
+         * @throws RenderException if no program is attached or in use
          *
-         * @see #glGetUniformLocation
+         * @see glGetUniformLocation
          * @see glGetUniformLocation
          * @see glUniform
-         * @see #getUniformLocation
+         * @see getUniformLocation
          * @see ShaderProgram#glReplaceShader
          */
-        bool pushUniform(const GL& gl, GLUniformData& data) noexcept {
-            if (!m_shaderProgram->inUse()) {
-                if (verbose()) {
-                    jau::INFO_PRINT("ShaderState: program not in use: %s", m_shaderProgram->toString().c_str());
+        bool send(const GL &gl, GLUniformData &data, bool deactivateUnresolved = false) {
+            if (!data.hasLocation() && !resolveLocation(gl, data)) {
+                if (deactivateUnresolved) {
+                    m_activeUniformMap.remove(data.name());
                 }
                 return false;
             }
-            if (!data.hasLocation() && !resolveUniform(gl, data)) {
-                m_activeUniformMap.remove1(data.name());
-                return false;
-            }
-            data.send(gl);
-            return true;
+            return data.send(gl);
         }
 
-        /** Same as pushUniform(), but for all active uniforms. */
-        bool pushAllUniforms(const GL& gl) noexcept {
-            if(!m_shaderProgram->inUse()) {
-                if (verbose()) {
-                    jau::INFO_PRINT("ShaderState: program not in use: %s", m_shaderProgram->toString().c_str());
+        /**
+         * Send all active uniforms
+         * @param gl the current GL context
+         * @param data the uniform to send
+         * @param deactivateUnresolved pass true to de-activate if uniform is unresolved, defaults to false
+         * @return number of successfully send resolved uniforms
+         */
+        size_t sendAllUniforms(const GL &gl, bool deactivateUnresolved=false) {
+            size_t c = 0;
+            for (const std::pair<const std::string_view, GLUniformData *> &n : m_activeUniformMap.map()) {
+                if( send(gl, *n.second, deactivateUnresolved) ) {
+                    ++c;
                 }
-                return false;
             }
-            for (const std::pair<const std::string_view, GLUniformData*>& n : m_activeUniformMap.map()) {
-                GLUniformData &data = *n.second;
-                if (data.hasLocation() || resolveUniform(gl, data)) {
-                    data.send(gl);
-                }
-            }
-            return true;
+            return c;
         }
 
-        /// Returns true if given uniform data is active, i.e. previously resolved/pushed and used in current program.
+        /// Returns true if given uniform data is active, i.e. previously resolved/send and used in current program.
         bool isActive(const GLUniformData& uniform) const {
             return &uniform == m_activeUniformMap.get(uniform.name());
         }
 
         /**
-         * Get the active uniform data, previously resolved/pushed and used in current program.
+         * Get the active uniform data, previously resolved/send and used in current program.
          *
          * @param name uniform name
          * @return the GLUniformData object, nullptr if not previously resolved.
          */
         GLUniformData* getActiveUniform(const stringview_t name) {
-            GLUniformData** v = m_activeUniformMap.get(name);
-            return v ? *v : nullptr;
+            return m_activeUniformMap.get(name);
         }
 
         /**
@@ -970,9 +1084,9 @@ namespace gamp::render::gl::glsl {
          * if tracking a uniform/program dirty flag.
          * </p>
          *
-         * @throws GLException is the program is not in use
+         * @throws RenderException is the program is not in use
          *
-         * @see #attachShaderProgram(GL, ShaderProgram)
+         * @see attachShaderProgram(GL, ShaderProgram)
          */
         bool resetAllUniforms(const GL& gl) noexcept {
             if (!m_shaderProgram->inUse()) {
@@ -1007,18 +1121,19 @@ namespace gamp::render::gl::glsl {
             } else {
                 sb.append("ShaderProgram: null");
             }
-            sb.append("\n").append(" enabledAttributes [");
-            for (const std::pair<const std::string_view, bool>& n : m_enabledAttribDataMap.map()) {
-                sb.append("\n  ").append(n.first).append(": ").append(n.second?"enabled":"disabled");
-            }
             sb.append("\n ],").append(" activeAttributes [");
-            for (const std::pair<const std::string_view, GLArrayDataRef>& n : m_activeAttribMap.map()) {
-                if( alsoUnlocated || 0 <= n.second->location() ) {
-                    sb.append("\n  ").append(n.second->toString());
+            for (const std::pair<const std::string_view, impl::DataLoc>& n : m_activeAttribMap.map()) {
+                const impl::DataLoc& dl = n.second;
+                sb.append("\n  ").append(n.first)
+                  .append(": enabled ").append(jau::to_string(dl.enabled())).append(", ");
+                if( dl.data() ) {
+                    sb.append(dl.data()->toString());
+                } else {
+                    sb.append("location ").append(jau::to_string(dl.location()));
                 }
             }
             sb.append("\n ],").append(" managedAttributes [");
-            for(const GLArrayDataRef& ad : m_managedAttributes) {
+            for(const GLArrayDataSRef& ad : m_managedAttributes) {
                 sb.append("\n  ").append(ad->toString());
             }
             sb.append("\n ],").append(" activeUniforms [");
@@ -1037,14 +1152,14 @@ namespace gamp::render::gl::glsl {
         }
 
       private:
-        bool             m_verbose            = false;
-        ShaderProgramRef m_shaderProgram      = nullptr;
-        bool             m_resetAllShaderData = false;
+        bool              m_verbose            = false;
+        ShaderProgramSRef m_shaderProgram      = nullptr;
+        bool              m_resetAllShaderData = false;
 
-        jau::StringViewHashMapWrap<bool, bool, false> m_enabledAttribDataMap;
-        jau::StringViewHashMapWrap<GLint, GLint, -1>  m_activeAttribLocationMap;
-        jau::StringViewHashMapWrap<GLArrayDataRef, std::nullptr_t, nullptr> m_activeAttribMap;
-        std::vector<GLArrayDataRef>              m_managedAttributes;
+        typedef std::reference_wrapper<GLUniformData> GLUniformDataRef;
+
+        jau::StringViewHashMapWrap<impl::DataLoc, impl::DataLocNone, impl::DataLocNone{}> m_activeAttribMap;
+        std::vector<GLArrayDataSRef>             m_managedAttributes;
 
         jau::StringViewHashMapWrap<GLUniformData*, std::nullptr_t, nullptr> m_activeUniformMap;
         std::vector<GLUniformData*>              m_managedUniforms;

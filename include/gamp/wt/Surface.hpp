@@ -26,7 +26,7 @@ namespace gamp::wt {
      */
     class Window;
     class Surface;
-    typedef std::shared_ptr<Surface> SurfaceRef;
+    typedef std::shared_ptr<Surface> SurfaceSRef;
 
     using namespace jau::fractions_i64_literals;
     using namespace jau::math;
@@ -59,7 +59,7 @@ namespace gamp::wt {
 
             void disposeImpl(handle_t) noexcept {}
             bool setSwapIntervalImpl(int v) noexcept;
-            static CapabilitiesPtr retrieveCaps(const wt::SurfaceRef& surface) noexcept;
+            static CapabilitiesPtr retrieveCaps(const wt::SurfaceSRef& surface) noexcept;
 
         protected:
             struct Private{ explicit Private() = default; };
@@ -79,7 +79,7 @@ namespace gamp::wt {
             Surface(Private, handle_t surface_handle, const Vec2i& surface_size)
             : m_surface_handle(surface_handle), m_surface_size(surface_size) { }
 
-            static SurfaceRef create(handle_t surface_handle, const Vec2i& surface_size) {
+            static SurfaceSRef create(handle_t surface_handle, const Vec2i& surface_size) {
                 return std::make_shared<Surface>(Private(), surface_handle, surface_size);
             }
 
@@ -110,7 +110,7 @@ namespace gamp::wt {
                 }
             }
 
-            const SurfaceRef shared() { return shared_from_this(); }
+            const SurfaceSRef shared() { return shared_from_this(); }
 
             bool createContext(const gamp::render::RenderProfile& profile, const gamp::render::RenderContextFlags& contextFlags) {
                 gamp::render::RenderContextPtr rc = createContext(shared(), profile, contextFlags, nullptr);
@@ -121,7 +121,7 @@ namespace gamp::wt {
                 }
                 return false;
             }
-            static gamp::render::RenderContextPtr createContext(const wt::SurfaceRef& surface,
+            static gamp::render::RenderContextPtr createContext(const wt::SurfaceSRef& surface,
                                                       const gamp::render::RenderProfile& profile,
                                                       const gamp::render::RenderContextFlags& contextFlags,
                                                       gamp::render::RenderContext* shareWith) noexcept;

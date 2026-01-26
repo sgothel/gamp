@@ -85,10 +85,10 @@ namespace gamp {
         virtual ~Attachable() noexcept = default;
         virtual const jau::type_info& signature() const noexcept { return jau::static_ctti<Attachable>(); }
     };
-    typedef std::shared_ptr<Attachable> AttachableRef;
+    typedef std::shared_ptr<Attachable> AttachableSRef;
 
-    using StringAttachables = jau::StringHashMapWrap<AttachableRef, std::nullptr_t, nullptr>;
-    using StringViewAttachables = jau::StringViewHashMapWrap<AttachableRef, std::nullptr_t, nullptr>;
+    using StringAttachables = jau::StringHashMapWrap<AttachableSRef, std::nullptr_t, nullptr>;
+    using StringViewAttachables = jau::StringViewHashMapWrap<AttachableSRef, std::nullptr_t, nullptr>;
 
     /**@}*/
 }  // namespace gamp

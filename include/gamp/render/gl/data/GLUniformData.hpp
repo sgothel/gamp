@@ -199,7 +199,7 @@ namespace gamp::render::gl::data {
         /// global UBO binding point for glUniformBlockBinding and glBindBufferRange/glBindBufferBase
         GLuint      m_bufferGlobalBinding;
     };
-    typedef std::shared_ptr<GLUniformData> GLUniformDataRef;
+    typedef std::shared_ptr<GLUniformData> GLUniformDataSRef;
 
     inline std::ostream& operator<<(std::ostream& out, const GLUniformData& v) {
         return out << v.toString();
@@ -237,7 +237,7 @@ namespace gamp::render::gl::data {
         constexpr const PMVMat4f& pmv() const noexcept { return m_mat; }
         constexpr PMVMat4f& pmv() noexcept { return m_mat; }
     };
-    typedef std::shared_ptr<GLUniformSyncPMVMat4fExt> GLUniformSyncPMVMat4fExtRef;
+    typedef std::shared_ptr<GLUniformSyncPMVMat4fExt> GLUniformSyncPMVMat4fExtSRef;
 
     class GLUniformSyncPMVMat4f : public GLUniformData {
       public:
@@ -257,7 +257,7 @@ namespace gamp::render::gl::data {
           m_mat(mat), m_data(m_mat.makeSyncPMvReq()) {}
 
         /**
-         * Shared GLUniformSyncPMVMat4f ctor
+         * GLUniformSyncPMVMat4f ctor
          * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
          */
         GLUniformSyncPMVMat4f(stringview_t name, PMVData derivedMatrices = PMVData::none)
@@ -273,7 +273,7 @@ namespace gamp::render::gl::data {
         constexpr const PMVMat4f& pmv() const noexcept { return m_mat; }
         constexpr PMVMat4f& pmv() noexcept { return m_mat; }
     };
-    typedef std::shared_ptr<GLUniformSyncPMVMat4f> GLUniformSyncPMVMat4fRef;
+    typedef std::shared_ptr<GLUniformSyncPMVMat4f> GLUniformSyncPMVMat4fSRef;
 
     class GLUniformSyncMatrices4f : public GLUniformData {
       public:
@@ -301,7 +301,7 @@ namespace gamp::render::gl::data {
 
         constexpr const GLfloat* floats() const noexcept { return m_data.floats(); }
     };
-    typedef std::shared_ptr<GLUniformSyncMatrices4f> GLUniformSyncMatrices4fRef;
+    typedef std::shared_ptr<GLUniformSyncMatrices4f> GLUniformSyncMatrices4fSRef;
 
     class GLUniformVec4f : public GLUniformData {
       private:
@@ -329,7 +329,7 @@ namespace gamp::render::gl::data {
         constexpr const jau::math::Vec4f& vec4f() const noexcept { return m_data; }
         constexpr jau::math::Vec4f& vec4f() noexcept { return m_data; }
     };
-    typedef std::shared_ptr<GLUniformVec4f> GLUniformVec4fRef;
+    typedef std::shared_ptr<GLUniformVec4f> GLUniformVec4fSRef;
 
     class GLUniformVec3f : public GLUniformData {
       private:
@@ -357,7 +357,7 @@ namespace gamp::render::gl::data {
         constexpr const jau::math::Vec3f& vec3f() const noexcept { return m_data; }
         constexpr jau::math::Vec3f& vec3f() noexcept { return m_data; }
     };
-    typedef std::shared_ptr<GLUniformVec3f> GLUniformVec3fRef;
+    typedef std::shared_ptr<GLUniformVec3f> GLUniformVec3fSRef;
 
     class GLUniformVec2f : public GLUniformData {
       private:
@@ -385,7 +385,7 @@ namespace gamp::render::gl::data {
         constexpr const jau::math::Vec2f& vec2f() const noexcept { return m_data; }
         constexpr jau::math::Vec2f& vec2f() noexcept { return m_data; }
     };
-    typedef std::shared_ptr<GLUniformVec2f> GLUniformVec2fRef;
+    typedef std::shared_ptr<GLUniformVec2f> GLUniformVec2fSRef;
 
     class GLUniformScalarF32 : public GLUniformData {
       private:
@@ -413,7 +413,7 @@ namespace gamp::render::gl::data {
         constexpr float scalar() const noexcept { return m_data; }
         constexpr float& scalar() noexcept { return m_data; }
     };
-    typedef std::shared_ptr<GLUniformScalarF32> GLUniformScalarF32Ref;
+    typedef std::shared_ptr<GLUniformScalarF32> GLUniformScalarF32SRef;
 
     template<typename T>
     class GLUniformBuffer : public GLUniformData {

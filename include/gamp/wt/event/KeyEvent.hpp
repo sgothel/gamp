@@ -769,7 +769,7 @@ namespace gamp::wt::event {
             }
         }
       public:
-        KeyEvent(uint16_t type, const jau::fraction_timespec& when, const WindowRef& source, InputModifier globalMods,
+        KeyEvent(uint16_t type, const jau::fraction_timespec& when, const WindowSRef& source, InputModifier globalMods,
                  VKeyCode keySym, InputModifier keySymMods, uint16_t keyChar) noexcept
         : InputEvent(type, when, source, globalMods), m_keySym(keySym), m_keyChar(keyChar), m_flags(0)
         {
@@ -906,7 +906,7 @@ namespace gamp::wt::event {
          */
         virtual void keyReleased(KeyEvent& /*e*/, const KeyboardTracker&) {}
     };
-    typedef std::shared_ptr<KeyListener> KeyListenerRef;
+    typedef std::shared_ptr<KeyListener> KeyListenerSRef;
 
     /**@}*/
 

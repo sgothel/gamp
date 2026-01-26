@@ -46,7 +46,7 @@ using namespace gamp::render::gl::glsl;
 using namespace gamp::render::gl::data;
 
 class GearsObjectES2;
-typedef jau::function<bool(const PointerEvent& e, const WindowRef& win, GearsObjectES2& shape)> PointerShapeAction;
+typedef jau::function<bool(const PointerEvent& e, const WindowSRef& win, GearsObjectES2& shape)> PointerShapeAction;
 
 /**
  * GearsObjectES2
@@ -70,15 +70,15 @@ class GearsObjectES2 {
     jau::math::geom::AABBox3f m_objbox, m_viewbox;
     jau::math::Mat4f  m_PMvi;
 
-    GLFloatArrayDataServerRef m_frontFace;
-    GLFloatArrayDataServerRef m_frontSide;
-    GLFloatArrayDataServerRef m_backFace;
-    GLFloatArrayDataServerRef m_backSide;
-    GLFloatArrayDataServerRef m_outwardFace;
-    GLFloatArrayDataServerRef m_insideRadiusCyl;
+    GLFloatArrayDataServerSRef m_frontFace;
+    GLFloatArrayDataServerSRef m_frontSide;
+    GLFloatArrayDataServerSRef m_backFace;
+    GLFloatArrayDataServerSRef m_backSide;
+    GLFloatArrayDataServerSRef m_outwardFace;
+    GLFloatArrayDataServerSRef m_insideRadiusCyl;
 
   private:
-    GLFloatArrayDataServerRef createInterleaved(bool useMappedBuffers, GLsizei compsPerElem, bool normalized, GLsizei initialSize, GLenum vboUsage) {
+    GLFloatArrayDataServerSRef createInterleaved(bool useMappedBuffers, GLsizei compsPerElem, bool normalized, GLsizei initialSize, GLenum vboUsage) {
         if( useMappedBuffers ) {
             return GLFloatArrayDataServer::createGLSLInterleavedMapped(compsPerElem, normalized, initialSize, vboUsage);
         } else {
@@ -86,12 +86,12 @@ class GearsObjectES2 {
         }
     }
 
-    void addInterleavedVertexAndNormalArrays(GLFloatArrayDataServerRef& array, GLsizei compsPerElem) {
+    void addInterleavedVertexAndNormalArrays(GLFloatArrayDataServerSRef& array, GLsizei compsPerElem) {
         array->addGLSLSubArray("gca_Vertex", compsPerElem, GL_ARRAY_BUFFER);
         array->addGLSLSubArray("gca_Normal", compsPerElem, GL_ARRAY_BUFFER);
     }
 
-    void vert(GLFloatArrayDataServerRef& array, float x, float y, float z, const jau::math::Vec3f& n) {
+    void vert(GLFloatArrayDataServerSRef& array, float x, float y, float z, const jau::math::Vec3f& n) {
         array->put3f(x, y, z);
         array->put3f(n);
         m_objbox.resize(x, y, z);
@@ -102,7 +102,7 @@ class GearsObjectES2 {
         cos[cosIdx] = std::cos(x);
     }
 
-    void initGL(GL& gl, GLFloatArrayDataServerRef& array) {
+    void initGL(GL& gl, GLFloatArrayDataServerSRef& array) {
         array->enableBuffer(gl, true);
         array->enableBuffer(gl, false);
     }
@@ -116,7 +116,7 @@ class GearsObjectES2 {
         m_insideRadiusCyl->associate(st, true);
     }
 
-    void draw(GL& gl, GLFloatArrayDataServerRef& array, int mode) {
+    void draw(GL& gl, GLFloatArrayDataServerSRef& array, int mode) {
         if( 0 < array->vboName() ) {
             array->enableBuffer(gl, true);
             ::glDrawArrays(mode, 0, array->elemCount());
@@ -333,7 +333,7 @@ class GearsObjectES2 {
         pmv.translateMv(m_tx);
         m_objbox.transform(pmv.getMv(), m_viewbox); // view-box for findPick
         pmv.rotateMv(ang_rad, 0.0f, 0.0f, 1.0f);
-        m_st.pushUniform(gl, m_pmvMatUni);  // automatic sync + update of Mvi + Mvit
+        m_st.send(gl, m_pmvMatUni);  // automatic sync + update of Mvi + Mvit
 
         if( m_picked ) {
             const float gray = ( m_gearColor.x + m_gearColor.y + m_gearColor.z ) / 3.0f;
@@ -341,7 +341,7 @@ class GearsObjectES2 {
         } else {
             m_colorUniform.vec4f() = m_gearColor;
         }
-        m_st.pushUniform(gl, m_colorUniform);
+        m_st.send(gl, m_colorUniform);
 
         draw(gl, m_frontFace, GL_TRIANGLE_STRIP);
         draw(gl, m_frontSide, GL_TRIANGLES);
@@ -353,7 +353,7 @@ class GearsObjectES2 {
         m_PMvi = pmv.getPMvi();
         pmv.popMv();
     }
-    bool dispatchAction(const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
+    bool dispatchAction(const PointerShapeAction& action, const PointerEvent& e, const WindowSRef& win) {
         PMVMat4f& pmv = m_pmvMatUni.pmv();
         pmv.pushMv();
         pmv.translateMv(m_tx);
@@ -452,14 +452,14 @@ class GearsES2 : public RenderListener {
         m_zViewDist = zViewDist;
     }
 
-    bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
+    bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
         GL& gl = GL::downcast(win->renderContext());
 
         // m_st.setVerbose(true);
-        ShaderCodeRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
+        ShaderCodeSRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
                                                "demos/glsl/bin", "SingleLight0");
-        ShaderCodeRef fp0 = ShaderCode::create(gl, GL_FRAGMENT_SHADER, "demos/glsl",
+        ShaderCodeSRef fp0 = ShaderCode::create(gl, GL_FRAGMENT_SHADER, "demos/glsl",
                                                "demos/glsl/bin", "SingleLight0");
         if( !vp0 || !fp0 ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
@@ -468,7 +468,7 @@ class GearsES2 : public RenderListener {
         }
         vp0->defaultShaderCustomization(gl);
         fp0->defaultShaderCustomization(gl);
-        ShaderProgramRef sp0 = ShaderProgram::create();
+        ShaderProgramSRef sp0 = ShaderProgram::create();
         if( !sp0->add(gl, vp0, true) || !sp0->add(gl, fp0, true) ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
             sp0->destroy(gl);
@@ -481,7 +481,9 @@ class GearsES2 : public RenderListener {
         m_gear2.initGL(gl);
         m_gear3.initGL(gl);
 
-        m_st.pushAllUniforms(gl);
+        m_st.send(gl, m_pmvMatUni);
+        m_st.send(gl, m_colorUni);
+        m_st.send(gl, m_lightU);
 
         if( m_clearBuffers ) {
             ::glClearColor(m_clearColor.x, m_clearColor.y, m_clearColor.z, m_clearColor.w);
@@ -497,7 +499,7 @@ class GearsES2 : public RenderListener {
         return m_initialized;
     }
 
-    void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", toString().c_str());
         jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", win->toString().c_str());
         GL& gl = GL::downcast(win->renderContext());
@@ -509,14 +511,14 @@ class GearsES2 : public RenderListener {
         m_initialized = false;
     }
 
-    void reshape(const WindowRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
+    void reshape(const WindowSRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n\t%s\n", toString().c_str(), m_pmvMatUni.pmv().toString().c_str());
         if( !m_initialized ) { return; }
         m_viewport = viewport;
         reshapeImpl(win, viewport, float(viewport.width()), float(viewport.height()), when);
     }
 
-    void reshapeImpl(const WindowRef& win, const jau::math::Recti& viewport, float imageWidth, float imageHeight, const jau::fraction_timespec& when) {
+    void reshapeImpl(const WindowSRef& win, const jau::math::Recti& viewport, float imageWidth, float imageHeight, const jau::fraction_timespec& when) {
         const bool msaa = false;  // gl.getContext().getGLDrawable().getChosenGLCapabilities().getSampleBuffers();
         jau::fprintf_td(when.to_ms(), stdout, "GearsES2.reshape %s of %fx%f, swapInterval %d, msaa %d, tileRendererInUse %d\n",
                         viewport.toString().c_str(), imageWidth, imageHeight, m_swapInterval, msaa, false);
@@ -562,7 +564,7 @@ class GearsES2 : public RenderListener {
         pmv.translateMv(0.0f, 0.0f, -m_zViewDist);
 
         m_st.useProgram(gl, true);
-        m_st.pushUniform(gl, m_pmvMatUni);
+        m_st.send(gl, m_pmvMatUni);
         m_st.useProgram(gl, false);
     }
 
@@ -574,7 +576,7 @@ class GearsES2 : public RenderListener {
         }
     }
 
-    void display(const WindowRef& win, const jau::fraction_timespec&) override {
+    void display(const WindowSRef& win, const jau::fraction_timespec&) override {
         if( !m_initialized ) { return; }
 
         // Turn the gears' teeth
@@ -608,7 +610,7 @@ class GearsES2 : public RenderListener {
     }
 
     /// Fast loop through all shapes using PointerShapeAction w/o matrix traversal using view-coordinates
-    GearsObjectES2* findPick(const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
+    GearsObjectES2* findPick(const PointerShapeAction& action, const PointerEvent& e, const WindowSRef& win) {
         // Sort gears in z-axis descending order
         std::array<GearsObjectES2*, 3> gears{ &m_gear1, &m_gear2, &m_gear3 };
         struct ZDescending {
@@ -628,7 +630,7 @@ class GearsES2 : public RenderListener {
         return res;
     }
     /// Dispatch PointerShapeAction to given shape w/ matrix traversal
-    bool dispatchForShape(GearsObjectES2& shape, const PointerShapeAction& action, const PointerEvent& e, const WindowRef& win) {
+    bool dispatchForShape(GearsObjectES2& shape, const PointerShapeAction& action, const PointerEvent& e, const WindowSRef& win) {
         PMVMat4f& pmv = m_pmvMatUni.pmv();
         pmv.pushMv();
         pmv.translateMv(m_pan);
@@ -643,7 +645,7 @@ class GearsES2 : public RenderListener {
     }
 
   private:
-    void setGLStates(const WindowRef& win, bool enable) {
+    void setGLStates(const WindowSRef& win, bool enable) {
         // Culling only possible if we do not flip the projection matrix
         const bool useCullFace = !(m_flipVerticalInGLOrientation && win->isBLOriented());
         if( enable ) {

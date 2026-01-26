@@ -54,7 +54,7 @@ class Shape {
     ShaderState& m_st;
     GLUniformSyncPMVMat4f& m_pmvMatUni;
     GLUniformVec4f& m_staticColor;
-    GLFloatArrayDataServerRef m_array;
+    GLFloatArrayDataServerSRef m_array;
 
   public:
     Shape(GLenum type, ShaderState &st, GLUniformSyncPMVMat4f &pmvMatU, GLUniformVec4f &color)
@@ -72,8 +72,8 @@ class Shape {
     constexpr const Quat4f& rotation() const noexcept { return m_rotation; }
     constexpr Quat4f& rotation() noexcept { return m_rotation; }
 
-    constexpr const GLFloatArrayDataServerRef& vertices() const noexcept { return m_array; }
-    constexpr GLFloatArrayDataServerRef& vertices() noexcept { return m_array; }
+    constexpr const GLFloatArrayDataServerSRef& vertices() const noexcept { return m_array; }
+    constexpr GLFloatArrayDataServerSRef& vertices() noexcept { return m_array; }
 
     const Vec4f& color() const noexcept { return m_color; }
     void setColor(const Vec4f& c) noexcept { m_color=c; }
@@ -86,10 +86,10 @@ class Shape {
         m_pmvMatUni.pmv().translateMv(m_position); // identity + translate, scaled
         // Rotate shape around its scaled center
         m_pmvMatUni.pmv().rotateMv(m_rotation);
-        m_st.pushUniform(gl, m_pmvMatUni); // automatic sync + update of Mvi + Mvit
+        m_st.send(gl, m_pmvMatUni); // automatic sync + update of Mvi + Mvit
 
         m_staticColor.vec4f() = m_color;
-        m_st.pushUniform(gl, m_staticColor);
+        m_st.send(gl, m_staticColor);
 
         m_array->enableBuffer(gl, true);
         ::glDrawArrays(m_type, 0, m_array->elemCount());
@@ -143,14 +143,14 @@ class Primitives01 : public RenderListener {
     bool animating() const noexcept { return m_animating; }
     bool& animating() noexcept { return m_animating; }
 
-    bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
+    bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
         m_tlast = when;
 
         GL& gl = GL::downcast(win->renderContext());
-        ShaderCodeRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
+        ShaderCodeSRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
                 "demos/glsl/bin", "SingleLight0");
-        ShaderCodeRef fp0 = ShaderCode::create(gl, GL_FRAGMENT_SHADER, "demos/glsl",
+        ShaderCodeSRef fp0 = ShaderCode::create(gl, GL_FRAGMENT_SHADER, "demos/glsl",
                 "demos/glsl/bin", "SingleLight0");
         if( !vp0 || !fp0 ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
@@ -165,7 +165,7 @@ class Primitives01 : public RenderListener {
             fp0->insertShaderSource(0, fsPos, custom);
         }
 
-        ShaderProgramRef sp0 = ShaderProgram::create();
+        ShaderProgramSRef sp0 = ShaderProgram::create();
         if( !sp0->add(gl, vp0, true) || !sp0->add(gl, fp0, true) ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
             sp0->destroy(gl);
@@ -178,12 +178,10 @@ class Primitives01 : public RenderListener {
         m_pmvMatUni.pmv().getP().loadIdentity();
         m_pmvMatUni.pmv().getMv().loadIdentity();
 
-        m_st.pushAllUniforms(gl);
-
         const Vec3f frontNormal(0, 0,  1);
         const Vec3f backNormal(0, 0, -1);
         {
-            GLFloatArrayDataServerRef& v = m_shape1.vertices();
+            GLFloatArrayDataServerSRef& v = m_shape1.vertices();
             float dz = 0.001f;
             v->put3f(-half,  half, dz); v->put3f(frontNormal);
             v->put3f( half,  half, dz); v->put3f(frontNormal);
@@ -212,7 +210,7 @@ class Primitives01 : public RenderListener {
             float ctrX = 0, ctrY = 0;
             float ctrZ = 0;
 
-            GLFloatArrayDataServerRef& v = m_shape2.vertices();
+            GLFloatArrayDataServerSRef& v = m_shape2.vertices();
             // CCW
             v->put3f(ctrX-lwh, ctrY+thh, ctrZ); v->put3f(frontNormal); // vert: left-top
             v->put3f(ctrX-lwh, ctrY+lwh, ctrZ); v->put3f(frontNormal);
@@ -244,13 +242,13 @@ class Primitives01 : public RenderListener {
         return m_initialized;
     }
 
-    void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", toString().c_str());
         m_st.destroy(GL::downcast(win->renderContext()));
         m_initialized = false;
     }
 
-    void reshape(const WindowRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
+    void reshape(const WindowSRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
         GL& gl = GL::downcast(win->renderContext());
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
@@ -261,11 +259,11 @@ class Primitives01 : public RenderListener {
         const float aspect2 = ( (float) m_viewport.width() / (float) m_viewport.height() ) / aspect;
         m_pmvMatUni.pmv().perspectiveP(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
         m_st.useProgram(gl, true);
-        m_st.pushUniform(gl, m_pmvMatUni); // automatic sync + update of Mvi + Mvit
+        m_st.send(gl, m_pmvMatUni); // automatic sync + update of Mvi + Mvit
         m_st.useProgram(gl, true);
     }
 
-    void display(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void display(const WindowSRef& win, const jau::fraction_timespec& when) override {
         // jau::fprintf_td(when.to_ms(), stdout, "RL::display: %s, %s\n", toString().c_str(), win->toString().c_str());
         if( !m_initialized ) {
             return;
@@ -310,14 +308,14 @@ class Example : public Primitives01 {
         void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
             jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
             if( e.keySym() == VKeyCode::VK_ESCAPE ) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 if( win ) {
                     win->dispose(e.when());
                 }
             } else if( e.keySym() == VKeyCode::VK_PAUSE || e.keySym() == VKeyCode::VK_P ) {
                 m_parent.animating() = !m_parent.animating();
             } else if( e.keySym() == VKeyCode::VK_W ) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
             }
         }
@@ -333,14 +331,14 @@ class Example : public Primitives01 {
     : Primitives01(),
       m_kl(std::make_shared<MyKeyListener>(*this)) {  }
 
-    bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
+    bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
         if( !Primitives01::init(win, when) ) {
             return false;
         }
         win->addKeyListener(m_kl);
         return true;
     }
-    void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
         win->removeKeyListener(m_kl);
         Primitives01::dispose(win, when);
     }

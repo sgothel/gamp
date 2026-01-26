@@ -45,7 +45,7 @@ struct GLLaunchProps {
     gamp::render::RenderContextFlags contextFlags;
 };
 
-int launch(std::string_view sfile, GLLaunchProps props, const RenderListenerRef& demo, int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
+inline int launch(std::string_view sfile, GLLaunchProps props, const RenderListenerSRef& demo, int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
     std::string demo_name = std::string("Gamp ").append(jau::io::fs::basename(sfile, {{".cpp"}, {".hpp"}}));
     std::cout << "Launching: " << demo_name << ", source " << sfile << " , exe " << argv[0] << "\n";
@@ -81,7 +81,7 @@ int launch(std::string_view sfile, GLLaunchProps props, const RenderListenerRef&
         return 1;
     }
     const bool verbose = is_set(props.contextFlags, gamp::render::RenderContextFlags::verbose);
-    WindowRef main_win = Window::create(demo_name.c_str(), win_width, win_height, verbose);
+    WindowSRef main_win = Window::create(demo_name.c_str(), win_width, win_height, verbose);
     if( !main_win ) {
         printf("Exit (1): Failed to create window.\n");
         return 1;

@@ -36,7 +36,7 @@ namespace gamp::render::gl::data {
      */
 
     class GLArrayData;
-    typedef std::shared_ptr<GLArrayData> GLArrayDataRef;
+    typedef std::shared_ptr<GLArrayData> GLArrayDataSRef;
 
     /**
      * Interface for a generic data buffer to be used for OpenGL arrays.
@@ -45,7 +45,7 @@ namespace gamp::render::gl::data {
       public:
         virtual ~GLArrayData() noexcept = default;
 
-        const GLArrayDataRef shared() { return shared_from_this(); }
+        const GLArrayDataSRef shared() { return shared_from_this(); }
 
         /**
          * Implementation and type dependent object association.
@@ -111,6 +111,9 @@ namespace gamp::render::gl::data {
          */
         constexpr GLint location() const noexcept { return m_location; }
 
+        /// Returns true is location() is >= 0, otherwise false
+        constexpr bool hasLocation() const noexcept { return 0<=m_location; }
+
         /**
          * Sets the given location of the shader attribute
          *
@@ -128,9 +131,9 @@ namespace gamp::render::gl::data {
          * @return &ge;0 denotes a valid attribute location as found and used in the given shader program.
          *         &lt;0 denotes an invalid location, i.e. not found or used in the given shader program.
          */
-        GLint setLocation(const GL&, GLuint program) noexcept {
-            m_location = glGetAttribLocation(program, std::string(m_name).c_str());
-            return m_location;
+        bool resolveLocation(const GL&, GLuint program) noexcept {
+            m_location = ::glGetAttribLocation(program, std::string(m_name).c_str());
+            return 0<=m_location;
         }
 
         /**
@@ -142,27 +145,11 @@ namespace gamp::render::gl::data {
          * @param program
          * @return the given location
          */
-        GLint setLocation(const GL&, GLuint program, GLint loc) noexcept {
+        void setLocation(const GL&, GLuint program, GLint loc) noexcept {
             m_location = loc;
-            glBindAttribLocation(program, loc, std::string(m_name).c_str());
-            return loc;
+            ::glBindAttribLocation(program, loc, std::string(m_name).c_str());
         }
 
-
-        /**
-         * Retrieves the location of the shader attribute from the linked shader program.
-         * <p>
-         * No validation is performed within the implementation.
-         * </p>
-         * @param gl
-         * @param program
-         * @return &ge;0 denotes a valid attribute location as found and used in the given shader program.
-         *         &lt;0 denotes an invalid location, i.e. not found or used in the given shader program.
-         */
-        GLint retrieveLocation(const GL&, GLuint program) noexcept {
-            m_location = glGetAttribLocation(program, std::string(m_name).c_str());
-            return m_location;
-        }
 
         /**
          * Binds the location of the shader attribute to the given location for the unlinked shader program.
@@ -175,7 +162,7 @@ namespace gamp::render::gl::data {
         void bindLocation(const GL&, GLuint program, GLint location) noexcept {
             if( 0 <= location ) {
                 m_location = location;
-                glBindAttribLocation(program, location, std::string(m_name).c_str());
+                ::glBindAttribLocation(program, location, std::string(m_name).c_str());
             }
         }
 

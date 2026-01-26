@@ -33,7 +33,7 @@ namespace gamp::wt {
      */
 
     class Window;
-    typedef std::shared_ptr<Window> WindowRef;
+    typedef std::shared_ptr<Window> WindowSRef;
 
     using namespace jau::fractions_i64_literals;
     using namespace jau::math;
@@ -75,7 +75,7 @@ namespace gamp::wt {
         *
         * @return true if initialization is completed, false if not initialized yet and init shall be called again
         */
-        virtual bool init(const WindowRef&, const jau::fraction_timespec& /*when*/) = 0;
+        virtual bool init(const WindowSRef&, const jau::fraction_timespec& /*when*/) = 0;
 
         /** Notifies the listener to perform the release of all renderer
             resources per context, such as memory buffers and shader programs.<P>
@@ -85,12 +85,12 @@ namespace gamp::wt {
 
             Note that this event does not imply the end of life of the application.
         */
-        virtual void dispose(const WindowRef&, const jau::fraction_timespec& /*when*/) = 0;
+        virtual void dispose(const WindowSRef&, const jau::fraction_timespec& /*when*/) = 0;
 
         /** Called by the drawable to initiate rendering by the
             client. After all listener have been notified of a
             display event, the drawable will swap its buffers. */
-        virtual void display(const WindowRef&, const jau::fraction_timespec& /*when*/) = 0;
+        virtual void display(const WindowSRef&, const jau::fraction_timespec& /*when*/) = 0;
 
         /**
          * Called by the drawable during the first repaint after the
@@ -105,7 +105,7 @@ namespace gamp::wt {
          * @param drawable the triggering {@link GLAutoDrawable}
          * @param viewport the viewport in pixel units
          */
-        virtual void reshape(const WindowRef&, const jau::math::Recti& /*viewport*/, const jau::fraction_timespec& /*when*/) = 0;
+        virtual void reshape(const WindowSRef&, const jau::math::Recti& /*viewport*/, const jau::fraction_timespec& /*when*/) = 0;
 
         virtual std::string toStringImpl() const noexcept { return "none"; }
 
@@ -119,7 +119,7 @@ namespace gamp::wt {
         }
 
     };
-    typedef std::shared_ptr<RenderListener> RenderListenerRef;
+    typedef std::shared_ptr<RenderListener> RenderListenerSRef;
 
     enum class WindowState : uint16_t {
         none       = 0,
@@ -142,7 +142,7 @@ namespace gamp::wt {
             KeyEventManager     m_key_evt_mngr;
             PointerEventManager m_ptr_evt_mngr;
 
-            jau::cow_darray<RenderListenerRef> m_render_listener;
+            jau::cow_darray<RenderListenerSRef> m_render_listener;
 
         protected:
             struct Private{ explicit Private() = default; };
@@ -162,7 +162,7 @@ namespace gamp::wt {
                 void windowResized(WindowEvent&, const Vec2i& winSize, const jau::math::Vec2i& surfSize) override {
                     m_self->setWindowSize(winSize);
                     m_self->setSurfaceSize(surfSize);
-                    for(const RenderListenerRef& l : *m_self->m_render_listener.snapshot()) {
+                    for(const RenderListenerSRef& l : *m_self->m_render_listener.snapshot()) {
                         write(l->pendingActions(), RenderActions::reshape, true);
                     }
                 }
@@ -173,7 +173,7 @@ namespace gamp::wt {
                 void windowRepaint(WindowEvent&) override {}
                 void windowVisibilityChanged(WindowEvent&, bool visible) override { m_self->setVisible(visible); }
             };
-            WindowListenerRef m_win_selflistener;
+            WindowListenerSRef m_win_selflistener;
 
             void disposeImpl(handle_t handle) noexcept;
 
@@ -196,8 +196,8 @@ namespace gamp::wt {
              * Must be driven by a native toolkit implementation, see create() below.
              * @see create()
              */
-            static WindowRef wrapNative(handle_t window_handle, const Recti& window_bounds,
-                                        handle_t surface_handle, const Vec2i& surface_size) {
+            static WindowSRef wrapNative(handle_t window_handle, const Recti& window_bounds,
+                                         handle_t surface_handle, const Vec2i& surface_size) {
                 return std::make_shared<Window>(Private(), window_handle, window_bounds,
                                                 surface_handle, surface_size);
             }
@@ -207,7 +207,7 @@ namespace gamp::wt {
              *
              * @see wrapNative()
              */
-            static WindowRef create(const char* title, int wwidth, int wheight, bool verbose=false);
+            static WindowSRef create(const char* title, int wwidth, int wheight, bool verbose=false);
 
             Window(const Window&) = delete;
             void operator=(const Window&) = delete;
@@ -223,8 +223,8 @@ namespace gamp::wt {
              * Returns this instance, which <i>is-a</i> {@link Surface}.
              * </p>
              */
-            SurfaceRef nativeSurface() { return shared_from_this(); }
-            const WindowRef shared() { return Surface::shared_from_base<Window>(); }
+            SurfaceSRef nativeSurface() { return shared_from_this(); }
+            const WindowSRef shared() { return Surface::shared_from_base<Window>(); }
 
             /** Returns the window top-lect position of client-area in window units */
             constexpr Vec2i windowPos() const noexcept { return m_window_bounds.getPosition(); }
@@ -291,8 +291,8 @@ namespace gamp::wt {
                 }
             }
 
-            void addWindowListener(const WindowListenerRef& l) { m_win_evt_mngr.addListener(l); }
-            size_t removeWindowListener(const WindowListenerRef& l) { return m_win_evt_mngr.removeListener(l); }
+            void addWindowListener(const WindowListenerSRef& l) { m_win_evt_mngr.addListener(l); }
+            size_t removeWindowListener(const WindowListenerSRef& l) { return m_win_evt_mngr.removeListener(l); }
             size_t removeAllWindowListener() { size_t r = m_win_evt_mngr.removeAllListener() - 1; addWindowListener(m_win_selflistener); return r; }
             size_t windowListenerCount() const noexcept { return m_win_evt_mngr.listenerCount() - 1; }
 
@@ -307,8 +307,8 @@ namespace gamp::wt {
             void notifyKeyReleased(const jau::fraction_timespec& when, VKeyCode keySym, InputModifier keySymMods, uint16_t keyChar) noexcept {
                 m_key_evt_mngr.dispatchReleased(when, shared(), keySym, keySymMods, keyChar);
             }
-            void addKeyListener(const KeyListenerRef& l) { m_key_evt_mngr.addListener(l); }
-            size_t removeKeyListener(const KeyListenerRef& l) { return m_key_evt_mngr.removeListener(l); }
+            void addKeyListener(const KeyListenerSRef& l) { m_key_evt_mngr.addListener(l); }
+            size_t removeKeyListener(const KeyListenerSRef& l) { return m_key_evt_mngr.removeListener(l); }
             size_t removeAllKeyListener() { return m_key_evt_mngr.removeAllListener(); }
             size_t keyListenerCount() const noexcept { return m_key_evt_mngr.listenerCount(); }
 
@@ -321,8 +321,8 @@ namespace gamp::wt {
                                jau::math::Vec3f rotation, float rotationScale) noexcept {
                 m_ptr_evt_mngr.dispatch(type, when, shared(), keyTracker().modifier(), ptype, id, pos, clickCount, button, rotation, rotationScale);
             }
-            void addPointerListener(const PointerListenerRef& l) { m_ptr_evt_mngr.addListener(l); }
-            size_t removePointerListener(const PointerListenerRef& l) { return m_ptr_evt_mngr.removeListener(l); }
+            void addPointerListener(const PointerListenerSRef& l) { m_ptr_evt_mngr.addListener(l); }
+            size_t removePointerListener(const PointerListenerSRef& l) { return m_ptr_evt_mngr.removeListener(l); }
             size_t removeAllPointerListener() { return m_ptr_evt_mngr.removeAllListener(); }
             size_t pointerListenerCount() const noexcept { return m_ptr_evt_mngr.listenerCount(); }
 
@@ -330,11 +330,11 @@ namespace gamp::wt {
             //
             //
 
-            void addRenderListener(const RenderListenerRef& l) { m_render_listener.push_back(l); }
+            void addRenderListener(const RenderListenerSRef& l) { m_render_listener.push_back(l); }
 
-            size_t removeRenderListener(const RenderListenerRef& l) {
+            size_t removeRenderListener(const RenderListenerSRef& l) {
                 return m_render_listener.erase_matching(l, true,
-                    [](const RenderListenerRef& a, const RenderListenerRef& b) noexcept -> bool { return a.get() == b.get(); } );
+                    [](const RenderListenerSRef& a, const RenderListenerSRef& b) noexcept -> bool { return a.get() == b.get(); } );
             }
 
             size_t removeAllRenderListener() {

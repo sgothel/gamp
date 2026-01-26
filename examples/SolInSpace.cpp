@@ -41,12 +41,13 @@ using namespace gamp::render::gl::glsl;
 using namespace gamp::render::gl::data;
 
 class Example : public RenderListener {
-  public:
-    static constexpr float radius = 1.00f;
-    static constexpr float coreRadius = 0.20f;
-    static constexpr float coreRadiusHalfStep = 0.015f;
-
   private:
+    constexpr static float defaultCoreRadius = 0.20f;
+    constexpr static float animCoreRadiusHalfStep = 0.015f;
+
+    Vec3f m_center = Vec3f(0, 0, 0);
+    float m_radius = 1.00f;
+
     ShaderState m_st;
     Recti m_viewport;
     GLUniformSyncPMVMat4f m_pmvMatUni;
@@ -65,12 +66,12 @@ class Example : public RenderListener {
         void keyPressed(KeyEvent &e, const KeyboardTracker &kt) override {
             jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
             if (e.keySym() == VKeyCode::VK_ESCAPE) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 if (win) {
                     win->dispose(e.when());
                 }
             } else if (e.keySym() == VKeyCode::VK_W) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
             }
         }
@@ -91,7 +92,7 @@ class Example : public RenderListener {
       m_uHaloColor("gcu_solInSpace.haloColor", Vec4f(1.0f, 0.99f, 0.0f, 1.0f)),
       m_uBackColor("gcu_solInSpace.bgColor", Vec4f(0.0f, 0.0f, 0.0f, 0.5f)),
       m_uWinRadius("gcu_solInSpace.winRadius", 0),
-      m_uCoreRadius("gcu_solInSpace.coreRadius", coreRadius),
+      m_uCoreRadius("gcu_solInSpace.coreRadius", defaultCoreRadius),
       m_uSeam("gcu_solInSpace.seam", 0.005f),
       m_initialized(false),
       m_kl(std::make_shared<MyKeyListener>(*this))
@@ -113,16 +114,18 @@ class Example : public RenderListener {
     PMVMat4f& pmv() noexcept { return m_pmvMatUni.pmv(); }
     const PMVMat4f& pmv() const noexcept { return m_pmvMatUni.pmv(); }
 
-    bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
+    bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
         ShaderCode::DEBUG_CODE = true;
+        // ShaderState::VERBOSE_STATE = true;
+        // ShaderState::DEBUG_STATE = true;
 
         jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
         m_tlast = when;
 
         GL& gl = GL::downcast(win->renderContext());
-        ShaderCodeRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
+        ShaderCodeSRef vp0 = ShaderCode::create(gl, GL_VERTEX_SHADER, "demos/glsl",
                 "demos/glsl/bin", "default");
-        ShaderCodeRef fp0 = ShaderCode::create(gl, GL_FRAGMENT_SHADER, "demos/glsl",
+        ShaderCodeSRef fp0 = ShaderCode::create(gl, GL_FRAGMENT_SHADER, "demos/glsl",
                 "demos/glsl/bin", "SolInSpace");
         if( !vp0 || !fp0 ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
@@ -131,7 +134,7 @@ class Example : public RenderListener {
         }
         vp0->defaultShaderCustomization(gl);
         fp0->defaultShaderCustomization(gl);
-        ShaderProgramRef sp0 = ShaderProgram::create();
+        ShaderProgramSRef sp0 = ShaderProgram::create();
         if( !sp0->add(gl, vp0, true) || !sp0->add(gl, fp0, true) ) {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
             sp0->destroy(gl);
@@ -151,38 +154,56 @@ class Example : public RenderListener {
         m_uBackColor.vec4f().set(0.0f, 0.0f, 0.0f, 0.5f);
 
         // Allocate Vertex Array
-        GLFloatArrayDataServerRef vertices = GLFloatArrayDataServer::createGLSL("gca_Vertex", 3, false, 4, GL_STATIC_DRAW);
+        GLFloatArrayDataServerSRef vertices = GLFloatArrayDataServer::createGLSL("gca_Vertex", 3, false, 4, GL_STATIC_DRAW);
         vertices->reserve(4); // reserve 4 elements (4x3 components) upfront, otherwise growIfNeeded is used
-        vertices->put( { -radius,  radius, 0, // 1st vertex
-                          radius,  radius, 0, // burst transfer, instead of 4x `put3f` for single vertice-value
-                         -radius, -radius, 0,
-                          radius, -radius, 0 } );
+        vertices->put( { -m_radius,  m_radius, 0, // 1st vertex
+                          m_radius,  m_radius, 0, // burst transfer, instead of 4x `put3f` for single vertice-value
+                         -m_radius, -m_radius, 0,
+                          m_radius, -m_radius, 0 } );
         m_st.manage(vertices);
         vertices->seal(gl, true);
 
         ::glEnable(GL_DEPTH_TEST);
 
         m_initialized = sp0->inUse();
-        if( !m_initialized ) {
+        if( m_initialized ) {
+            m_st.sendAllUniforms(gl);
+        } else {
             jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
             m_st.destroy(gl);
             win->dispose(when);
         }
-        m_st.pushAllUniforms(gl);
         m_st.useProgram(gl, false);
 
         win->addKeyListener(m_kl);
         return m_initialized;
     }
 
-    void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void updateSolSpatial(GL &gl) {
+        PMVMat4f &pmv = m_pmvMatUni.pmv();
+        {
+            Vec3f winCenter;
+            pmv.mapObjToWin(m_center, m_viewport, winCenter);
+            m_uWinCenter.vec4f().set(winCenter, 1.0f);
+
+            const Vec3f p1 = m_center + Vec3f(m_radius,0,0);
+            Vec3f winP1;
+            pmv.mapObjToWin(p1, m_viewport, winP1);
+            Vec3f winR = winP1 - winCenter;
+            m_uWinRadius.scalar() = winR.length();
+        }
+        m_st.send(gl, m_uWinCenter);
+        m_st.send(gl, m_uWinRadius);
+    }
+
+    void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
         jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", toString().c_str());
         win->removeKeyListener(m_kl);
         m_st.destroy(GL::downcast(win->renderContext()));
         m_initialized = false;
     }
 
-    void reshape(const WindowRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
+    void reshape(const WindowSRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
         GL& gl = GL::downcast(win->renderContext());
         jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
         m_viewport = viewport;
@@ -194,15 +215,18 @@ class Example : public RenderListener {
         const float zFar=100.0f;
         PMVMat4f &pmv = m_pmvMatUni.pmv();
         pmv.setToPerspective(jau::adeg_to_rad(fovy_deg), aspect2, zNear, zFar);
+        pmv.getMv().loadIdentity();
+        pmv.translateMv(0, 0, -3);
 
         m_st.useProgram(gl, true);
-        m_st.pushUniform(gl, m_pmvMatUni);
+        m_st.send(gl, m_pmvMatUni);
+        updateSolSpatial(gl);
         m_st.useProgram(gl, false);
     }
 
     bool m_once = true;
 
-    void display(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void display(const WindowSRef& win, const jau::fraction_timespec& when) override {
         // jau::fprintf_td(when.to_ms(), stdout, "RL::display: %s, %s\n", toString().c_str(), win->toString().c_str());
         if( !m_initialized ) {
             return;
@@ -211,27 +235,12 @@ class Example : public RenderListener {
         ::glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_st.useProgram(gl, true);
-        PMVMat4f &pmv = m_pmvMatUni.pmv();
-        pmv.getMv().loadIdentity();
-        pmv.translateMv(0, 0, -3);
-
         {
-            const Vec3f center(0,0,0);
-            Vec3f winCenter;
-            pmv.mapObjToWin(center, m_viewport, winCenter);
-            m_uWinCenter.vec4f().set(winCenter, 1.0f);
-
-            const Vec3f p1 = center + Vec3f(radius,0,0);
-            Vec3f winP1;
-            pmv.mapObjToWin(p1, m_viewport, winP1);
-            Vec3f winR = winP1 - winCenter;
-            m_uWinRadius.scalar() = winR.length();
-
             static float dr_dir = 1;
-            constexpr float dr_min = coreRadius * 1.0f-coreRadiusHalfStep;
-            constexpr float dr_max = coreRadius * 1.0f+coreRadiusHalfStep;
+            constexpr float dr_min = defaultCoreRadius * 1.0f-animCoreRadiusHalfStep;
+            constexpr float dr_max = defaultCoreRadius * 1.0f+animCoreRadiusHalfStep;
             const float dt = (float)(when - m_tlast).to_ms() / 1000.0f;
-            float r = m_uCoreRadius.scalar() + coreRadiusHalfStep * dt * dr_dir;
+            float r = m_uCoreRadius.scalar() + animCoreRadiusHalfStep * dt * dr_dir;
             if( r <= dr_min ) {
                 dr_dir = 1;
                 r = dr_min;
@@ -241,10 +250,7 @@ class Example : public RenderListener {
             }
             m_uCoreRadius.scalar() = r;
         }
-        m_st.pushUniform(gl, m_pmvMatUni);
-        m_st.pushUniform(gl, m_uWinCenter);
-        m_st.pushUniform(gl, m_uWinRadius);
-        m_st.pushUniform(gl, m_uCoreRadius);
+        m_st.send(gl, m_uCoreRadius);
         if( m_once ) {
             std::cerr << "XXX: " << m_st << "\n";
             m_once = false;

@@ -43,14 +43,14 @@ class Example : public RedSquareES2 {
         void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
             jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
             if( e.keySym() == VKeyCode::VK_ESCAPE ) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 if( win ) {
                     win->dispose(e.when());
                 }
             } else if( e.keySym() == VKeyCode::VK_PAUSE || e.keySym() == VKeyCode::VK_P ) {
                 m_parent.animating() = !m_parent.animating();
             } else if( e.keySym() == VKeyCode::VK_W ) {
-                WindowRef win = e.source().lock();
+                WindowSRef win = e.source().lock();
                 jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
             }
         }
@@ -66,14 +66,14 @@ class Example : public RedSquareES2 {
     : RedSquareES2(),
       m_kl(std::make_shared<MyKeyListener>(*this)) {  }
 
-    bool init(const WindowRef& win, const jau::fraction_timespec& when) override {
+    bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
         if( !RedSquareES2::init(win, when) ) {
             return false;
         }
         win->addKeyListener(m_kl);
         return true;
     }
-    void dispose(const WindowRef& win, const jau::fraction_timespec& when) override {
+    void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
         win->removeKeyListener(m_kl);
         RedSquareES2::dispose(win, when);
     }

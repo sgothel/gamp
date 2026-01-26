@@ -31,10 +31,10 @@ namespace gamp::render::gl::data::impl {
      */
     class GLSLSubArrayHandler : public GLSubArrayHandler {
       private:
-        GLArrayDataRef m_ad;
+        GLArrayDataSRef m_ad;
 
       public:
-        GLSLSubArrayHandler(GLArrayDataRef & ad)
+        GLSLSubArrayHandler(GLArrayDataSRef & ad)
         : m_ad(ad) { }
 
         void syncData(const GL& gl, ShaderState* st) override {
@@ -65,9 +65,9 @@ namespace gamp::render::gl::data::impl {
         void enableState(const GL& gl, bool enable, ShaderState* st) override {
             if( st ) {
                 if( enable ) {
-                    st->enableVertexAttribArray(gl, m_ad);
+                    st->enableAttribute(gl, m_ad);
                 } else {
-                    st->disableVertexAttribArray(gl, m_ad);
+                    st->disableAttribute(gl, m_ad);
                 }
             } else {
                 GLint location = m_ad->location();
@@ -81,7 +81,7 @@ namespace gamp::render::gl::data::impl {
             }
         }
 
-        const GLArrayDataRef& data() override { return m_ad; }
+        const GLArrayDataSRef& data() override { return m_ad; }
     };
     /**@}*/
 }  // namespace gamp::render::gl::data::impl

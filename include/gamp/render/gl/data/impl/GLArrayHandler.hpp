@@ -22,7 +22,7 @@ namespace gamp::render::gl::data {
     class GLArrayDataClient;
 
     template<typename Value_type>
-    using GLArrayDataClientRef = std::shared_ptr<GLArrayDataClient<Value_type>>;
+    using GLArrayDataClientSRef = std::shared_ptr<GLArrayDataClient<Value_type>>;
 }
 
 namespace gamp::render::gl::data::impl {
@@ -43,13 +43,13 @@ namespace gamp::render::gl::data::impl {
     template <typename Value_type>
     class GLArrayHandler {
       protected:
-        GLArrayDataClientRef<Value_type> m_ad = nullptr;
+        GLArrayDataClientSRef<Value_type> m_ad = nullptr;
 
       public:
         GLArrayHandler() noexcept = default;
         virtual ~GLArrayHandler() noexcept = default;
 
-        void set(const GLArrayDataClientRef<Value_type>& ad) noexcept { m_ad = ad; }
+        void set(const GLArrayDataClientSRef<Value_type>& ad) noexcept { m_ad = ad; }
 
         /**
          * if <code>bind</code> is true and the data uses VBO,

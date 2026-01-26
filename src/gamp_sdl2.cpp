@@ -60,7 +60,7 @@ static jau::fraction_timespec gpu_swap_t1;
 
 /** Ratio pixel-size / window-size, a DPI derivative per axis*/
 static jau::math::Vec2f devicePixelRatio(1, 1);
-static jau::cow_darray<WindowRef> window_list;
+static jau::cow_darray<WindowSRef> window_list;
 
 //
 /**
@@ -192,7 +192,7 @@ bool gamp::init_gfx_subsystem(const char* exe_path) {
     return true;
 }
 
-WindowRef Window::create(const char* title, int wwidth, int wheight, bool verbose) {
+WindowSRef Window::create(const char* title, int wwidth, int wheight, bool verbose) {
     if( !is_gfx_subsystem_initialized() ) {
         return nullptr;
     }
@@ -233,7 +233,7 @@ WindowRef Window::create(const char* title, int wwidth, int wheight, bool verbos
     gpu_frame_count = 0;
     jau::math::Recti window_bounds(64, 64, wwidth, wheight);
     jau::math::Vec2i surface_size(wwidth, wheight);
-    WindowRef res = Window::wrapNative((handle_t)sdl_win, window_bounds, (handle_t)sdl_win, surface_size);
+    WindowSRef res = Window::wrapNative((handle_t)sdl_win, window_bounds, (handle_t)sdl_win, surface_size);
 
     on_window_resized(res.get(), wwidth, wheight, getElapsedMonotonicTime(), verbose);
 
@@ -252,7 +252,7 @@ void Window::disposeImpl(handle_t handle) noexcept {
     SDL_DestroyWindow(sdl_win);
     try {
         window_list.erase_if(false,
-           [this](const WindowRef& a) noexcept -> bool { return a.get() == this; } );
+           [this](const WindowSRef& a) noexcept -> bool { return a.get() == this; } );
     } catch (std::exception &err) {
         ERR_PRINT("gamp::handle_events: Caught exception %s", err.what());
     }
@@ -266,7 +266,7 @@ extern "C" {
 
     EMSCRIPTEN_KEEPALIVE void set_window_size(int ww, int wh, float devPixelRatioX, float devPixelRatioY) noexcept {
         jau::math::Vec2i win_size;
-        WindowRef win = window_list.size() > 0 ? (*window_list.snapshot())[0] : nullptr;
+        WindowSRef win = window_list.size() > 0 ? (*window_list.snapshot())[0] : nullptr;
         const bool initial_call = !is_gfx_subsystem_initialized() || !win || !win->isValid();
         if( win && win->isValid() ) {
             win_size = win->windowSize();
@@ -307,7 +307,7 @@ static bool gamp_show_fps = true;
 
 static void gamp_swap_gpu_buffer(bool swapAllWindows, int fps) noexcept {
     if( swapAllWindows ) {
-        for(const WindowRef& win : *window_list.snapshot() ) {
+        for(const WindowSRef& win : *window_list.snapshot() ) {
             if( win ) {
                 win->surfaceSwap();
             }
@@ -544,7 +544,7 @@ static Window* getWin(Uint32 id) {
         return nullptr;
     }
     handle_t h = reinterpret_cast<handle_t>(p);
-    for(const WindowRef& win : *window_list.snapshot() ) {
+    for(const WindowSRef& win : *window_list.snapshot() ) {
         if( win && win->windowHandle() == h ) {
             return win.get();
         }
@@ -567,7 +567,7 @@ size_t gamp::handle_events() noexcept {
         switch (sdl_event.type) {
             case SDL_QUIT: {
                 printf("App Close Requested\n");
-                for(const WindowRef& win : *window_list.snapshot() ) {
+                for(const WindowSRef& win : *window_list.snapshot() ) {
                     win->dispose(when);
                 }
                 window_list.clear(true);
@@ -692,17 +692,17 @@ size_t gamp::handle_events() noexcept {
 bool gamp::mainloop_default() noexcept { // NOLINT
     gamp::handle_events();
 
-    jau::cow_darray<WindowRef>::storage_ref_t window_refs = window_list.snapshot();
-    jau::cow_darray<WindowRef>::storage_t windows = *window_refs;
+    jau::cow_darray<WindowSRef>::storage_ref_t window_refs = window_list.snapshot();
+    jau::cow_darray<WindowSRef>::storage_t windows = *window_refs;
     if( windows.size() == 0 ) {
         return false;
     }
-    for(const WindowRef& win : windows ) {
+    for(const WindowSRef& win : windows ) {
         if( win && win->isValid() ) {
             win->display(getElapsedMonotonicTime());
         }
     }
-    for(const WindowRef& win : windows ) {
+    for(const WindowSRef& win : windows ) {
         if( win ) {
             win->surfaceSwap();
         }
@@ -723,7 +723,7 @@ void gamp::mainloop_void() noexcept {
 
 void gamp::shutdown() noexcept {
     const jau::fraction_timespec when = getElapsedMonotonicTime();
-    for(const WindowRef& win : *window_list.snapshot() ) {
+    for(const WindowSRef& win : *window_list.snapshot() ) {
         win->dispose(when);
         // win->notifyWindowEvent(EVENT_WINDOW_DESTROY_NOTIFY, when);
     }
