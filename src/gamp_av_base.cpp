@@ -36,7 +36,7 @@ static std::regex jau_PTS_time_regex() noexcept {
                       );
 
     } catch (...) {
-        ERR_PRINT2("Caught unknown exception");
+        jau_ERR_PRINT2("Caught unknown exception");
         return std::regex();
     }
 }
@@ -81,7 +81,7 @@ uint32_t gamp::av::PTS::toMillis(const std::string& timestr) noexcept {
                    ns / ns_per_ms;
         }
     } catch (...) {
-        ERR_PRINT2("Caught unknown exception parsing %s", timestr.c_str());
+        jau_ERR_PRINT2("Caught unknown exception parsing %s", timestr.c_str());
     }
     return 0; // error
 }

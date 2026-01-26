@@ -254,7 +254,7 @@ void Window::disposeImpl(handle_t handle) noexcept {
         window_list.erase_if(false,
            [this](const WindowSRef& a) noexcept -> bool { return a.get() == this; } );
     } catch (std::exception &err) {
-        ERR_PRINT("gamp::handle_events: Caught exception %s", err.what());
+        jau_ERR_PRINT("gamp::handle_events: Caught exception %s", err.what());
     }
     printf("Window Closed: Remaining windows: %zu\n", (size_t)window_list.size());
 }
@@ -323,14 +323,14 @@ static void gamp_swap_gpu_buffer(bool swapAllWindows, int fps) noexcept {
         gpu_frame_count = 0;
         gpu_fps_resync = false;
         if( gamp_show_fps ) {
-            jau::PLAIN_PRINT(true, "fps resync");
+            jau_PLAIN_PRINT(true, "fps resync");
         }
     } else if( td >= fps_avg_period ) {
         gpu_fdur = td / gpu_frame_count;
         gpu_fps = float(double(gpu_frame_count) / ( double(td.to_us()) / 1000000.0 ));
         gpu_fps_t0 = gpu_swap_t0;
         if( gamp_show_fps ) {
-            jau::PLAIN_PRINT(true, "fps(5s): fps %3.3f, dur %" PRIu64 "ms over %" PRIi64 " frames", gpu_fps, gpu_fdur.to_ms(), gpu_frame_count);
+            jau_PLAIN_PRINT(true, "fps(5s): fps %3.3f, dur %" PRIu64 "ms over %" PRIi64 " frames", gpu_fps, gpu_fdur.to_ms(), gpu_frame_count);
         }
         gpu_frame_count = 0;
     }

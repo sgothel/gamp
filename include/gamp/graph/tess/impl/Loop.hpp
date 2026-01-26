@@ -84,7 +84,7 @@ namespace gamp::graph::tess::impl {
             const GraphVertexRefList& vertices = outline->graphPoints();
 
             if(vertices.size() < 3) {
-                ERR_PRINT2("Graph: Loop.initFromPolyline: GraphOutline's vertices < 3: %zu", vertices.size() );
+                jau_ERR_PRINT2("Graph: Loop.initFromPolyline: GraphOutline's vertices < 3: %zu", vertices.size() );
                 if( Graph::DEBUG_MODE ) {
                     jau::print_backtrace(true /* skip_anon_frames */, 4 /* max_frames */);
                 }
@@ -95,7 +95,7 @@ namespace gamp::graph::tess::impl {
 
             if( HEdge::BOUNDARY == edgeType && Winding::CCW != winding ) {
                 // XXXX
-                WARN_PRINT("Loop.init.xx.01: BOUNDARY req CCW but has %s", to_string(winding).c_str());
+                jau_WARN_PRINT("Loop.init.xx.01: BOUNDARY req CCW but has %s", to_string(winding).c_str());
                 // outline->outline().print(stderr);
                 jau::print_backtrace(true /* skip_anon_frames */, 4 /* max_frames */);
             }
@@ -114,15 +114,15 @@ namespace gamp::graph::tess::impl {
                     if(lastEdge) {
                         lastEdge->setNext(edge);
                         edge->setPrev(lastEdge);
-                        // jau::PLAIN_PRINT(true, "initFromPoly[%zu]: lastEdge %s -> new edge %s", index, lastEdge->toString().c_str(), edge->toString().c_str());
+                        // jau_PLAIN_PRINT(true, "initFromPoly[%zu]: lastEdge %s -> new edge %s", index, lastEdge->toString().c_str(), edge->toString().c_str());
                     } else {
                         firstEdge = edge;
-                        // jau::PLAIN_PRINT(true, "initFromPoly[%zu]: new firstEdge %s", index, firstEdge->toString().c_str());
+                        // jau_PLAIN_PRINT(true, "initFromPoly[%zu]: new firstEdge %s", index, firstEdge->toString().c_str());
                     }
                     if(index == maxVertIdx ) {
                         edge->setNext(firstEdge);
                         firstEdge->setPrev(edge);
-                        // jau::PLAIN_PRINT(true, "initFromPoly[%zu]: last new edge %s -> firstEdge %s", index, edge->toString().c_str(), firstEdge->toString().c_str());
+                        // jau_PLAIN_PRINT(true, "initFromPoly[%zu]: last new edge %s -> firstEdge %s", index, edge->toString().c_str(), firstEdge->toString().c_str());
                     }
                     lastEdge = edge;
                 }
@@ -148,7 +148,7 @@ namespace gamp::graph::tess::impl {
                     lastEdge = edge;
                 }
             }
-            // jau::PLAIN_PRINT(true, "initFromPoly.XX: firstEdge %s", firstEdge->toString().c_str());
+            // jau_PLAIN_PRINT(true, "initFromPoly.XX: firstEdge %s", firstEdge->toString().c_str());
             // firstEdge->printChain();
             return firstEdge;
         }
@@ -337,7 +337,7 @@ namespace gamp::graph::tess::impl {
             }
             GraphVertexRef v3 = locateClosestVertex(polyline);
             if( !v3 ) {
-                WARN_PRINT("Graph: Loop.locateClosestVertex returns null; root valid? %d", (nullptr!=m_root));
+                jau_WARN_PRINT("Graph: Loop.locateClosestVertex returns null; root valid? %d", (nullptr!=m_root));
                 if( Graph::DEBUG_MODE ) {
                     jau::print_backtrace(true /* skip_anon_frames */, 4 /* max_frames */);
                 }

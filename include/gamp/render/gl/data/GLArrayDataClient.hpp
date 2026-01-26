@@ -446,7 +446,7 @@ namespace gamp::render::gl::data {
             }
             m_buffer.resize(nsize);
             if( DEBUG_MODE ) {
-                jau::PLAIN_PRINT(true, "*** Size: Reserve: comps: %zd, %zd / %zd -> %zd / %zd; %s",
+                jau_PLAIN_PRINT(true, "*** Size: Reserve: comps: %zd, %zd / %zd -> %zd / %zd; %s",
                     proxy_t::compsPerElem(), (osize / proxy_t::compsPerElem()), osize,
                     (nsize / proxy_t::compsPerElem()), nsize, m_buffer.toString().c_str());
             }

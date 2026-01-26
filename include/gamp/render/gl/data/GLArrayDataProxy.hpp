@@ -163,7 +163,7 @@ namespace gamp::render::gl::data {
                                      jau::to_decstring(elem_limit).c_str(),
                                      jau::to_decstring(elemCapacity()).c_str());
             } catch (const std::exception &e) {
-               ERR_PRINT2("Caught exception %s", e.what());
+               jau_ERR_PRINT2("Caught exception %s", e.what());
                return "";
             }
         }

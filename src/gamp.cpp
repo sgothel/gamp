@@ -55,7 +55,7 @@ gamp::GampEnv::GampEnv() noexcept
   DEBUG_RENDER_GL_GLSL_STATE( jau::environment::getBooleanProperty("gamp.debug.render.gl.glsl.state", false) ),
   DEBUG_GRAPH_RENDER( jau::environment::getBooleanProperty("gamp.debug.graph.render", false) )
 {
-    jau::INFO_PRINT("GampEnv: Debug[global %d, wt.event %d, render.gl.glsl[code %d, state %d]]",
+    jau_INFO_PRINT("GampEnv: Debug[global %d, wt.event %d, render.gl.glsl[code %d, state %d]]",
         DEBUG_GLOBAL, DEBUG_WT_EVENT, DEBUG_RENDER_GL_GLSL_CODE, DEBUG_RENDER_GL_GLSL_STATE);
 }
 

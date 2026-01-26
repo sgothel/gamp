@@ -84,7 +84,7 @@ namespace gamp::render::gl {
       private:
         constexpr static std::string_view mapProfile2Tag(const jau::util::VersionNumber& version, GLProfileMask mask) noexcept {
             if( 1 != jau::ct_bit_count( number(mask) ) ) {
-                ERR_PRINT("GLProfileMask %s invalid, should have exactly 1 bit set", to_string(mask).c_str());
+                jau_ERR_PRINT("GLProfileMask %s invalid, should have exactly 1 bit set", to_string(mask).c_str());
             }
             if ( has_any(mask, GLProfileMask::es) ) {
                 if( version.major() < 2 ) {

@@ -233,11 +233,11 @@ const TriangleRefList& OutlineShape::getTriangles(VertexState destinationType) {
         updated = false;
     }
     if(Graph::DEBUG_MODE) {
-        jau::PLAIN_PRINT(true, "OutlineShape.getTriangles().X: %u, updated %d", m_triangles.size(), updated);
+        jau_PLAIN_PRINT(true, "OutlineShape.getTriangles().X: %u, updated %d", m_triangles.size(), updated);
         if( updated ) {
             size_type i=0;
             for(TriangleRef& t : m_triangles) {
-                jau::PLAIN_PRINT(false, "- [%u]: %s", i++, t->toString().c_str());
+                jau_PLAIN_PRINT(false, "- [%u]: %s", i++, t->toString().c_str());
             }
         }
     }
@@ -260,11 +260,11 @@ const VertexList& OutlineShape::getVertices() {
         updated = true;
     }
     if(Graph::DEBUG_MODE) {
-        jau::PLAIN_PRINT(true, "OutlineShape.getVertices().X: %u, updated %d", m_vertices.size(), updated);
+        jau_PLAIN_PRINT(true, "OutlineShape.getVertices().X: %u, updated %d", m_vertices.size(), updated);
         if( updated ) {
             size_type i=0;
             for(Vertex& v : m_vertices) {
-                jau::PLAIN_PRINT(false, "- [%u]: %s", i++, v.toString().c_str());
+                jau_PLAIN_PRINT(false, "- [%u]: %s", i++, v.toString().c_str());
             }
         }
     }

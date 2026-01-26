@@ -302,7 +302,7 @@ namespace gamp::render::gl::glsl {
          */
         void useProgram(const GL&, bool on) {
             if(on && !m_programLinked) {
-                ERR_PRINT("Not linked (on = %d): %s", on, toString().c_str());
+                jau_ERR_PRINT("Not linked (on = %d): %s", on, toString().c_str());
                 throw RenderException("Program is not linked", E_FILE_LINE);
             }
             if(m_programInUse==on) { return; }
@@ -325,12 +325,12 @@ namespace gamp::render::gl::glsl {
         }
 
         void dumpSource() {
-            jau::PLAIN_PRINT(true, "");
-            jau::PLAIN_PRINT(true, "%s", toString().c_str());
+            jau_PLAIN_PRINT(true, "");
+            jau_PLAIN_PRINT(true, "%s", toString().c_str());
             for(const auto & iter : m_allShaderCode) {
                 iter->dumpSource();
             }
-            jau::PLAIN_PRINT(true, "");
+            jau_PLAIN_PRINT(true, "");
         }
 
       private:

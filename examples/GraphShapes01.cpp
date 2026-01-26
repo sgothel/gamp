@@ -223,7 +223,7 @@ class GraphRenderer {
             std::string passS = m_props.m_pass1 ? "-pass1-" : "-pass2-";
             std::string shaderSegment = string_t(source_dir).append("/").append(shader_basename).append(passS).append("curve_simple").append(".glsl"); // sms.tech+sms.sub+".glsl";
             if( Graph::DEBUG_MODE || ShaderCode::DEBUG_CODE ) {
-                jau::PLAIN_PRINT(true, "RegionRenderer.createShaderProgram.1: segment %s", shaderSegment.c_str());
+                jau_PLAIN_PRINT(true, "RegionRenderer.createShaderProgram.1: segment %s", shaderSegment.c_str());
             }
             posFp = rsFp->insertShaderSourceFile(0, posFp, shaderSegment);
             if( posFp == std::string::npos ) {
@@ -339,7 +339,7 @@ class GraphRegion {
 
   private:
     void pushVertex(const Vertex& v, const Vec3f& normal) {
-        // jau::PLAIN_PRINT(true, "pushVertex.0[%d]: v %s]", m_num_vertices, v.toString().c_str());
+        // jau_PLAIN_PRINT(true, "pushVertex.0[%d]: v %s]", m_num_vertices, v.toString().c_str());
         m_array->put3f(v.coord());
         m_array->put3f(v.texCoord());
         if( m_renderer.usesNormal() ) {
@@ -348,7 +348,7 @@ class GraphRegion {
         ++m_num_vertices;
     }
     void pushIndices(uint32_t i, uint32_t j, uint32_t k) {
-        // jau::PLAIN_PRINT(true, "pushIndices.0[%d]: %u, %u, %u]", m_num_indices, i, j, k);
+        // jau_PLAIN_PRINT(true, "pushIndices.0[%d]: %u, %u, %u]", m_num_indices, i, j, k);
         m_indices->putN(i, j, k);
         m_num_indices += 3;
     }
@@ -365,14 +365,14 @@ class GraphRegion {
             return;
         }
         if( Graph::DEBUG_MODE ) {
-            jau::PLAIN_PRINT(true, "add.0 num[vertices %d, indices %d]", m_num_vertices, m_num_indices);
-            jau::PLAIN_PRINT(true, "add.0 array: %s", m_array->toString().c_str());
-            jau::PLAIN_PRINT(true, "add.0 indices: %s", m_indices->toString().c_str());
+            jau_PLAIN_PRINT(true, "add.0 num[vertices %d, indices %d]", m_num_vertices, m_num_indices);
+            jau_PLAIN_PRINT(true, "add.0 array: %s", m_array->toString().c_str());
+            jau_PLAIN_PRINT(true, "add.0 indices: %s", m_indices->toString().c_str());
         }
         const TriangleRefList& trisIn = shape.getTriangles();
         const VertexList& vertsIn = shape.getVertices();
         if( Graph::DEBUG_MODE ) {
-            jau::PLAIN_PRINT(true, "add.0 triangles %u, vertices %u", trisIn.size(), vertsIn.size());
+            jau_PLAIN_PRINT(true, "add.0 triangles %u, vertices %u", trisIn.size(), vertsIn.size());
         }
         {
             glmemsize_t verticeCount = (glmemsize_t)vertsIn.size() + shape.addedVertexCount();
@@ -408,9 +408,9 @@ class GraphRegion {
             }
         }
         if( Graph::DEBUG_MODE ) {
-            jau::PLAIN_PRINT(true, "add.x num[vertices %d, indices %d]", m_num_vertices, m_num_indices);
-            jau::PLAIN_PRINT(true, "add.x array: %s", m_array->toString().c_str());
-            jau::PLAIN_PRINT(true, "add.x indices: %s", m_indices->toString().c_str());
+            jau_PLAIN_PRINT(true, "add.x num[vertices %d, indices %d]", m_num_vertices, m_num_indices);
+            jau_PLAIN_PRINT(true, "add.x array: %s", m_array->toString().c_str());
+            jau_PLAIN_PRINT(true, "add.x indices: %s", m_indices->toString().c_str());
         }
     }
 
@@ -692,9 +692,9 @@ class GraphShapes01 : public RenderListener {
                 const Winding w11 = oshape.outlines()[1].getWinding();
                 oshape.outlines()[0].setWinding(Winding::CCW);
                 oshape.outlines()[1].setWinding(Winding::CW);
-                jau::PLAIN_PRINT(true, "Special.frontShape.10.winding_area: %s -> %s",
+                jau_PLAIN_PRINT(true, "Special.frontShape.10.winding_area: %s -> %s",
                     to_string(w10).c_str(), to_string(oshape.outlines()[0].getWinding()).c_str());
-                jau::PLAIN_PRINT(true, "Special.frontShape.11.winding_area: %s -> %s",
+                jau_PLAIN_PRINT(true, "Special.frontShape.11.winding_area: %s -> %s",
                     to_string(w11).c_str(), to_string(oshape.outlines()[1].getWinding()).c_str());
             }
 
@@ -713,9 +713,9 @@ class GraphShapes01 : public RenderListener {
             backShape->position().x = -1.0f;
             backShape->scale().x *= 0.1f;
             backShape->scale().y *= 0.1f;
-            jau::PLAIN_PRINT(true, "Special.backShape.10.winding_area: %s",
+            jau_PLAIN_PRINT(true, "Special.backShape.10.winding_area: %s",
                 to_string(backShape->outlines().outlines()[0].getWinding()).c_str());
-            jau::PLAIN_PRINT(true, "Special.backShape.11.winding_area: %s",
+            jau_PLAIN_PRINT(true, "Special.backShape.11.winding_area: %s",
                 to_string(backShape->outlines().outlines()[1].getWinding()).c_str());
         }
         if ( true ) {

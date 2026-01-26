@@ -76,7 +76,7 @@ namespace gamp::graph::tess::impl {
                 if constexpr (!FixedWindingRule) {
                     const Winding winding = polyline.getWinding();
                     if( Winding::CCW != winding ) {
-                        WARN_PRINT("CDT2.add.xx.BOUNDARY: !CCW but %s", to_string(winding).c_str());
+                        jau_WARN_PRINT("CDT2.add.xx.BOUNDARY: !CCW but %s", to_string(winding).c_str());
                         // polyline.print(System.err);
                         polyline.setWinding(Winding::CCW);  // FIXME: Too late?
                     }
@@ -110,10 +110,10 @@ namespace gamp::graph::tess::impl {
                        at com.jogamp.graph.curve.Region.countOutlineShape(Region.java:503)
                        at com.jogamp.graph.ui.shapes.GlyphShape.<init>(GlyphShape.java:77)
                      */
-                    jau::PLAIN_PRINT(true, "Drop innerPoly ctrlpts < 3");
-                    // jau::PLAIN_PRINT(true, "- innerPo[vertices "+innerPoly.getOutline().getVertexCount()+", ctrlpts "+innerPoly.getGraphPoint().size()+"] < 3");
-                    // jau::PLAIN_PRINT(true, "- outline[vertices "+outline.getOutline().getVertexCount()+", ctrlpts "+outline.getGraphPoint().size()+"]");
-                    // jau::PLAIN_PRINT(true, "-   Input[vertices "+polyline.getVertexCount()+"]");
+                    jau_PLAIN_PRINT(true, "Drop innerPoly ctrlpts < 3");
+                    // jau_PLAIN_PRINT(true, "- innerPo[vertices "+innerPoly.getOutline().getVertexCount()+", ctrlpts "+innerPoly.getGraphPoint().size()+"] < 3");
+                    // jau_PLAIN_PRINT(true, "- outline[vertices "+outline.getOutline().getVertexCount()+", ctrlpts "+outline.getGraphPoint().size()+"]");
+                    // jau_PLAIN_PRINT(true, "-   Input[vertices "+polyline.getVertexCount()+"]");
                     jau::print_backtrace(true, 4);
                 }
             } else {
@@ -151,14 +151,14 @@ namespace gamp::graph::tess::impl {
                         tri->id() = m_maxTriID++;
                         sink.push_back(tri);
                         // if (Graph::DEBUG_MODE ) {
-                        //   jau::PLAIN_PRINT(true, "CDTri.gen["+i+"].0: delaunay "+delaunay+", tries "+numTries+", size "+size+", "+tri); // FIXME
+                        //   jau_PLAIN_PRINT(true, "CDTri.gen["+i+"].0: delaunay "+delaunay+", tries "+numTries+", size "+size+", "+tri); // FIXME
                         // }
                         numTries = 0;
                         size--;
                     }
                     if (numTries > size * 2) {
                         // if (Graph::DEBUG_MODE ) {
-                        //   jau::PLAIN_PRINT("CDTri.gen["+i+"].X: Triangulation not complete!"); // FIXME
+                        //   jau_PLAIN_PRINT("CDTri.gen["+i+"].X: Triangulation not complete!"); // FIXME
                         // }
                         break;
                     }
@@ -169,7 +169,7 @@ namespace gamp::graph::tess::impl {
                     tri->id() = m_maxTriID++;
                     sink.push_back(tri);
                     // if (Graph::DEBUG_MODE ) {
-                    //   jau::PLAIN_PRINT("CDTri.gen["+i+"].1: size "+size+"/"+loopsSize+", "+tri); // FIXME
+                    //   jau_PLAIN_PRINT("CDTri.gen["+i+"].1: size "+size+"/"+loopsSize+", "+tri); // FIXME
                     // }
                 }
             }

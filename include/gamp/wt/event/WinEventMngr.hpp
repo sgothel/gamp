@@ -58,7 +58,7 @@ namespace gamp::wt::event {
                         default: break;
                     }
                 } catch (std::exception &err) {
-                    ERR_PRINT("WindowManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
+                    jau_ERR_PRINT("WindowManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
                 }
                 if( evt.consumed() ) { break; }
             }
@@ -70,7 +70,7 @@ namespace gamp::wt::event {
                 try {
                     kl->windowResized(evt, winSize, surfSize); break;
                 } catch (std::exception &err) {
-                    ERR_PRINT("WindowManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
+                    jau_ERR_PRINT("WindowManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
                 }
                 if( evt.consumed() ) { break; }
             }
@@ -82,7 +82,7 @@ namespace gamp::wt::event {
                 try {
                     kl->windowMoved(evt, winPos); break;
                 } catch (std::exception &err) {
-                    ERR_PRINT("WindowManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
+                    jau_ERR_PRINT("WindowManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
                 }
                 if( evt.consumed() ) { break; }
             }

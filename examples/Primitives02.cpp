@@ -117,7 +117,7 @@ class Shape {
 
     void update(GL& gl) {
         m_segments = GLUtilTesselator::tesselate(GLUtilTesselator::FLAG_VERBOSE | GLUtilTesselator::FLAG_NORMAL, *m_array, m_oshape);
-        jau::INFO_PRINT("\n%s", GLUtilTesselator::Segment::toString("- ", m_segments).c_str() );
+        jau_INFO_PRINT("\n%s", GLUtilTesselator::Segment::toString("- ", m_segments).c_str() );
         m_array->seal(gl, true);
     }
 

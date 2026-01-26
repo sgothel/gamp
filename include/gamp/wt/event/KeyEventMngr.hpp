@@ -47,7 +47,7 @@ namespace gamp::wt::event {
         InputModifier m_modifiers;
 
         bool isTracked(VKeyCode keyCode) {
-            return ( 0xFFFF & *keyCode ) < m_keybuffer.bit_size;
+            return ( 0xFFFFU & *keyCode ) < m_keybuffer.bit_size;
         }
 
         bool setPressed(VKeyCode keyCode, bool pressed) {
@@ -87,7 +87,7 @@ namespace gamp::wt::event {
                 try {
                     kl->keyPressed(ke, *this);
                 } catch (std::exception &err) {
-                    ERR_PRINT("KeyboardManager::dispatch (p): %s: Caught exception %s", ke.toString().c_str(), err.what());
+                    jau_ERR_PRINT("KeyboardManager::dispatch (p): %s: Caught exception %s", ke.toString().c_str(), err.what());
                 }
                 if( ke.consumed() ) { break; }
             }
@@ -105,7 +105,7 @@ namespace gamp::wt::event {
                 try {
                     kl->keyReleased(ke, *this);
                 } catch (std::exception &err) {
-                    ERR_PRINT("KeyboardManager::dispatch (r): %s: Caught exception %s", ke.toString().c_str(), err.what());
+                    jau_ERR_PRINT("KeyboardManager::dispatch (r): %s: Caught exception %s", ke.toString().c_str(), err.what());
                 }
                 if( ke.consumed() ) { break; }
             }

@@ -78,7 +78,7 @@ namespace gamp::render::gl::glsl {
 
             const bool res = ires==1;
             if(!res && verbose) {
-                jau::PLAIN_PRINT(true, "Shader status invalid: %s", getShaderInfoLog(gl, shaderObj).c_str());
+                jau_PLAIN_PRINT(true, "Shader status invalid: %s", getShaderInfoLog(gl, shaderObj).c_str());
             }
             return res;
         }
@@ -96,7 +96,7 @@ namespace gamp::render::gl::glsl {
             glGetProgramiv(programObj, name, &ires);
             const bool res = ires==1;
             if(!res && verbose) {
-                jau::PLAIN_PRINT(true, "Program status invalid: %s", getProgramInfoLog(gl, programObj).c_str());
+                jau_PLAIN_PRINT(true, "Program status invalid: %s", getProgramInfoLog(gl, programObj).c_str());
             }
             return ires==1;
         }
@@ -104,13 +104,13 @@ namespace gamp::render::gl::glsl {
         static bool isProgramLinkStatusValid(GL& gl, GLuint programObj, bool verbose=false) noexcept {
             if(!glIsProgram(programObj)) {
                 if(verbose) {
-                    jau::PLAIN_PRINT(true, "Program name invalid: %u", programObj);
+                    jau_PLAIN_PRINT(true, "Program name invalid: %u", programObj);
                 }
                 return false;
             }
             if(!isProgramStatusValid(gl, programObj, GL_LINK_STATUS)) {
                 if(verbose) {
-                    jau::PLAIN_PRINT(true, "Program link failed: %u\n\t%s", programObj, getProgramInfoLog(gl, programObj).c_str());
+                    jau_PLAIN_PRINT(true, "Program link failed: %u\n\t%s", programObj, getProgramInfoLog(gl, programObj).c_str());
                 }
                 return false;
             }
@@ -133,7 +133,7 @@ namespace gamp::render::gl::glsl {
             glValidateProgram(programObj);
             if(!isProgramStatusValid(gl, programObj, GL_VALIDATE_STATUS)) {
                 if(verbose) {
-                    jau::PLAIN_PRINT(true, "Program validation failed: %u\n\t%s", programObj, getProgramInfoLog(gl, programObj).c_str());
+                    jau_PLAIN_PRINT(true, "Program validation failed: %u\n\t%s", programObj, getProgramInfoLog(gl, programObj).c_str());
                 }
                 return false;
             }
@@ -304,7 +304,7 @@ namespace gamp::render::gl::glsl {
         {
             GLenum err = glGetError(); // flush previous errors ..
             if(err!=GL_NO_ERROR && verbose) {
-                jau::PLAIN_PRINT(true, "createAndLoadShader: Pre GL Error: 0x%x", err);
+                jau_PLAIN_PRINT(true, "createAndLoadShader: Pre GL Error: 0x%x", err);
             }
 
             createShader(gl, shaderType, shader);
@@ -317,7 +317,7 @@ namespace gamp::render::gl::glsl {
 
             err = glGetError();
             if(err!=GL_NO_ERROR && verbose) {
-                jau::PLAIN_PRINT(true, "createAndLoadShader: ShaderBinary failed, GL Error: 0x%x", err);
+                jau_PLAIN_PRINT(true, "createAndLoadShader: ShaderBinary failed, GL Error: 0x%x", err);
             }
             return err == GL_NO_ERROR;
         }
@@ -328,7 +328,7 @@ namespace gamp::render::gl::glsl {
         {
             GLenum err = glGetError(); // flush previous errors ..
             if(err!=GL_NO_ERROR && verbose) {
-                jau::PLAIN_PRINT(true, "createAndCompileShader: Pre GL Error: 0x%x", err);
+                jau_PLAIN_PRINT(true, "createAndCompileShader: Pre GL Error: 0x%x", err);
             }
 
             createShader(gl, shaderType, shader);
@@ -345,7 +345,7 @@ namespace gamp::render::gl::glsl {
             compileShader(gl, shader);
             err = glGetError();
             if(err!=GL_NO_ERROR && verbose) {
-                jau::PLAIN_PRINT(true, "createAndCompileShader: CompileShader failed, GL Error: 0x%x", err);
+                jau_PLAIN_PRINT(true, "createAndCompileShader: CompileShader failed, GL Error: 0x%x", err);
             }
 
             return isShaderStatusValid(gl, shader, GL_COMPILE_STATUS, verbose) && err == GL_NO_ERROR;

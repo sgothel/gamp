@@ -118,11 +118,11 @@ namespace gamp::render::gl::glsl {
         : m_shaderBinaryFormat(0), m_shaderType(0), m_id(0), m_compiled(false)
         {
             if(sources.size() != count) {
-                ERR_PRINT("shader number (%zu) and sourceFiles array (%zu) of different length.", count, sources.size());
+                jau_ERR_PRINT("shader number (%zu) and sourceFiles array (%zu) of different length.", count, sources.size());
                 return;
             }
             if( !isValidShaderType(type) ) {
-                ERR_PRINT("Invalid shader type: %u", type);
+                jau_ERR_PRINT("Invalid shader type: %u", type);
                 return;
             }
             m_shaderSource = sources;
@@ -152,7 +152,7 @@ namespace gamp::render::gl::glsl {
         : m_shaderBinaryFormat(0), m_shaderType(0), m_id(0), m_compiled(false)
         {
             if( !isValidShaderType(type) ) {
-                ERR_PRINT("Invalid shader type: %u", type);
+                jau_ERR_PRINT("Invalid shader type: %u", type);
                 return;
             }
             // shaderSource = null;
@@ -194,11 +194,11 @@ namespace gamp::render::gl::glsl {
          */
         static ShaderCodeSRef create(GL& gl, GLenum type, size_t count, const string_list_t& sourceFiles) noexcept {
             if(!ShaderUtil::isShaderCompilerAvailable(gl)) {
-                ERR_PRINT("No shader compiler available for %s", gl.toString().c_str());
+                jau_ERR_PRINT("No shader compiler available for %s", gl.toString().c_str());
                 return nullptr;
             }
             if( !isValidShaderType(type) ) {
-                ERR_PRINT("Invalid shader type: %u", type);
+                jau_ERR_PRINT("Invalid shader type: %u", type);
                 return nullptr;
             }
             string_list_t one_string;
@@ -708,7 +708,7 @@ namespace gamp::render::gl::glsl {
             // Create & Compile the vertex/fragment shader objects
             if(!m_shaderSource.empty()) {
                 if(DEBUG_CODE) {
-                    jau::PLAIN_PRINT(true, "ShaderCode.compile");
+                    jau_PLAIN_PRINT(true, "ShaderCode.compile");
                     dumpSource(); // NOLINT(bugprone-exception-escape)
                 }
                 m_compiled=ShaderUtil::createAndCompileShader(gl, m_shader, m_shaderType,
@@ -717,7 +717,7 @@ namespace gamp::render::gl::glsl {
                 m_compiled=ShaderUtil::createAndLoadShader(gl, m_shader, m_shaderType,
                                                            m_shaderBinaryFormat, m_shaderBinary, verbose);
             } else if(DEBUG_CODE) {
-                jau::PLAIN_PRINT(true, "ShaderCode.compile: No code");
+                jau_PLAIN_PRINT(true, "ShaderCode.compile: No code");
                 dumpSource(); // NOLINT(bugprone-exception-escape)
             }
             return m_compiled;
@@ -761,40 +761,40 @@ namespace gamp::render::gl::glsl {
 
         void dumpSource() {
             if(m_shaderSource.empty()) {
-                jau::PLAIN_PRINT(true, "<no shader source>");
+                jau_PLAIN_PRINT(true, "<no shader source>");
                 return;
             }
             const size_t sourceCount = m_shaderSource.size();
             const size_t shaderCount = m_shader.size();
-            jau::PLAIN_PRINT(true, "");
-            jau::PLAIN_PRINT(true, "ShaderCode[id=%d, type=%s, valid=%d, compiled=%d, %zu/%zu shader:",
+            jau_PLAIN_PRINT(true, "");
+            jau_PLAIN_PRINT(true, "ShaderCode[id=%zu, type=%s, valid=%d, compiled=%d, %zu/%zu shader:",
                 m_id, shaderTypeStr().c_str(), isValid(), m_compiled, m_shader.size(), shaderCount);
             if( 0 == shaderCount ) {
-                jau::PLAIN_PRINT(true, "none]");
+                jau_PLAIN_PRINT(true, "none]");
             }
             for(size_t i=0; i<shaderCount; ++i) {
-                jau::PLAIN_PRINT(true, "");
-                jau::PLAIN_PRINT(true, "Shader #%zu/%zu name %u", i, shaderCount, m_shader[i]);
-                jau::PLAIN_PRINT(true, "--------------------------------------------------------------");
+                jau_PLAIN_PRINT(true, "");
+                jau_PLAIN_PRINT(true, "Shader #%zu/%zu name %u", i, shaderCount, m_shader[i]);
+                jau_PLAIN_PRINT(true, "--------------------------------------------------------------");
                 if(i>=sourceCount) {
-                    jau::PLAIN_PRINT(true, "<no shader source>");
+                    jau_PLAIN_PRINT(true, "<no shader source>");
                 } else {
                     const string_list_t& src = m_shaderSource[i];
                     int lineno=0;
 
                     for(size_t j=0; j<src.size(); j++) {
-                        jau::PLAIN_PRINT(false, "%4d: // Segment %d/%d:", lineno, j, src.size());
+                        jau_PLAIN_PRINT(false, "%4d: // Segment %zu/%zu:", lineno, j, src.size());
                         std::istringstream reader(src[j]);
                         string_t line;
                         while (std::getline(reader, line)) {
                             ++lineno;
-                            jau::PLAIN_PRINT(false, "%4d: %s", lineno, line.c_str());
+                            jau_PLAIN_PRINT(false, "%4d: %s", lineno, line.c_str());
                         }
                     }
                 }
-                jau::PLAIN_PRINT(true, "--------------------------------------------------------------");
+                jau_PLAIN_PRINT(true, "--------------------------------------------------------------");
             }
-            jau::PLAIN_PRINT(true, "]");
+            jau_PLAIN_PRINT(true, "]");
         }
 
         /**
@@ -808,22 +808,22 @@ namespace gamp::render::gl::glsl {
          */
         size_t insertShaderSource(size_t shaderIdx, stringview_t tag, size_t fromIndex, stringview_t data) noexcept {
             if(m_shaderSource.empty()) {
-                ERR_PRINT("no shader source");
+                jau_ERR_PRINT("no shader source");
                 return string_t::npos;
             }
             const size_t shaderCount = m_shader.size();
             if(shaderIdx>=shaderCount) {
-                ERR_PRINT("shaderIdx %zu not within shader bounds %zu", shaderIdx, shaderCount);
+                jau_ERR_PRINT("shaderIdx %zu not within shader bounds %zu", shaderIdx, shaderCount);
                 return string_t::npos;
             }
             const size_t sourceCount = m_shaderSource.size();
             if(shaderIdx>=sourceCount) {
-                ERR_PRINT("shaderIdx %zu not within source bounds %zu", shaderIdx, shaderCount);
+                jau_ERR_PRINT("shaderIdx %zu not within source bounds %zu", shaderIdx, shaderCount);
                 return string_t::npos;
             }
             string_list_t& src = m_shaderSource[shaderIdx];
             if(src.empty()) {
-                ERR_PRINT("no shader source at for shader index %zu", shaderIdx);
+                jau_ERR_PRINT("no shader source at for shader index %zu", shaderIdx);
                 return string_t::npos;
             }
             size_t curEndIndex = 0;
@@ -861,22 +861,22 @@ namespace gamp::render::gl::glsl {
          */
         size_t insertShaderSource(size_t shaderIdx, size_t position, stringview_t data) noexcept {
             if(m_shaderSource.empty()) {
-                ERR_PRINT("no shader source");
+                jau_ERR_PRINT("no shader source");
                 return string_t::npos;
             }
             const size_t shaderCount = m_shader.size();
             if(shaderIdx>=shaderCount) {
-                ERR_PRINT("shaderIdx %zu not within shader bounds %zu", shaderIdx, shaderCount);
+                jau_ERR_PRINT("shaderIdx %zu not within shader bounds %zu", shaderIdx, shaderCount);
                 return string_t::npos;
             }
             const size_t sourceCount = m_shaderSource.size();
             if(shaderIdx>=sourceCount) {
-                ERR_PRINT("shaderIdx %zu not within source bounds %zu", shaderIdx, shaderCount);
+                jau_ERR_PRINT("shaderIdx %zu not within source bounds %zu", shaderIdx, shaderCount);
                 return string_t::npos;
             }
             string_list_t& src = m_shaderSource[shaderIdx];
             if(src.empty()) {
-                ERR_PRINT("no shader source at for shader index %zu", shaderIdx);
+                jau_ERR_PRINT("no shader source at for shader index %zu", shaderIdx);
                 return string_t::npos;
             }
             size_t curEndIndex = 0;
@@ -987,7 +987,7 @@ namespace gamp::render::gl::glsl {
                         return false;
                     }
                     if( DEBUG_CODE ) {
-                        jau::PLAIN_PRINT(true, "readShaderSource: including '%s' -> '%s'", includeFile.c_str(), nextConn.c_str());
+                        jau_PLAIN_PRINT(true, "readShaderSource: including '%s' -> '%s'", includeFile.c_str(), nextConn.c_str());
                     }
                     lineno = readShaderSource(nextConn, result, lineno);
                 } else {
@@ -1009,7 +1009,7 @@ namespace gamp::render::gl::glsl {
             const string_t path(path0);
             const string_t conn = gamp::resolve_asset(path);
             if( DEBUG_CODE ) {
-                jau::PLAIN_PRINT(true, "readShaderSource: %s -> %s", path.c_str(), conn.c_str());
+                jau_PLAIN_PRINT(true, "readShaderSource: %s -> %s", path.c_str(), conn.c_str());
             }
             if (!conn.empty()) {
                 int lineno=0;

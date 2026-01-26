@@ -66,7 +66,7 @@ class Glyph02UbuntuLight_ae  {
             // 008: B1: line-to p0-p1
             // Shape.LineTo:
             shape.addVertex(pos0, 0.728000f, 0.300000f, 0, true);
-            jau::PLAIN_PRINT(true, "Glyph02UbuntuLight_ae.shape01a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()).c_str());
+            jau_PLAIN_PRINT(true, "Glyph02UbuntuLight_ae.shape01a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()).c_str());
             shape.closeLastOutline(false);
         }
 
@@ -250,7 +250,7 @@ class Glyph02UbuntuLight_ae  {
             // Shape.QuadTo:
             shape.addVertex(pos0, 0.289000f, -0.011000f, 0, false);
             shape.addVertex(pos0, 0.252000f, -0.011000f, 0, true);
-            jau::PLAIN_PRINT(true, "Glyph02UbuntuLight_ae.shape02a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()).c_str());
+            jau_PLAIN_PRINT(true, "Glyph02UbuntuLight_ae.shape02a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()).c_str());
             shape.closeLastOutline(false);
         }
 
@@ -318,7 +318,7 @@ class Glyph02UbuntuLight_ae  {
             // Shape.QuadTo:
             shape.addVertex(pos0, 0.366000f, 0.190000f, 0, false);
             shape.addVertex(pos0, 0.365000f, 0.238000f, 0, true);
-            jau::PLAIN_PRINT(true, "Glyph02UbuntuLight_ae.shape03a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()).c_str());
+            jau_PLAIN_PRINT(true, "Glyph02UbuntuLight_ae.shape03a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()).c_str());
             shape.closeLastOutline(false);
         }
         // End Shape for Glyph 193

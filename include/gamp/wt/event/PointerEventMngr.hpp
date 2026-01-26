@@ -90,7 +90,7 @@ namespace gamp::wt::event {
                         default: break;
                     }
                 } catch (std::exception &err) {
-                    ERR_PRINT("PointerManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
+                    jau_ERR_PRINT("PointerManager::dispatch: %s: Caught exception %s", evt.toString().c_str(), err.what());
                 }
                 if( evt.consumed() ) { break; }
             }

@@ -36,7 +36,7 @@ using namespace gamp::wt::event;
     // TODO: Should be moved into a GLDebugListener
     static void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
         (void)userParam;
-        jau::PLAIN_PRINT(true, "GL-Debug: src 0x%x, type 0x%x, id 0x%x, serverity 0x%x, len %zu: %s", source, type, id, severity, length, message);
+        jau_PLAIN_PRINT(true, "GL-Debug: src 0x%x, type 0x%x, id 0x%x, serverity 0x%x, len %zu: %s", source, type, id, severity, length, message);
     }
 #endif
 

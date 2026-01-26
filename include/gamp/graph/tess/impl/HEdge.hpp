@@ -108,9 +108,9 @@ namespace gamp::graph::tess::impl {
             int i=0;
             HEdgePtr current = this;
             HEdgePtr next = getNext();
-            jau::PLAIN_PRINT(true, "HEdge[%d: root %p]", i, this);
+            jau_PLAIN_PRINT(true, "HEdge[%d: root %p]", i, this);
             do {
-                jau::PLAIN_PRINT(true, "HEdge[%d: current %p, next %p]", i, current, next); ++i;
+                jau_PLAIN_PRINT(true, "HEdge[%d: current %p, next %p]", i, current, next); ++i;
                 if( !next ) {
                     break;
                 }

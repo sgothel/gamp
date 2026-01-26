@@ -105,10 +105,10 @@ void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
             }
         } catch (const std::exception &e) {
             eptr = std::current_exception();
-            ERR_PRINT2("Caught exception %s", e.what());
+            jau_ERR_PRINT2("Caught exception %s", e.what());
         } catch (...) {
             eptr = std::current_exception();
-            ERR_PRINT2("Caught unknown exception");
+            jau_ERR_PRINT2("Caught unknown exception");
         }
         if( eptr ) {
             try {
@@ -117,11 +117,11 @@ void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
                    [l](const RenderListenerSRef& a) noexcept -> bool { return a.get() == l.get(); } );
                 l2->dispose(self, when);
             } catch (const std::exception &e) {
-                ERR_PRINT2("Caught exception %s", e.what());
+                jau_ERR_PRINT2("Caught exception %s", e.what());
             } catch (...) {
-                ERR_PRINT2("Caught unknown exception");
+                jau_ERR_PRINT2("Caught unknown exception");
             }
-            WARN_PRINT("Removed listener (sz %zu)", m_render_listener.size());
+            jau_WARN_PRINT("Removed listener (sz %zu)", m_render_listener.size());
         }
     }
 }
@@ -134,7 +134,7 @@ void gamp::wt::Window::disposeRenderListener(bool clearRenderListener, const jau
             write(l->pendingActions(), RenderActions::init, true);
             write(l->pendingActions(), RenderActions::reshape, true);
         } catch (std::exception &err) {
-            ERR_PRINT("Window::display: %s: Caught exception %s", toString().c_str(), err.what());
+            jau_ERR_PRINT("Window::display: %s: Caught exception %s", toString().c_str(), err.what());
         }
     }
     if( clearRenderListener ) {
