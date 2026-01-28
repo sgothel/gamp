@@ -22,6 +22,7 @@
 
 #include <gamp/Gamp.hpp>
 #include <gamp/render/gl/glsl/ShaderUtil.hpp>
+#include "jau/cpp_lang_util.hpp"
 
 namespace gamp::render::gl::glsl {
     using namespace gamp::render::gl;
@@ -125,11 +126,14 @@ namespace gamp::render::gl::glsl {
                 jau_ERR_PRINT("Invalid shader type: %u", type);
                 return;
             }
+            if ( !jau::do_noexcept([&]() {
+                m_shader.reserve(count);
+                m_shader.resize(count, 0); } ) ) {
+                return;
+            }
             m_shaderSource = sources;
             // m_shaderBinary = null;
             m_shaderType   = type;
-            m_shader.reserve(count);
-            m_shader.resize(count, 0);
             m_id = nextID();
         }
         /**
@@ -139,7 +143,7 @@ namespace gamp::render::gl::glsl {
          * @param sources shader sources, organized as <code>source[count][strings-per-shader]</code>.
          * @return successfully created valid ShaderCodeRef or nullptr on failure
          */
-        static ShaderCodeSRef create(GLenum type, size_t count, const source_list_t& sources) noexcept {
+        static ShaderCodeSRef create(GLenum type, size_t count, const source_list_t& sources) {
             ShaderCodeSRef res = std::make_shared<ShaderCode>(Private(), type, count, sources);
             if( res->isValid() ) {
                 return res;
@@ -155,12 +159,15 @@ namespace gamp::render::gl::glsl {
                 jau_ERR_PRINT("Invalid shader type: %u", type);
                 return;
             }
+            if ( !jau::do_noexcept([&]() {
+                m_shader.reserve(count);
+                m_shader.resize(count, 0); } ) ) {
+                return;
+            }
             // shaderSource = null;
             m_shaderBinaryFormat = binFormat;
             m_shaderBinary = binary;
             m_shaderType   = type;
-            m_shader.reserve(count);
-            m_shader.resize(count, 0);
             m_id = nextID();
         }
         /**
@@ -170,7 +177,7 @@ namespace gamp::render::gl::glsl {
          * @param binary binary buffer containing the shader binaries,
          * @return successfully created valid ShaderCodeRef or nullptr on failure
          */
-        static ShaderCodeSRef create(GLenum type, size_t count, GLenum binFormat, const bytes_t& binary) noexcept {
+        static ShaderCodeSRef create(GLenum type, size_t count, GLenum binFormat, const bytes_t& binary) {
             ShaderCodeSRef res = std::make_shared<ShaderCode>(Private(), type, count, binFormat, binary);
             if( res->isValid() ) {
                 return res;
@@ -192,7 +199,7 @@ namespace gamp::render::gl::glsl {
          *
          * @see #readShaderSource()
          */
-        static ShaderCodeSRef create(GL& gl, GLenum type, size_t count, const string_list_t& sourceFiles) noexcept {
+        static ShaderCodeSRef create(GL& gl, GLenum type, size_t count, const string_list_t& sourceFiles) {
             if(!ShaderUtil::isShaderCompilerAvailable(gl)) {
                 jau_ERR_PRINT("No shader compiler available for %s", gl.toString().c_str());
                 return nullptr;
@@ -215,13 +222,7 @@ namespace gamp::render::gl::glsl {
                     ok = readShaderSource(sourceFiles[i], shaderSources[i][0]);
                 }
             }
-            if( ok ) {
-                ShaderCodeSRef res = create(type, count, shaderSources);
-                if( res->isValid() ) {
-                    return res;
-                }
-            }
-            return nullptr;
+            return ok ? create(type, count, shaderSources) : nullptr;
         }
 
 #if 0
@@ -468,7 +469,7 @@ namespace gamp::render::gl::glsl {
                     }
                 }
                 res = create(gl, type, count, srcPaths);
-                if(res && res->isValid()) {
+                if(res) {
                     return res;
                 }
                 for(const string_t& s : srcPaths) {
@@ -486,12 +487,9 @@ namespace gamp::render::gl::glsl {
                     if(bFmtPath.empty()) continue;
                     binFileName = string_t(binRoot).append("/").append(bFmtPath).append("/").append(binBasename).append(".").append(binSuffix);
                     // res = create(type, count, bFmt, binFileName);
-                    if(res && res->isValid()) {
-                        return res;
-                    }
                 }
             }
-            return nullptr;
+            return res;
         }
 
         /**
@@ -1170,7 +1168,7 @@ namespace gamp::render::gl::glsl {
                     case GL_FRAGMENT_SHADER:
                         defaultPrecision = es3_default_precision_fp; break;
                     case GL_COMPUTE_SHADER:
-                    	defaultPrecision = es3_default_precision_fp; break;
+                        defaultPrecision = es3_default_precision_fp; break;
                     default:
                         defaultPrecision = "";
                         break;
@@ -1196,7 +1194,7 @@ namespace gamp::render::gl::glsl {
                     case GL_FRAGMENT_SHADER:
                         defaultPrecision = gl3_default_precision_fp; break;
                     case GL_COMPUTE_SHADER:
-                    	defaultPrecision = gl3_default_precision_fp; break;
+                        defaultPrecision = gl3_default_precision_fp; break;
                     default:
                         defaultPrecision = "";
                         break;
