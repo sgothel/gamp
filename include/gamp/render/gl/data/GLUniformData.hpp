@@ -223,12 +223,15 @@ namespace gamp::render::gl::data {
                         /*rows=*/4, /*columns=*/4, /*count=*/data.matrixCount()),
           m_mat(mat), m_data(data) {}
 
+        GLUniformSyncPMVMat4fExt(stringview_t name, PMVMat4f &mat)
+        : GLUniformSyncPMVMat4fExt(name, mat, mat.makeSyncPMvReq()) {}
+
         /**
          * Shared GLUniformSyncPMVMat4fExt ctor
          * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
          */
-        static std::shared_ptr<GLUniformSyncPMVMat4fExt> createShared(stringview_t name, PMVMat4f &mat, SyncMats4f &&data) {
-            return std::make_shared<GLUniformSyncPMVMat4fExt>(name, mat, std::move(data));
+        static std::shared_ptr<GLUniformSyncPMVMat4fExt> createShared(stringview_t name, PMVMat4f &mat) {
+            return std::make_shared<GLUniformSyncPMVMat4fExt>(name, mat);
         }
         const void* data() const noexcept override { return m_data.syncedData(); }
 

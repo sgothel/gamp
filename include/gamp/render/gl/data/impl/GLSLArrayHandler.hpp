@@ -84,7 +84,7 @@ namespace gamp::render::gl::data::impl {
                         m_ad->setVBOWritten(true);
                         st.vertexAttribPointer(gl, m_ad);
                         m_ad->glBindBuffer(gl, false);
-                    } else if( st.resolveLocation(gl, m_ad) >= 0 ) {
+                    } else if( st.resolveLocation(gl, m_ad) ) {
                         // didn't experience a performance hit on this query ..
                         // (using ShaderState's location query above to validate the location)
                         GLuint tempI;
