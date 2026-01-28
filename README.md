@@ -137,6 +137,7 @@ with [topics](https://jausoft.com/projects/gamp/build/documentation/cpp/html/top
 #### Install on Debian or Ubuntu
 
 Installing build dependencies for Debian >= 12 and Ubuntu >= 22:
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.sh}
 apt install git
 apt install build-essential g++ gcc libc-dev libpthread-stubs0-dev
@@ -200,6 +201,7 @@ Following debug presets are defined in `CMakePresets.json`
 
 Kick-off the workflow by e.g. using preset `release-gcc` to configure, build, test, install and building documentation.
 You may skip `install` and `doc` by dropping it from `--target`.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.sh}
 cmake --preset release-gcc
 cmake --build --preset release-gcc --parallel
@@ -222,6 +224,7 @@ The hardcoded presets resemble `debug-clang` [presets](README.md#cmake_presets_o
 
 Kick-off the workflow to configure, build, test, install and building documentation.
 You may skip `install` and `doc` by dropping it from `--target`.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.sh}
 rm -rf build/default
 cmake -B build/default
@@ -291,10 +294,12 @@ IDE integration configuration files are provided for
 
 For VSCodium one might copy the [example root-workspace file](.vscode/gamp.code-workspace_example)
 to the parent folder of this project (*note the filename change*) and adjust the `path` to your filesystem.
+
 ~~~~~~~~~~~~~
 cp .vscode/gamp.code-workspace_example ../gamp.code-workspace
 vi ../gamp.code-workspace
 ~~~~~~~~~~~~~
+
 Then you can open it via `File . Open Workspace from File...` menu item.
 - All listed extensions are referenced in this workspace file to be installed via the IDE
 - Select one of the [CMake Presets](README.md#cmake_presets_optional) for
