@@ -15,10 +15,9 @@
 #include <GLES3/gl32.h>
 #include <gamp/Gamp.hpp>
 
-#include <cstdio>
-
 #include <jau/basic_types.hpp>
 #include <jau/debug.hpp>
+#include <jau/string_cfmt.hpp>
 #include <jau/io/file_util.hpp>
 
 #include <gamp/Gamp.hpp>
@@ -78,37 +77,37 @@ inline int launch(std::string_view sfile, GLLaunchProps props, const RenderListe
             }
         }
         std::cout << "-profile " << props.profile << ", context flags " << props.contextFlags << "\n";
-        printf("-window %d x %d, fps %d\n", win_width, win_height, gamp::gpu_forced_fps());
+        jau_printf("-window %d x %d, fps %d, req %s\n", win_width, win_height, gamp::gpu_forced_fps(), props.requestedCaps.toString());
     }
 
     if( !gamp::init_gfx_subsystem(argv[0]) ) {
-        printf("Exit (0)...");
+        std::cout << "Exit (0)...\n";
         return 1;
     }
     const bool verbose = is_set(props.contextFlags, gamp::render::RenderContextFlags::verbose);
     WindowSRef main_win = Window::create(demo_name.c_str(), win_width, win_height, props.requestedCaps, verbose);
     if( !main_win ) {
-        printf("Exit (1): Failed to create window.\n");
+        std::cout << "Exit (1): Failed to create window.\n";
         return 1;
     }
     {
         const int w = main_win->surfaceSize().x;
         const int h = main_win->surfaceSize().y;
         const float a = (float)w / (float)h;
-        printf("FB %d x %d [w x h], aspect %f [w/h]; Win %s\n", w, h, a, main_win->windowBounds().toString().c_str());
+        jau_printf("FB %d x %d [w x h], aspect %f [w/h]; Win %s\n", w, h, a, main_win->windowBounds().toString());
     }
     // main_win->createContext(const gamp::render::RenderProfile &profile, const gamp::render::RenderContextFlags &contextFlags);
 
     if( !main_win->createContext(props.profile, props.contextFlags) ) {
-        printf("Exit (2): Failed to create context\n");
+        std::cout << "Exit (2): Failed to create context\n";
         main_win->dispose(jau::getMonotonicTime());
         return 1;
     }
-    printf("Window: %s\n", main_win->toString().c_str());
+    jau_printf("Window: %s\n", main_win->toString());
     {
         gamp::render::gl::GL& gl = gamp::render::gl::GL::downcast(main_win->renderContext());
 
-        printf("GL Context: %s\n", gl.toString().c_str());
+        jau_printf("GL Context: %s\n", gl.toString());
 
         #if !defined(__EMSCRIPTEN__)
             // TODO: Should be hooked with a GLDebugListener manager
@@ -126,7 +125,7 @@ inline int launch(std::string_view sfile, GLLaunchProps props, const RenderListe
     #else
         while( gamp::mainloop_default() ) { }
     #endif
-    printf("Exit: %s\n", main_win->toString().c_str());
+    jau_printf("Exit: %s\n", main_win->toString());
     return 0;
 }
 

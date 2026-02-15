@@ -89,14 +89,14 @@ static void on_window_resized(Window* win, int wwidth, int wheight, const jau::f
     if( !win || !win->isValid() ) { return; }
     SDL_Window* sdl_win = reinterpret_cast<SDL_Window*>(win->windowHandle()); // NOLINT
     if( verbose ) {
-        printf("Window::resized:: %d x %d: %s\n", wwidth, wheight, win->toString().c_str());
+        jau_printf("Window::resized:: %d x %d: %s\n", wwidth, wheight, win->toString());
     }
     jau::math::Vec2i window_size = win->windowSize();
     {
         int wwidth2 = 0, wheight2 = 0;
         SDL_GetWindowSize(sdl_win, &wwidth2, &wheight2);
         if( verbose ) {
-            printf("Window::resized: Size %d x %d -> %d x %d (given), %d x %d (query)\n", window_size.x, window_size.y, wwidth, wheight, wwidth2, wheight2);
+            jau_printf("Window::resized: Size %d x %d -> %d x %d (given), %d x %d (query)\n", window_size.x, window_size.y, wwidth, wheight, wwidth2, wheight2);
         }
         if (0 == wwidth || 0 == wheight) {
             wwidth = wwidth2;
@@ -105,12 +105,12 @@ static void on_window_resized(Window* win, int wwidth, int wheight, const jau::f
     }
     window_size.set(wwidth, wheight);
 
-    // printf("SDL: Couldn't fetch renderer (window resize): %s\n", SDL_GetError());
+    // jau_printf("SDL: Couldn't fetch renderer (window resize): %s\n", SDL_GetError());
     int fb_width = static_cast<int>(static_cast<float>(wwidth) * devicePixelRatio.x);
     int fb_height = static_cast<int>(static_cast<float>(wheight) * devicePixelRatio.y);
     if( verbose ) {
-        printf("Window::resized: DevicePixelRatio Size %f x %f -> %d x %d\n",
-               devicePixelRatio.x, devicePixelRatio.y, fb_width, fb_height);
+        jau_printf("Window::resized: DevicePixelRatio Size %f x %f -> %d x %d\n",
+                   devicePixelRatio.x, devicePixelRatio.y, fb_width, fb_height);
     }
 
     jau::math::Vec2i surface_size(fb_width, fb_height);
