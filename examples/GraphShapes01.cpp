@@ -120,7 +120,7 @@ class GraphRenderer {
     constexpr bool initialized() const noexcept { return m_initialized; }
 
     bool init(GL& gl, const jau::fraction_timespec& when) {
-        ShaderCode::DEBUG_CODE = true;
+        // ShaderCode::DEBUG_CODE = true;
         // ShaderState::VERBOSE_STATE = true;
 
         std::string vertexShaderName, fragmentShaderName;
@@ -464,7 +464,7 @@ class Shape {
     : m_st(st), m_oshape(3, 16),
       m_renderer(renderer), m_region(m_renderer, m_st)
     {
-        std::cerr << "XXX ctor.x " << m_st << "\n";
+        // std::cerr << "XXX ctor.x " << m_st << "\n";
     }
 
     static ShapeRef createShared(ShaderState &st, GraphRenderer &renderer) {
@@ -490,8 +490,8 @@ class Shape {
     constexpr const Vec3f& scale() const noexcept { return m_scale; }
     constexpr Vec3f& scale() noexcept { iMatDirty=true; return m_scale; }
 
-    constexpr const OutlineShape& outlines() const noexcept { return m_oshape; }
-    constexpr OutlineShape& outlines() noexcept { return m_oshape; }
+    constexpr const OutlineShape& outlinShape() const noexcept { return m_oshape; }
+    constexpr OutlineShape& outlineShape() noexcept { return m_oshape; }
 
     const Vec4f& color() const noexcept { return m_color; }
     void setColor(const Vec4f& c) noexcept { m_color = c; }
@@ -629,7 +629,7 @@ class GraphShapes01 : public RenderListener {
         }
 
         const float lineWidth = 1/2.5f;
-        const float dz = 0.005f;
+        const float dz = 0.001f;
         if( true ) {
             // Cross / Plus
             const float width = 1.5f;
@@ -643,9 +643,13 @@ class GraphShapes01 : public RenderListener {
             float ctrX = 0, ctrY = 0, ctrZ = dz;
             ShapeRef frontShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(frontShape);
-            OutlineShape& oshape = frontShape->outlines();
+            OutlineShape& oshape = frontShape->outlineShape();
             // CCW
-            oshape.moveTo(ctrX-lwh, ctrY+thh, ctrZ); // vert: left-top
+            oshape.moveTo(ctrX+twh, ctrY-lwh, ctrZ); // horz: right-bottom
+            oshape.lineTo(ctrX+twh, ctrY+lwh, ctrZ); // horz: right-top
+            oshape.lineTo(ctrX+lwh, ctrY+lwh, ctrZ);
+            oshape.lineTo(ctrX+lwh, ctrY+thh, ctrZ); // vert: right-top
+            oshape.lineTo(ctrX-lwh, ctrY+thh, ctrZ); // vert: left-top
             oshape.lineTo(ctrX-lwh, ctrY+lwh, ctrZ);
             oshape.lineTo(ctrX-twh, ctrY+lwh, ctrZ); // horz: left-top
             oshape.lineTo(ctrX-twh, ctrY-lwh, ctrZ); // horz: left-bottom
@@ -654,11 +658,9 @@ class GraphShapes01 : public RenderListener {
             oshape.lineTo(ctrX+lwh, ctrY-thh, ctrZ); // vert: right-bottom
             oshape.lineTo(ctrX+lwh, ctrY-lwh, ctrZ);
             oshape.lineTo(ctrX+twh, ctrY-lwh, ctrZ); // horz: right-bottom
-            oshape.lineTo(ctrX+twh, ctrY+lwh, ctrZ); // horz: right-top
-            oshape.lineTo(ctrX+lwh, ctrY+lwh, ctrZ);
-            oshape.lineTo(ctrX+lwh, ctrY+thh, ctrZ); // vert: right-top
-            oshape.lineTo(ctrX-lwh, ctrY+thh, ctrZ); // vert: left-top
             oshape.closePath();
+            oshape.normal() = Vec3f(0, 0, 1); // manual
+
             // shape1->seal(gl, true);
             frontShape->update(gl);
             frontShape->setColor(Vec4f(0.5f, 0.05f, 0.05f, 1));
@@ -666,8 +668,8 @@ class GraphShapes01 : public RenderListener {
 
             ShapeRef backShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(backShape);
-            backShape->outlines() = oshape.flipFace(); // -dz);
-            backShape->outlines().clearCache();
+            backShape->outlineShape() = oshape.flipFace(); // -dz);
+            backShape->outlineShape().clearCache();
             backShape->update(gl);
             backShape->setColor(Vec4f(0.2f, 0.5f, 0.2f, 1));
             backShape->position().x = -2.0f;
@@ -675,7 +677,7 @@ class GraphShapes01 : public RenderListener {
         if( true) {
             ShapeRef frontShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(frontShape);
-            OutlineShape& oshape = frontShape->outlines();
+            OutlineShape& oshape = frontShape->outlineShape();
             // Outer boundary-shapes are required as Winding::CCW (is CCW)
             oshape.moveTo(0.0f,-10.0f, 0);
             oshape.lineTo(15.0f,-10.0f, 0);
@@ -706,8 +708,8 @@ class GraphShapes01 : public RenderListener {
 
             ShapeRef backShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(backShape);
-            backShape->outlines() = oshape.flipFace(-dz); // winding preserved and is correct
-            backShape->outlines().clearCache();
+            backShape->outlineShape() = oshape.flipFace(-dz); // winding preserved and is correct
+            backShape->outlineShape().clearCache();
             backShape->update(gl);
             backShape->setColor(Vec4f(0.2f, 0.2f, 0.5f, 1));
             backShape->position().x = -1.0f;
@@ -721,7 +723,7 @@ class GraphShapes01 : public RenderListener {
         if ( true ) {
             ShapeRef frontShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(frontShape);
-            OutlineShape& oshape = frontShape->outlines();
+            OutlineShape& oshape = frontShape->outlineShape();
             Glyph05FreeSerifBoldItalic_ae::addShapeToRegion(oshape);
             frontShape->update(gl);
             frontShape->setColor(Vec4f(0.05f, 0.05f, 0.5f, 1));
@@ -732,8 +734,8 @@ class GraphShapes01 : public RenderListener {
 
             ShapeRef backShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(backShape);
-            backShape->outlines() = oshape.flipFace(-dz);
-            backShape->outlines().clearCache();
+            backShape->outlineShape() = oshape.flipFace(-dz);
+            backShape->outlineShape().clearCache();
             backShape->update(gl);
             backShape->setColor(Vec4f(0.4f, 0.4f, 0.1f, 1));
             backShape->position().x =  1.5f;
@@ -744,7 +746,7 @@ class GraphShapes01 : public RenderListener {
         if ( true ) {
             ShapeRef frontShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(frontShape);
-            OutlineShape& oshape = frontShape->outlines();
+            OutlineShape& oshape = frontShape->outlineShape();
             Glyph03FreeMonoRegular_M::addShapeToRegion(oshape);
             frontShape->update(gl);
             frontShape->setColor(Vec4f(0.05f, 0.5f, 0.05f, 1));
@@ -755,8 +757,8 @@ class GraphShapes01 : public RenderListener {
 
             ShapeRef backShape = Shape::createShared(m_st, m_renderer);
             m_shapes.push_back(backShape);
-            backShape->outlines() = oshape.flipFace(-dz);
-            backShape->outlines().clearCache();
+            backShape->outlineShape() = oshape.flipFace(-dz);
+            backShape->outlineShape().clearCache();
             backShape->update(gl);
             backShape->setColor(Vec4f(0.5f, 0.1f, 0.1f, 1));
             backShape->position().x =  1.5f;
@@ -830,7 +832,7 @@ class GraphShapes01 : public RenderListener {
 
         if( m_once ) {
             m_once = false;
-            std::cerr << "XXX draw " << m_st << "\n";
+            // std::cerr << "XXX draw " << m_st << "\n";
         }
 
         // m_st.useProgram(gl, false);
