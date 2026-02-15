@@ -160,6 +160,7 @@ namespace models {
             oshape.lineTo(ctrX-width/ 7, ctrY-thh, ctrZ + tdh/4);
             oshape.lineTo(ctrX-width/ 7, ctrY-thh, ctrZ);
             oshape.closePath();
+            oshape.normal() = Vec3f(0, -1, 0);
             oshapes.push_back(oshape);
         }
         { // eliminate the hole down with left and right motor
@@ -177,6 +178,7 @@ namespace models {
             oshape.lineTo(ctrX-width/26, ctrY-thh, ctrZ-tdh/4);
             oshape.lineTo(ctrX-width/26, ctrY-thh, ctrZ);
             oshape.closePath();
+            oshape.normal() = Vec3f(0, -1, 0);
             oshapes.push_back(oshape);
         }
     }
