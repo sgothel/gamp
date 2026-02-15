@@ -490,7 +490,7 @@ class Shape {
     constexpr const Vec3f& scale() const noexcept { return m_scale; }
     constexpr Vec3f& scale() noexcept { iMatDirty=true; return m_scale; }
 
-    constexpr const OutlineShape& outlinShape() const noexcept { return m_oshape; }
+    constexpr const OutlineShape& outlineShape() const noexcept { return m_oshape; }
     constexpr OutlineShape& outlineShape() noexcept { return m_oshape; }
 
     const Vec4f& color() const noexcept { return m_color; }

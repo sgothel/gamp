@@ -109,8 +109,8 @@ class Shape {
     constexpr const Vec3f& scale() const noexcept { return m_scale; }
     constexpr Vec3f& scale() noexcept { iMatDirty=true; return m_scale; }
 
-    constexpr const OutlineShape& outlines() const noexcept { return m_oshape; }
-    constexpr OutlineShape& outlines() noexcept { return m_oshape; }
+    constexpr const OutlineShape& outlineShape() const noexcept { return m_oshape; }
+    constexpr OutlineShape& outlineShape() noexcept { return m_oshape; }
 
     const Vec4f& color() const noexcept { return m_color; }
     void setColor(const Vec4f& c) noexcept { m_color=c; }
@@ -297,7 +297,7 @@ class Primitives02 : public RenderListener {
             float z = dz;
             ShapeRef frontShape = Shape::createShared(m_st, m_pmvMat, m_staticColor);
             m_shapes.push_back(frontShape);
-            OutlineShape& oshape = frontShape->outlines();
+            OutlineShape& oshape = frontShape->outlineShape();
             {
                 // Outer OutlineShape as Winding.CCW.
                 oshape.moveTo(x1, y1, z);
@@ -324,7 +324,7 @@ class Primitives02 : public RenderListener {
 
             ShapeRef backShape = Shape::createShared(m_st, m_pmvMat, m_staticColor);
             m_shapes.push_back(backShape);
-            backShape->outlines() = oshape.flipFace();
+            backShape->outlineShape() = oshape.flipFace();
             backShape->update(gl);
             backShape->setColor(Vec4f(0.4f, 0.4f, 0.1f, 1));
             backShape->position().x =  1.5f;
@@ -342,7 +342,7 @@ class Primitives02 : public RenderListener {
             float ctrX = 0, ctrY = 0, ctrZ = dz;
             ShapeRef frontShape = Shape::createShared(m_st, m_pmvMat, m_staticColor);
             m_shapes.push_back(frontShape);
-            OutlineShape& oshape = frontShape->outlines();
+            OutlineShape& oshape = frontShape->outlineShape();
             // CCW
             oshape.moveTo(ctrX-lwh, ctrY+thh, ctrZ); // vert: left-top
             oshape.lineTo(ctrX-lwh, ctrY+lwh, ctrZ);
@@ -365,7 +365,7 @@ class Primitives02 : public RenderListener {
 
             ShapeRef backShape = Shape::createShared(m_st, m_pmvMat, m_staticColor);
             m_shapes.push_back(backShape);
-            backShape->outlines() = oshape.flipFace();
+            backShape->outlineShape() = oshape.flipFace();
             backShape->update(gl);
             backShape->setColor(Vec4f(0.2f, 0.2f, 0.2f, 1));
             backShape->position().x = -1.5f;
