@@ -154,9 +154,11 @@ namespace gamp::graph {
         constexpr const Vec3f& normal() const noexcept { return m_normal; }
         /** Writing the normal vector, optionally used by tesselator to add (interleaved) normals.  */
         constexpr Vec3f& normal() noexcept { return m_normal; }
+        /// Set the normal using given 3 points
         void setNormal(Point3f p0, Point3f p1, Point3f p2) noexcept {
-            m_normal.cross((p1 - p0), (p2 - p0));
+            m_normal.cross((p1 - p0), (p2 - p0)).normalize();
         }
+        /// Set the normal using first outline's 3 points
         void setNormal() noexcept {
             if(m_outlines.size() > 0){
                 const VertexList& v = m_outlines[0].vertices();
@@ -617,9 +619,13 @@ namespace gamp::graph {
         }
 
         /**
-         * Closes the current sub-path segment by drawing a straight line back to the coordinates of the last moveTo. If the path is already closed then this method has no effect.
+         * Closes the current sub-path segment by drawing a straight line back to the coordinates of the last moveTo.
+         * If the path is already closed, no additional lineTo is issued.
+         *
+         * Method sets the normal using the first outline's 3 points, see setNormal()
          * @see Path2F#closePath()
          * @see #addPath(com.jogamp.math.geom.plane.Path2F.Iterator, boolean)
+         * @see setNormal
          */
         void closePath() {
             if ( 0 < lastOutline().vertexCount() ) {
@@ -655,11 +661,11 @@ namespace gamp::graph {
             return newOutlineShape;
         }
 
-        /// Returns a copy of this instance with normal() and all outlines() vertices()'s z-axis sign-flipped,
+        /// Returns a copy of this instance with normal() pointing to the opposite direction and all outlines() vertices()'s z-axis sign-flipped,
         /// used to generate a back-face from a front-face shape.
         OutlineShape flipFace(float zoffset=0) const {
             OutlineShape nshape = *this;
-            nshape.normal().z *= -1;
+            nshape.normal() *= -1;
             for(Outline& o : nshape.outlines()) {
                 for(Vertex& v : o.vertices()) {
                     v.coord().z = ( v.coord().z * -1.0f ) + zoffset;
