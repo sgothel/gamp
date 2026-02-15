@@ -25,6 +25,7 @@
 #include <gamp/render/RenderContext.hpp>
 #include <gamp/render/gl/GLLiterals.hpp>
 #include <gamp/render/gl/GLContext.hpp>
+#include <gamp/render/gl/GLCapabilities.hpp>
 
 using namespace jau::math;
 using namespace jau::math::util;
@@ -43,6 +44,7 @@ using namespace gamp::wt::event;
 struct GLLaunchProps {
     gamp::render::gl::GLProfile profile;
     gamp::render::RenderContextFlags contextFlags;
+    gamp::render::gl::GLCapabilities requestedCaps;
 };
 
 inline int launch(std::string_view sfile, GLLaunchProps props, const RenderListenerSRef& demo, int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
@@ -70,6 +72,9 @@ inline int launch(std::string_view sfile, GLLaunchProps props, const RenderListe
             } else if( 0 == strcmp("-fps", argv[i]) && i+1<argc) {
                 gamp::set_gpu_forced_fps( atoi(argv[i+1]) );
                 ++i;
+            } else if( 0 == strcmp("-smsaa", argv[i]) && i+1<argc) {
+                props.requestedCaps.setMultiSamplesCount(atoi(argv[i+1]));
+                ++i;
             }
         }
         std::cout << "-profile " << props.profile << ", context flags " << props.contextFlags << "\n";
@@ -81,7 +86,7 @@ inline int launch(std::string_view sfile, GLLaunchProps props, const RenderListe
         return 1;
     }
     const bool verbose = is_set(props.contextFlags, gamp::render::RenderContextFlags::verbose);
-    WindowSRef main_win = Window::create(demo_name.c_str(), win_width, win_height, verbose);
+    WindowSRef main_win = Window::create(demo_name.c_str(), win_width, win_height, props.requestedCaps, verbose);
     if( !main_win ) {
         printf("Exit (1): Failed to create window.\n");
         return 1;

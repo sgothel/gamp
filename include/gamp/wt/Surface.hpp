@@ -52,7 +52,8 @@ namespace gamp::wt {
             handle_t m_surface_handle;
             /// Surface client-area size in pixel units
             Vec2i m_surface_size;
-            CapabilitiesPtr m_capsptr;
+            CapabilitiesPtr m_capsptr_req;
+            CapabilitiesPtr m_capsptr_chosen;
             gamp::render::RenderContextPtr m_renderContext;
 
             jau::RecursiveLock m_surface_lock;
@@ -62,6 +63,7 @@ namespace gamp::wt {
             static CapabilitiesPtr retrieveCaps(const wt::SurfaceSRef& surface) noexcept;
 
         protected:
+            static void setCaps(handle_t surface_handle, const Capabilities& requested) noexcept;
             struct Private{ explicit Private() = default; };
 
             template <typename ChildT>
@@ -76,11 +78,11 @@ namespace gamp::wt {
 
         public:
             /** Private ctor for single Surface::create() method w/o public ctor. */
-            Surface(Private, handle_t surface_handle, const Vec2i& surface_size)
-            : m_surface_handle(surface_handle), m_surface_size(surface_size) { }
+            Surface(Private, handle_t surface_handle, const Vec2i& surface_size, const Capabilities &requested)
+            : m_surface_handle(surface_handle), m_surface_size(surface_size), m_capsptr_req(requested.clone()) { }
 
-            static SurfaceSRef create(handle_t surface_handle, const Vec2i& surface_size) {
-                return std::make_shared<Surface>(Private(), surface_handle, surface_size);
+            static SurfaceSRef create(handle_t surface_handle, const Vec2i& surface_size, const Capabilities &requested) {
+                return std::make_shared<Surface>(Private(), surface_handle, surface_size, requested);
             }
 
             Surface(const Surface&) = delete;
@@ -116,7 +118,7 @@ namespace gamp::wt {
                 gamp::render::RenderContextPtr rc = createContext(shared(), profile, contextFlags, nullptr);
                 if( rc && rc->isValid() ) {
                     m_renderContext = std::move(rc);
-                    m_capsptr = retrieveCaps(shared());
+                    m_capsptr_chosen = retrieveCaps(shared());
                     return true;
                 }
                 return false;
@@ -133,7 +135,11 @@ namespace gamp::wt {
                 return m_renderContext ? m_renderContext.get() : nullptr;
             }
 
-            const Capabilities* capabilities() const noexcept { return m_capsptr ? m_capsptr.get() : nullptr; }
+            /// Returns the chosen (retrieved) capabilities of a realized surface
+            const Capabilities* capabilities() const noexcept { return m_capsptr_chosen ? m_capsptr_chosen.get() : nullptr; }
+
+            /// Sets the requested capabilities for a surface to be realized
+            void setRequestedCapabilities(CapabilitiesPtr &&req) noexcept { m_capsptr_req = std::move(req); }
 
             /**
              * Returns desired or determined swap interval. Defaults to -1, i.e. adaptive swap interval.
@@ -270,7 +276,8 @@ namespace gamp::wt {
                 res.append("handle ").append(jau::toHexString(m_surface_handle))
                    .append(", ").append(m_renderContext ? m_renderContext->toString() : "nil-ctx")
                    .append(", size ").append(m_surface_size.toString())
-                   .append(", ").append(m_capsptr?m_capsptr->toString():"nocaps")
+                   .append(", caps[req ").append(m_capsptr_req->toString())
+                   .append(", chosen ").append(m_capsptr_chosen?m_capsptr_chosen->toString():"nocaps")
                    .append("]");
                 return res;
             }

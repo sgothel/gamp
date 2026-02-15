@@ -349,6 +349,6 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
     ShaderCode::DEBUG_CODE = true;
 
     return launch("Primitives01.cpp",
-                  GLLaunchProps{.profile=GLProfile(GLProfile::GLES2), .contextFlags=gamp::render::RenderContextFlags::verbose},
+                  GLLaunchProps{.profile=GLProfile(GLProfile::GLES2), .contextFlags=gamp::render::RenderContextFlags::verbose, .requestedCaps=GLCapabilities()},
                   std::make_shared<Example>(), argc, argv);
 }

@@ -31,6 +31,7 @@
 #include <gamp/render/gl/glsl/ShaderState.hpp>
 
 #include "../demos/GLLauncher01.hpp"
+#include "gamp/render/gl/GLCapabilities.hpp"
 
 using namespace jau::math;
 using namespace jau::math::util;
@@ -275,6 +276,6 @@ class Example : public RenderListener {
 int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
     return launch("SolInSpace",
-                  GLLaunchProps{.profile=GLProfile(GLProfile::GLES2), .contextFlags=gamp::render::RenderContextFlags::verbose},
+                  GLLaunchProps{.profile=GLProfile(GLProfile::GLES2), .contextFlags=gamp::render::RenderContextFlags::verbose, .requestedCaps=GLCapabilities()},
                   std::make_shared<Example>(), argc, argv);
 }

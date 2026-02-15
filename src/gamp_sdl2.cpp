@@ -192,7 +192,7 @@ bool gamp::init_gfx_subsystem(const char* exe_path) {
     return true;
 }
 
-WindowSRef Window::create(const char* title, int wwidth, int wheight, bool verbose) {
+WindowSRef Window::create(const char* title, int wwidth, int wheight, const Capabilities &requested, bool verbose) {
     if( !is_gfx_subsystem_initialized() ) {
         return nullptr;
     }
@@ -206,12 +206,7 @@ WindowSRef Window::create(const char* title, int wwidth, int wheight, bool verbo
     SDL_Window* sdl_win = nullptr;
     Uint32 sdl_win_id = 0;
 
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 1);
+    Surface::setCaps((handle_t)sdl_win, requested);
 
     sdl_win = SDL_CreateWindow(title,
                                SDL_WINDOWPOS_UNDEFINED,
@@ -233,7 +228,7 @@ WindowSRef Window::create(const char* title, int wwidth, int wheight, bool verbo
     gpu_frame_count = 0;
     jau::math::Recti window_bounds(64, 64, wwidth, wheight);
     jau::math::Vec2i surface_size(wwidth, wheight);
-    WindowSRef res = Window::wrapNative((handle_t)sdl_win, window_bounds, (handle_t)sdl_win, surface_size);
+    WindowSRef res = Window::wrapNative((handle_t)sdl_win, window_bounds, (handle_t)sdl_win, surface_size, requested);
 
     on_window_resized(res.get(), wwidth, wheight, getElapsedMonotonicTime(), verbose);
 

@@ -82,6 +82,6 @@ class Example : public RedSquareES2 {
 int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
     return launch("RedSquareES2.hpp",
-                  GLLaunchProps{.profile=GLProfile(GLProfile::GLES2), .contextFlags=gamp::render::RenderContextFlags::verbose},
+                  GLLaunchProps{.profile=GLProfile(GLProfile::GLES2), .contextFlags=gamp::render::RenderContextFlags::verbose, .requestedCaps=GLCapabilities()},
                   std::make_shared<Example>(), argc, argv);
 }

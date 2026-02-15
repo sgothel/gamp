@@ -26,10 +26,23 @@ namespace gamp::wt {
     class Capabilities;
     typedef std::unique_ptr<Capabilities> CapabilitiesPtr;
 
-    /** Specifies a set of capabilities that a window's rendering context
-        must support, such as color depth per channel. It currently
-        contains the minimal number of routines which allow configuration
-        on all supported window systems. */
+    /**
+     * Specifies a set of capabilities that a window's rendering context
+     * must support, such as color depth per channel. It currently
+     * contains the minimal number of routines which allow configuration
+     * on all supported window systems.
+     *
+     * Default (bit-sizes):
+     * - bit sizes
+     *   - red 8
+     *   - green 8
+     *   - blue 8
+     *   - alpha 8
+     *   - transparent off (zero)
+     * - flags
+     *   - onscreen true
+     *   - bitmap false
+     */
     class Capabilities {
       protected:
         constexpr static std::string_view na_str = "----";
@@ -39,9 +52,9 @@ namespace gamp::wt {
         int m_redBits   = 8;
         int m_greenBits = 8;
         int m_blueBits  = 8;
-        int m_alphaBits = 0;
+        int m_alphaBits = 8;
 
-        // Support for transparent windows containing OpenGL content
+        /// Support for transparent windows containing OpenGL content
         bool m_backgroundOpaque = true;
 
         int m_xparentValueRed   = 0;
@@ -49,10 +62,10 @@ namespace gamp::wt {
         int m_xparentValueBlue  = 0;
         int m_xparentValueAlpha = 0;
 
-        // Switch for on- or offscreen
+        /// Switch for on- or offscreen
         bool m_onscreen = true;
 
-        // offscreen bitmap mode
+        /// offscreen bitmap mode
         bool m_isBitmap = false;
 
       public:
@@ -149,59 +162,34 @@ namespace gamp::wt {
         }
 
         constexpr int visualID() const noexcept { return m_vid; }
-        /**
-         * Returns the number of bits for the color buffer's red
-         * component. On some systems only the color depth, which is the sum of the
-         * red, green, and blue bits, is considered.
-         */
+        /// Returns the number of bits for the color buffer's red component.
         constexpr int redBits() const noexcept { return m_redBits; }
-        /**
-         * Returns the number of bits for the color buffer's green
-         * component. On some systems only the color depth, which is the sum of the
-         * red, green, and blue bits, is considered.
-         */
+        /// Returns the number of bits for the color buffer's green component.
         constexpr int greenBits() const noexcept { return m_greenBits; }
-        /**
-         * Returns the number of bits for the color buffer's blue
-         * component. On some systems only the color depth, which is the sum of the
-         * red, green, and blue bits, is considered.
-         */
+        /// Returns the number of bits for the color buffer's blue component.
         constexpr int blueBits() const noexcept { return m_blueBits; }
-        /**
-         * Returns the number of bits for the color buffer's alpha
-         * component. On some systems only the color depth, which is the sum of the
-         * red, green, and blue bits, is considered.
-         */
+        /// Returns the number of bits for the color buffer's alpha component.
         constexpr int alphaBits() const noexcept { return m_alphaBits; }
 
         constexpr int& visualID() noexcept { return m_vid; }
 
-        /** Allows setting the number of bits requested for the color buffer's red
-            component. On some systems only the color depth, which is the
-            sum of the red, green, and blue bits, is considered. */
+        /// Returns the reference to the number of bits for the color buffer's red component.
         constexpr int& redBits() noexcept { return m_redBits; }
 
-        /** Allows setting the number of bits requested for the color buffer's green
-            component. On some systems only the color depth, which is the
-            sum of the red, green, and blue bits, is considered. */
+        /// Returns the reference to the number of bits for the color buffer's green component.
         constexpr int& greenBits() noexcept { return m_greenBits; }
 
-        /** Allows setting the number of bits requested for the color buffer's blue
-            component. On some systems only the color depth, which is the
-            sum of the red, green, and blue bits, is considered. */
+        /// Returns the reference to the number of bits for the color buffer's blue component.
         constexpr int& blueBits() noexcept { return m_blueBits; }
 
         /**
-         * Allows setting the number of bits requested for the color buffer's alpha
-         * component. On some systems only the color depth, which is the
-         * sum of the red, green, and blue bits, is considered.
-         * <p>
-         * <b>Note:</b> If alpha bits are <code>zero</code>, they are set to <code>one</code>
+         * Returns the reference to the number of bits for the color buffer's blue component.
+         *
+         * Note: If alpha bits are <code>zero</code>, they are set to <code>one</code>
          * by {@link #setBackgroundOpaque(boolean)} and it's OpenGL specialization <code>GLCapabilities::setSampleBuffers(boolean)</code>.<br/>
          * Ensure to call this method after the above to ensure a <code>zero</code> value.</br>
          * The above automated settings takes into account, that the user calls this method to <i>request</i> alpha bits,
          * not to <i>reflect</i> a current state. Nevertheless if this is the case - call it at last.
-         * </p>
          */
         constexpr int& alphaBits() noexcept { return m_alphaBits; }
 

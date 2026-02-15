@@ -35,6 +35,9 @@ using namespace gamp::render::gl;
 static bool GetGLAttribute(SDL_GLattr attr, int& value) noexcept {
     return 0 == SDL_GL_GetAttribute(attr, &value);
 }
+static bool SetGLAttribute(SDL_GLattr attr, int value) noexcept {
+    return 0 == SDL_GL_SetAttribute(attr, value);
+}
 
 bool Surface::setSwapIntervalImpl(int v) noexcept {
     if( 0 == SDL_GL_SetSwapInterval( v ) ) {
@@ -50,7 +53,7 @@ bool Surface::setSwapIntervalImpl(int v) noexcept {
 }
 
 CapabilitiesPtr Surface::retrieveCaps(const wt::SurfaceSRef& surface) noexcept {
-    if( !surface->isValid() ) {
+    if (!surface->isValid()) {
         return nullptr;
     }
     // SDL_Window* sdl_win = reinterpret_cast<SDL_Window*>(surface->surfaceHandle()); // NOLINT
@@ -62,12 +65,12 @@ CapabilitiesPtr Surface::retrieveCaps(const wt::SurfaceSRef& surface) noexcept {
     ok = ok && GetGLAttribute(SDL_GL_GREEN_SIZE, caps->greenBits());
     ok = ok && GetGLAttribute(SDL_GL_BLUE_SIZE, caps->blueBits());
     ok = ok && GetGLAttribute(SDL_GL_ALPHA_SIZE, caps->alphaBits());
-    if( !ok ) {
+    if (!ok) {
         return nullptr;
     }
 
     ok = GetGLAttribute(SDL_GL_DOUBLEBUFFER, v);
-    if( ok ) { caps->setDoubleBuffered(v); }
+    if (ok) { caps->setDoubleBuffered(v); }
 
     GetGLAttribute(SDL_GL_DEPTH_SIZE, caps->depthBits());
     GetGLAttribute(SDL_GL_STENCIL_SIZE, caps->stencilBits());
@@ -76,8 +79,47 @@ CapabilitiesPtr Surface::retrieveCaps(const wt::SurfaceSRef& surface) noexcept {
     GetGLAttribute(SDL_GL_ACCUM_BLUE_SIZE, caps->accumBlueBits());
     GetGLAttribute(SDL_GL_ACCUM_ALPHA_SIZE, caps->accumAlphaBits());
     ok = GetGLAttribute(SDL_GL_STEREO, v);
-    if( ok ) { caps->setStereo(v); }
+    if (ok) { caps->setStereo(v); }
+    ok = GetGLAttribute(SDL_GL_ACCELERATED_VISUAL, v);
+    if (ok) { caps->setHardwareAccelerated(v>0); }
+
+    ok = GetGLAttribute(SDL_GL_MULTISAMPLEBUFFERS, v);
+    if (ok && v > 0) {
+        ok = GetGLAttribute(SDL_GL_MULTISAMPLESAMPLES, v);
+        if (ok) { caps->setMultiSamplesCount(v); }
+    }
+
     return caps;
+}
+
+void Surface::setCaps(handle_t surface_handle, const Capabilities& requested) noexcept {
+    (void)surface_handle; // SDL2 uses a process static capabilities system (well)
+
+    SetGLAttribute(SDL_GL_RED_SIZE, requested.redBits());
+    SetGLAttribute(SDL_GL_GREEN_SIZE, requested.greenBits());
+    SetGLAttribute(SDL_GL_BLUE_SIZE, requested.blueBits());
+    SetGLAttribute(SDL_GL_ALPHA_SIZE, requested.alphaBits());
+
+    if( requested.signature() == GLCapabilities::GLSignature() ) {
+        const GLCapabilities &glcaps =  static_cast<const GLCapabilities&>(requested);
+        SetGLAttribute(SDL_GL_DOUBLEBUFFER, glcaps.doubleBuffered() ? 1 : 0);
+
+        SetGLAttribute(SDL_GL_DEPTH_SIZE, glcaps.depthBits());
+        SetGLAttribute(SDL_GL_STENCIL_SIZE, glcaps.stencilBits());
+        SetGLAttribute(SDL_GL_ACCUM_RED_SIZE, glcaps.accumRedBits());
+        SetGLAttribute(SDL_GL_ACCUM_GREEN_SIZE, glcaps.accumGreenBits());
+        SetGLAttribute(SDL_GL_ACCUM_BLUE_SIZE, glcaps.accumBlueBits());
+        SetGLAttribute(SDL_GL_ACCUM_ALPHA_SIZE, glcaps.accumAlphaBits());
+        SetGLAttribute(SDL_GL_STEREO, glcaps.stereo() ? 1 : 0);
+        SetGLAttribute(SDL_GL_ACCELERATED_VISUAL, glcaps.hardwareAccelerated() ? 1 : 0);
+        if (glcaps.hasMultiSamples()) {
+            SetGLAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+            SetGLAttribute(SDL_GL_MULTISAMPLESAMPLES, glcaps.multiSamplesCount());
+        } else {
+            SetGLAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+            SetGLAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
+        }
+    }
 }
 
 gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceSRef& surface,

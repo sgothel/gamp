@@ -803,6 +803,7 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
     return launch("GraphShapes02.cpp",
                   GLLaunchProps{.profile=GLProfile(GLProfile::GLES2),
-                                .contextFlags=gamp::render::RenderContextFlags::verbose}, // | gamp::render::RenderContextFlags::debug},
+                                .contextFlags=gamp::render::RenderContextFlags::verbose, // | gamp::render::RenderContextFlags::debug,
+                                .requestedCaps = GLCapabilities()},
                   std::make_shared<Example>(), argc, argv);
 }

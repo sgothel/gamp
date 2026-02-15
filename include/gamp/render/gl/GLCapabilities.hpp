@@ -24,18 +24,41 @@ namespace gamp::render::gl {
 
     using namespace gamp::wt;
 
-    /** Specifies a set of OpenGL capabilities.<br>
-        At creation time of a {@link GLDrawable} using {@link GLDrawableFactory},
-        an instance of this class is passed,
-        describing the desired capabilities that a rendering context
-        must support, such as the OpenGL profile, color depth and whether stereo is enabled.<br>
-
-        The actual capabilites of created {@link GLDrawable}s are then reflected by their own
-        GLCapabilites instance, which can be queried with {@link GLDrawable#getChosenGLCapabilities()}.
-        <br>
-
-        It currently contains the minimal number of routines which allow
-        configuration on all supported window systems. */
+    /**
+     * Specifies a set of OpenGL capabilities.
+     *
+     * At creation time of a {@link GLDrawable} using {@link GLDrawableFactory},
+     * an instance of this class is passed,
+     * describing the desired capabilities that a rendering context
+     * must support, such as the OpenGL profile, color depth and whether stereo is enabled.
+     *
+     * The actual capabilites of created {@link GLDrawable}s are then reflected by their own
+     * GLCapabilites instance, which can be queried with {@link GLDrawable#getChosenGLCapabilities()}.
+     *
+     * It currently contains the minimal number of routines which allow
+     * configuration on all supported window systems.
+     *
+     * Default (bit-sizes):
+     * - bit sizes
+     *   - red 8
+     *   - green 8
+     *   - blue 8
+     *   - alpha 8
+     *   - transparent off (zero)
+     *   - depth 16
+     *   - stencil 0
+     *   - depth 16
+     *   - stencil 0
+     *   - accum 0 (rgba)
+     *   - multi-samples-count 0
+     * - flags
+     *   - onscreen true
+     *   - bitmap false
+     *   - fbo false
+     *   - double-buffered true
+     *   - stereo false
+     *   - hardware-accelerated true
+     */
     class GLCapabilities : public Capabilities {
       private:
         bool m_isFBO               = false;
@@ -49,10 +72,9 @@ namespace gamp::render::gl {
         int  m_accumBlueBits       = 0;
         int  m_accumAlphaBits      = 0;
 
-        // Support for full-scene antialiasing (FSAA)
-        // std::string  sampleExtension = DEFAULT_SAMPLE_EXTENSION;
-        bool m_hasSamples   = false;
-        int  m_samplesCount = 2;
+        // Using full-scene antialiasing (FSAA) if value > 1,
+        // TODO: std::string  sampleExtension = DEFAULT_SAMPLE_EXTENSION;
+        int  m_multiSamplesCount = 0;
 
       public:
         constexpr GLCapabilities() noexcept                       = default;
@@ -60,7 +82,8 @@ namespace gamp::render::gl {
         constexpr GLCapabilities(GLCapabilities&&) noexcept       = default;
         GLCapabilities& operator=(const GLCapabilities&) noexcept = default;
 
-        const jau::type_info& signature() const noexcept override { return jau::static_ctti<GLCapabilities>(); }
+        static const jau::type_info& GLSignature() noexcept { return jau::static_ctti<GLCapabilities>(); }
+        const jau::type_info& signature() const noexcept override { return GLSignature(); }
 
         CapabilitiesPtr clone() const noexcept override { return std::make_unique<GLCapabilities>(*this); }
 
@@ -71,8 +94,7 @@ namespace gamp::render::gl {
             hash        = ((hash << 5) - hash) + (m_stereo ? 1 : 0);
             hash        = ((hash << 5) - hash) + (m_isFBO ? 1 : 0);
             // hash     = ((hash << 5) - hash) + (isPBuffer ? 1 : 0);
-            hash        = ((hash << 5) - hash) + (m_hasSamples ? 1 : 0);
-            hash        = ((hash << 5) - hash) + samplesCount();
+            hash        = ((hash << 5) - hash) + multiSamplesCount();
             // hash     = ((hash << 5) - hash) + sampleExtension.hashCode(); // FIXME
             hash        = ((hash << 5) - hash) + m_depthBits;
             hash        = ((hash << 5) - hash) + m_stencilBits;
@@ -103,12 +125,8 @@ namespace gamp::render::gl {
                        rhs.accumGreenBits() == m_accumGreenBits &&
                        rhs.accumBlueBits() == m_accumBlueBits &&
                        rhs.accumAlphaBits() == m_accumAlphaBits &&
-                       rhs.hasSamples() == m_hasSamples;
-            if( res && m_hasSamples ) {
-                res = rhs.samplesCount() == samplesCount()
-                // && rhs.getSampleExtension().equals(sampleExtension)
-                ;
-            }
+                       rhs.multiSamplesCount() == multiSamplesCount();
+                 // && rhs.getSampleExtension().equals(sampleExtension)
             return res;
         }
 
@@ -139,8 +157,8 @@ namespace gamp::render::gl {
                 return -1;
             }
 
-            const int ms  = samplesCount();
-            const int xms = rhs.samplesCount();
+            const int ms  = multiSamplesCount();
+            const int xms = rhs.multiSamplesCount();
 
             if( ms > xms ) {
                 return 1;
@@ -192,11 +210,12 @@ namespace gamp::render::gl {
          * Requesting offscreen FBO mode disables the offscreen auto selection.
          * </p>
          */
-        constexpr void setFBO(bool enable) noexcept {
+        constexpr GLCapabilities& setFBO(bool enable) noexcept {
             if( enable ) {
                 setOnscreen(false);
             }
             m_isFBO = enable;
+            return *this;
         }
 
         /**
@@ -208,7 +227,7 @@ namespace gamp::render::gl {
         constexpr bool doubleBuffered() const noexcept { return m_doubleBuffered; }
 
         /** Enables or disables double buffering. */
-        constexpr void setDoubleBuffered(bool enable) noexcept { m_doubleBuffered = enable; }
+        constexpr GLCapabilities& setDoubleBuffered(bool enable) noexcept { m_doubleBuffered = enable; return *this; }
 
         /**
          * Returns whether stereo is requested, available or chosen.
@@ -219,7 +238,7 @@ namespace gamp::render::gl {
         constexpr bool stereo() const noexcept { return m_stereo; }
 
         /** Enables or disables stereo viewing. */
-        constexpr void setStereo(bool enable) noexcept { m_stereo = enable; }
+        constexpr GLCapabilities& setStereo(bool enable) noexcept { m_stereo = enable; return *this; }
 
         /**
          * Returns whether hardware acceleration is requested, available or chosen.
@@ -230,7 +249,7 @@ namespace gamp::render::gl {
         constexpr bool hardwareAccelerated() const noexcept { return m_hardwareAccelerated; }
 
         /** Enables or disables hardware acceleration. */
-        constexpr void setHardwareAccelerated(bool enable) noexcept { m_hardwareAccelerated = enable; }
+        constexpr GLCapabilities& setHardwareAccelerated(bool enable) noexcept { m_hardwareAccelerated = enable; return *this; }
 
         /**
          * Returns the number of depth buffer bits.
@@ -322,27 +341,27 @@ namespace gamp::render::gl {
         // const std::string& getSampleExtension() { return sampleExtension; }
 
         /**
-         * Returns whether sample buffers for full-scene antialiasing
-         * (FSAA) should be allocated for this drawable.
-         * <p>
+         * Returns whether sample buffers for full-scene antialiasing (FSAA)
+         * is/shall-be used for this drawable.
+         *
          * Default is false.
-         * </p>
          */
-        constexpr bool hasSamples() const noexcept { return m_hasSamples; }
+        constexpr bool hasMultiSamples() const noexcept { return m_multiSamplesCount > 1; }
 
         /**
-         * Defaults to false.<br>
+         * Defaults to 0, i.e. no full-scene antialiasing (FSAA).
+         *
          * Indicates whether sample buffers for full-scene antialiasing
-         * (FSAA) should be allocated for this drawable.<br>
-         * Mind that this requires the alpha component.<br>
-         * If enabled this method also invokes {@link #setAlphaBits(int) setAlphaBits(1)}
-         * if {@link #getAlphaBits()} == 0.<br>
+         * (FSAA) should is/shall-be used for this drawable.
+         *
+         * If FSAA is enabled but alphaBits()==0, alphaBits() will be set to 1.
          */
-        constexpr void setHasSamples(bool enable) noexcept {
-            m_hasSamples = enable;
-            if( m_hasSamples && alphaBits() == 0 ) {
+        constexpr GLCapabilities& setMultiSamplesCount(int v) noexcept {
+            m_multiSamplesCount = v;
+            if( v > 1 && alphaBits() == 0 ) {
                 alphaBits() = 1;
             }
+            return *this;
         }
 
         /**
@@ -352,14 +371,7 @@ namespace gamp::render::gl {
          * Default is 0 due to disable sample buffers per default.
          * </p>
          */
-        constexpr int samplesCount() const noexcept { return m_hasSamples ? m_samplesCount : 0; }
-
-        /**
-         * If sample buffers are enabled, indicates the number of buffers
-         * to be allocated. Defaults to 2.
-         * @see #getNumSamples()
-         */
-        constexpr int& samplesCount() noexcept { return m_samplesCount; }
+        constexpr int multiSamplesCount() const noexcept { return hasMultiSamples() ? m_multiSamplesCount : 0; }
 
         /** Returns a textual representation of this GLCapabilities
             object. */
@@ -372,14 +384,12 @@ namespace gamp::render::gl {
 
       protected:
         std::string toString(std::string& sink) const {
-            const int samples = m_hasSamples ? m_samplesCount : 0;
-
             Capabilities::toString(sink, false);
 
             sink.append(", accum-rgba ").append(std::to_string(m_accumRedBits)).append(ESEP).append(std::to_string(m_accumGreenBits)).append(ESEP)
                 .append(std::to_string(m_accumBlueBits)).append(ESEP).append(std::to_string(m_accumAlphaBits));
             sink.append(", dp/st/ms ").append(std::to_string(m_depthBits)).append(ESEP)
-                .append(std::to_string(m_stencilBits)).append(ESEP).append(std::to_string(samples));
+                .append(std::to_string(m_stencilBits)).append(ESEP).append(std::to_string(multiSamplesCount()));
             // if(samples>0) { sink.append(", sample-ext ").append(m_sampleExtension); }
             if( m_doubleBuffered ) {
                 sink.append(", dbl");

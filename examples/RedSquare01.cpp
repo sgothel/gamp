@@ -20,6 +20,7 @@
 #include <jau/io/file_util.hpp>
 
 #include <gamp/Gamp.hpp>
+#include <gamp/render/gl/GLCapabilities.hpp>
 #include <gamp/render/gl/GLTypes.hpp>
 #include <gamp/render/RenderContext.hpp>
 #include <gamp/wt/event/Event.hpp>
@@ -277,7 +278,7 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
         printf("Exit (0)...");
         return 1;
     }
-    WindowSRef main_win = Window::create(demo_name.c_str(), win_width, win_height, true /* verbose */);
+    WindowSRef main_win = Window::create(demo_name.c_str(), win_width, win_height, gamp::render::gl::GLCapabilities(), true /* verbose */);
     if( !main_win ) {
         printf("Exit (1): Failed to create window.\n");
         return 1;

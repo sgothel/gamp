@@ -180,8 +180,8 @@ namespace gamp::wt {
         public:
             /** Private ctor for single Window::create() method w/o public ctor. */
             Window(Private, handle_t window_handle, const Recti& window_bounds,
-                   handle_t surface_handle, const Vec2i& surface_size)
-            : Surface(Surface::Private(), surface_handle, surface_size),
+                   handle_t surface_handle, const Vec2i& surface_size, const Capabilities &requested)
+            : Surface(Surface::Private(), surface_handle, surface_size, requested),
               m_window_handle(window_handle),
               m_window_bounds(window_bounds), m_state(WindowState::none),
               m_win_selflistener(std::make_shared<SelfWinListener>(this))
@@ -197,9 +197,9 @@ namespace gamp::wt {
              * @see create()
              */
             static WindowSRef wrapNative(handle_t window_handle, const Recti& window_bounds,
-                                         handle_t surface_handle, const Vec2i& surface_size) {
+                                         handle_t surface_handle, const Vec2i& surface_size, const Capabilities &requested) {
                 return std::make_shared<Window>(Private(), window_handle, window_bounds,
-                                                surface_handle, surface_size);
+                                                surface_handle, surface_size, requested);
             }
 
             /**
@@ -207,7 +207,7 @@ namespace gamp::wt {
              *
              * @see wrapNative()
              */
-            static WindowSRef create(const char* title, int wwidth, int wheight, bool verbose=false);
+            static WindowSRef create(const char* title, int wwidth, int wheight, const Capabilities &requested, bool verbose=false);
 
             Window(const Window&) = delete;
             void operator=(const Window&) = delete;

@@ -81,6 +81,7 @@
 #include <gamp/render/gl/data/GLUniformData.hpp>
 #include <gamp/render/gl/glsl/ShaderState.hpp>
 
+#include "gamp/render/gl/GLCapabilities.hpp"
 #include "model_cobramk3.hpp"
 
 #include "../demos/GLLauncher01.hpp"
@@ -707,6 +708,7 @@ int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {
     return launch("Primitives03.cpp",
                   GLLaunchProps{.profile=GLProfile(GLProfile::GLES2),
-                                .contextFlags=gamp::render::RenderContextFlags::verbose}, // | gamp::render::RenderContextFlags::debug},
+                                .contextFlags=gamp::render::RenderContextFlags::verbose, // | gamp::render::RenderContextFlags::debug,
+                                .requestedCaps=GLCapabilities()},
                   std::make_shared<Example>(), argc, argv);
 }
