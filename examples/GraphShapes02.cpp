@@ -458,7 +458,7 @@ class Shape {
     bool iMatIdent = true;
     bool iMatDirty = false;
 
-	float m_velo = 0; // m/s
+    float m_velo = 0; // m/s
 
     struct Private{ explicit Private() = default; };
 
@@ -479,7 +479,7 @@ class Shape {
 
     constexpr const Vec3f& position() const noexcept { return m_position; }
     constexpr Vec3f& position() noexcept { iMatDirty=true; return m_position; }
-	constexpr void set_position(Vec3f new_pos) noexcept { m_position = new_pos; }
+    constexpr void set_position(Vec3f new_pos) noexcept { m_position = new_pos; }
 
     constexpr const float& zOffset() const noexcept { return m_zOffset; }
     constexpr float& zOffset() noexcept { iMatDirty=true; return m_zOffset; }
@@ -518,19 +518,19 @@ class Shape {
         pmv.popMv();
     }
 
-	/// Game ..
-	void tick(float dt) {
-		if( !jau::is_zero(m_velo) ) {
-			iMatDirty = true;
-			m_rotation.rotateByAngleZ( M_PI_2);
-			Vec3f dir = m_rotation.rotateVector(Vec3f(1, 0, 0));
-			m_rotation.rotateByAngleZ(-M_PI_2);
-			Vec3f d_p = dir * m_velo * dt;
+    /// Game ..
+    void tick(float dt) {
+        if( !jau::is_zero(m_velo) ) {
+            iMatDirty = true;
+            m_rotation.rotateByAngleZ( M_PI_2);
+            Vec3f dir = m_rotation.rotateVector(Vec3f(1, 0, 0));
+            m_rotation.rotateByAngleZ(-M_PI_2);
+            Vec3f d_p = dir * m_velo * dt;
 
-			m_position += d_p;
-		}
-	}
-	float& velo() noexcept { return m_velo; }
+            m_position += d_p;
+        }
+    }
+    float& velo() noexcept { return m_velo; }
 
   private:
     /**
@@ -632,7 +632,7 @@ class GraphShapes02 : public RenderListener {
 
     Recti& viewport() noexcept { return m_viewport; }
     const Recti& viewport() const noexcept { return m_viewport; }
-	std::vector<ShapeRef>& shapes() noexcept { return m_shapes; }
+    std::vector<ShapeRef>& shapes() noexcept { return m_shapes; }
 
     bool animating() const noexcept { return m_animating; }
     bool& animating() noexcept { return m_animating; }
@@ -656,7 +656,7 @@ class GraphShapes02 : public RenderListener {
         cobraMkIII_Shape->update(gl);
         m_shapes.push_back(cobraMkIII_Shape);
 
-		//::glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+        //::glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
         ::glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         ::glEnable(GL_DEPTH_TEST);
         // ::glEnable(GL_CULL_FACE);
@@ -710,16 +710,16 @@ class GraphShapes02 : public RenderListener {
 
         m_st.useProgram(gl, true);
 
-		const float dt = float( (when - m_tlast).to_double() );
+        const float dt = float( (when - m_tlast).to_double() );
         for(const ShapeRef& s : m_shapes) {
             if( (animating() || m_oneframe) && s != m_shapes[0]) {
                 constexpr float angle_per_sec = 30;
                 const float rad = dt * angle_per_sec;
                 s->rotation().rotateByAngleX(jau::adeg_to_rad( -rad ));
-				s->rotation().rotateByAngleY(jau::adeg_to_rad(  rad ));
-				//s->rotation().rotateByAngleZ(jau::adeg_to_rad(  rad ));
+                s->rotation().rotateByAngleY(jau::adeg_to_rad(  rad ));
+                //s->rotation().rotateByAngleZ(jau::adeg_to_rad(  rad ));
             }
-			s->tick(dt);
+            s->tick(dt);
             s->draw(gl);
         }
         m_oneframe = false;
@@ -748,7 +748,7 @@ class Example : public GraphShapes02 {
         void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
             jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
             std::vector<ShapeRef>& shapeList = m_parent.shapes();
-			if( e.keySym() == VKeyCode::VK_ESCAPE ) {
+            if( e.keySym() == VKeyCode::VK_ESCAPE ) {
                 WindowSRef win = e.source().lock();
                 if( win ) {
                     win->dispose(e.when());
@@ -761,18 +761,18 @@ class Example : public GraphShapes02 {
                 WindowSRef win = e.source().lock();
                 jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
             } else if( e.keySym() == VKeyCode::VK_UP   ) {
-				shapeList[0]->rotation().rotateByAngleX(-M_PI / 50);
-			} else if( e.keySym() == VKeyCode::VK_DOWN ) {
-				shapeList[0]->rotation().rotateByAngleX( M_PI / 50);
-		    } else if( e.keySym() == VKeyCode::VK_SHIFT   ) {
-				shapeList[0]->velo() += 0.1f;
-			} else if( e.keySym() == VKeyCode::VK_ENTER ) {
-				shapeList[0]->velo() = std::max(shapeList[0]->velo() - 0.1f, 0.0f);
-			} else if( e.keySym() == VKeyCode::VK_RIGHT) {
-				shapeList[0]->rotation().rotateByAngleY( M_PI / 50);
-			} else if( e.keySym() == VKeyCode::VK_LEFT ) {
-				shapeList[0]->rotation().rotateByAngleY(-M_PI / 50);
-			}
+                shapeList[0]->rotation().rotateByAngleX(-M_PI / 50);
+            } else if( e.keySym() == VKeyCode::VK_DOWN ) {
+                shapeList[0]->rotation().rotateByAngleX( M_PI / 50);
+            } else if( e.keySym() == VKeyCode::VK_SHIFT   ) {
+                shapeList[0]->velo() += 0.1f;
+            } else if( e.keySym() == VKeyCode::VK_ENTER ) {
+                shapeList[0]->velo() = std::max(shapeList[0]->velo() - 0.1f, 0.0f);
+            } else if( e.keySym() == VKeyCode::VK_RIGHT) {
+                shapeList[0]->rotation().rotateByAngleY( M_PI / 50);
+            } else if( e.keySym() == VKeyCode::VK_LEFT ) {
+                shapeList[0]->rotation().rotateByAngleY(-M_PI / 50);
+            }
         }
         void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
             jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
