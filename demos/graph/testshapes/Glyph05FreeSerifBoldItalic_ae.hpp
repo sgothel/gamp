@@ -136,7 +136,7 @@ class Glyph05FreeSerifBoldItalic_ae {
         // Shape.QuadTo:
         shape.addVertex(pos0, 0.578000f, -0.013000f, 0, false); // NOLINT
         shape.addVertex(pos0, 0.450000f, -0.013000f, 0, true);
-        jau_PLAIN_PRINT(true, "Glyph05FreeSerifBoldItalic_ae.shape01a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()).c_str());
+        jau_PLAIN_PRINT(true, "Glyph05FreeSerifBoldItalic_ae.shape01a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()));
         shape.closeLastOutline(false);
 
         // 039: B0a: move-to p0
@@ -184,7 +184,7 @@ class Glyph05FreeSerifBoldItalic_ae {
         // Shape.QuadTo:
         shape.addVertex(pos0, 0.172000f, 0.058000f, 0, false);
         shape.addVertex(pos0, 0.194000f, 0.058000f, 0, true);
-        jau_PLAIN_PRINT(true, "Glyph05FreeSerifBoldItalic_ae.shape02a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()).c_str());
+        jau_PLAIN_PRINT(true, "Glyph05FreeSerifBoldItalic_ae.shape02a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()));
         shape.closeLastOutline(false);
 
         if( true ) {
@@ -237,7 +237,7 @@ class Glyph05FreeSerifBoldItalic_ae {
             // 060: B1: line-to p0-p1
             // Shape.LineTo:
             shape.addVertex(pos0, 0.438000f, 0.214000f, 0, true);
-            jau_PLAIN_PRINT(true, "Glyph05FreeSerifBoldItalic_ae.shape03a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()).c_str());
+            jau_PLAIN_PRINT(true, "Glyph05FreeSerifBoldItalic_ae.shape03a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()));
             shape.closeLastOutline(false);
         }
 

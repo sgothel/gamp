@@ -326,7 +326,7 @@ namespace gamp::render::gl::glsl {
 
         void dumpSource() {
             jau_PLAIN_PRINT(true, "");
-            jau_PLAIN_PRINT(true, "%s", toString().c_str());
+            jau_PLAIN_PRINT(true, "%s", toString());
             for(const auto & iter : m_allShaderCode) {
                 iter->dumpSource();
             }

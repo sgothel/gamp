@@ -191,8 +191,8 @@ namespace gamp::render::gl::glsl {
                 const size_t newId = prog ? prog->id() : 0;
                 jau_INFO_PRINT("ShaderState: attachShaderProgram: %zu -> %zu (enable: %d)\n\t%s\n\t%s",
                     curId, newId, enable,
-                    (m_shaderProgram ? m_shaderProgram->toString().c_str() : "null"),
-                    (prog ? prog->toString().c_str() : "null"));
+                    (m_shaderProgram ? m_shaderProgram->toString() : "null"),
+                    (prog ? prog->toString() : "null"));
             }
             if(m_shaderProgram) {
                 if(m_shaderProgram == prog) {
@@ -473,7 +473,7 @@ namespace gamp::render::gl::glsl {
                 if( 0 <= location ) {
                     dl = &m_activeAttribMap.put2(name, *dl);
                     if (debug()) {
-                        jau_INFO_PRINT("ShaderState: resolveLocation(1) failed, no location for: %s", string_t(name).c_str());
+                        jau_INFO_PRINT("ShaderState: resolveLocation(1) failed, no location for: %s", string_t(name));
                     }
                 } else {
                     if( forceMap ) {
@@ -482,7 +482,7 @@ namespace gamp::render::gl::glsl {
                         dl = &m_activeAttribMap.novalue();
                     }
                     if(verbose()) {
-                        jau_INFO_PRINT("ShaderState: resolveLocation(1) failed, no location for: %s", string_t(name).c_str());
+                        jau_INFO_PRINT("ShaderState: resolveLocation(1) failed, no location for: %s", string_t(name));
                     }
                 }
             }
@@ -524,12 +524,12 @@ namespace gamp::render::gl::glsl {
                 if ( data->resolveLocation(gl, m_shaderProgram->program()) ) {
                     dl = &updateDataLoc(*dl, data, true);
                     if (debug()) {
-                        jau_INFO_PRINT("ShaderState: resolveLocation(2): %s, loc: %d", string_t(data->name()).c_str(), data->location());
+                        jau_INFO_PRINT("ShaderState: resolveLocation(2): %s, loc: %d", string_t(data->name()), data->location());
                     }
                 } else {
                     dl = &updateDataLoc(*dl, data, forceMap);
                     if(verbose()) {
-                        jau_INFO_PRINT("ShaderState: resolveLocation(2) failed, no location for: %s", string_t(data->name()).c_str());
+                        jau_INFO_PRINT("ShaderState: resolveLocation(2) failed, no location for: %s", string_t(data->name()));
                     }
                 }
             }
@@ -583,12 +583,12 @@ namespace gamp::render::gl::glsl {
             const GLint location = dl.location();
             if( 0 > location ) {
                 if(verbose()) {
-                    jau_INFO_PRINT("ShaderState: enableAttribute(1) failed, no data for: %s", string_t(name).c_str());
+                    jau_INFO_PRINT("ShaderState: enableAttribute(1) failed, no data for: %s", name);
                 }
                 return false;
             }
             if (debug()) {
-                jau_INFO_PRINT("ShaderState: enableAttribute(1): %s, loc: %d", string_t(name).c_str(), location);
+                jau_INFO_PRINT("ShaderState: enableAttribute(1): %s, loc: %d", name, location);
             }
             ::glEnableVertexAttribArray(location);
             return true;
@@ -624,12 +624,12 @@ namespace gamp::render::gl::glsl {
             const GLint location = dl.location();
             if( 0 > location ) {
                 if(verbose()) {
-                    jau_INFO_PRINT("ShaderState: enableAttribute(2) failed, no data for: %s", string_t(data->name()).c_str());
+                    jau_INFO_PRINT("ShaderState: enableAttribute(2) failed, no data for: %s", data->name());
                 }
                 return false;
             }
             if (debug()) {
-                jau_INFO_PRINT("ShaderState: enableAttribute(2): %s, loc: %d", string_t(data->name()).c_str(), location);
+                jau_INFO_PRINT("ShaderState: enableAttribute(2): %s, loc: %d", data->name(), location);
             }
             ::glEnableVertexAttribArray(data->location());
             return true;
@@ -662,12 +662,12 @@ namespace gamp::render::gl::glsl {
             const GLint location = dl.location();
             if( 0 > location ) {
                 if(verbose()) {
-                    jau_INFO_PRINT("ShaderState: disableAttribute(1) failed, no data for: %s", string_t(name).c_str());
+                    jau_INFO_PRINT("ShaderState: disableAttribute(1) failed, no data for: %s", name);
                 }
                 return false;
             }
             if (debug()) {
-                jau_INFO_PRINT("ShaderState: disableAttribute(1): %s, loc: %d", string_t(name).c_str(), location);
+                jau_INFO_PRINT("ShaderState: disableAttribute(1): %s, loc: %d", name, location);
             }
             ::glDisableVertexAttribArray(location);
             return true;
@@ -702,12 +702,12 @@ namespace gamp::render::gl::glsl {
             const GLint location = dl.location();
             if( 0 > location ) {
                 if(verbose()) {
-                    jau_INFO_PRINT("ShaderState: disableAttribute(2) failed, no data for: %s", string_t(data->name()).c_str());
+                    jau_INFO_PRINT("ShaderState: disableAttribute(2) failed, no data for: %s", data->name());
                 }
                 return false;
             }
             if (debug()) {
-                jau_INFO_PRINT("ShaderState: disableAttribute(2): %s, loc: %d", string_t(data->name()).c_str(), location);
+                jau_INFO_PRINT("ShaderState: disableAttribute(2): %s, loc: %d", data->name(), location);
             }
             ::glDisableVertexAttribArray(data->location());
             return true;
@@ -809,7 +809,7 @@ namespace gamp::render::gl::glsl {
             GLArrayDataSRef &data = dl.data();
             if( data->resolveLocation(gl, m_shaderProgram->program()) ) {
                 if(debug()) {
-                    jau_INFO_PRINT("ShaderState: relocateAttribute: %s, loc: %d", std::string(data->name()).c_str(), data->location());
+                    jau_INFO_PRINT("ShaderState: relocateAttribute: %s, loc: %d", std::string(data->name()), data->location());
                 }
                 if(dl.enabled()) {
                     // enable attrib, VBO and pass location/data
@@ -973,7 +973,7 @@ namespace gamp::render::gl::glsl {
                 if (!m_shaderProgram->inUse()) throw RenderException("Program is not in use", E_FILE_LINE);
                 if (!data.resolveLocation(gl, m_shaderProgram->program())) {
                     if (verbose()) {
-                        jau_INFO_PRINT("ShaderState: resolving uniform failed, no location/index for: %s", string_t(data.name()).c_str());
+                        jau_INFO_PRINT("ShaderState: resolving uniform failed, no location/index for: %s", string_t(data.name()));
                     }
                     return false;
                 }
@@ -1091,7 +1091,7 @@ namespace gamp::render::gl::glsl {
         bool resetAllUniforms(const GL& gl) noexcept {
             if (!m_shaderProgram->inUse()) {
                 if (verbose()) {
-                    jau_INFO_PRINT("ShaderState: program not in use: %s", m_shaderProgram->toString().c_str());
+                    jau_INFO_PRINT("ShaderState: program not in use: %s", m_shaderProgram->toString());
                 }
                 return false;
             }
@@ -1102,7 +1102,7 @@ namespace gamp::render::gl::glsl {
                 GLUniformData *data = n.second;
                 if (data->resolveLocation(gl, m_shaderProgram->program())) {
                     if (debug()) {
-                        jau_INFO_PRINT("ShaderState: resetAllUniforms: %s", string_t(data->name()).c_str());
+                        jau_INFO_PRINT("ShaderState: resetAllUniforms: %s", string_t(data->name()));
                     }
                     if (!data->isBuffer()) {  // only send plain uniforms again
                         data->send(gl);

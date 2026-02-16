@@ -78,7 +78,7 @@ namespace gamp::render::gl::glsl {
 
             const bool res = ires==1;
             if(!res && verbose) {
-                jau_PLAIN_PRINT(true, "Shader status invalid: %s", getShaderInfoLog(gl, shaderObj).c_str());
+                jau_PLAIN_PRINT(true, "Shader status invalid: %s", getShaderInfoLog(gl, shaderObj));
             }
             return res;
         }
@@ -96,7 +96,7 @@ namespace gamp::render::gl::glsl {
             glGetProgramiv(programObj, name, &ires);
             const bool res = ires==1;
             if(!res && verbose) {
-                jau_PLAIN_PRINT(true, "Program status invalid: %s", getProgramInfoLog(gl, programObj).c_str());
+                jau_PLAIN_PRINT(true, "Program status invalid: %s", getProgramInfoLog(gl, programObj));
             }
             return ires==1;
         }
@@ -110,7 +110,7 @@ namespace gamp::render::gl::glsl {
             }
             if(!isProgramStatusValid(gl, programObj, GL_LINK_STATUS)) {
                 if(verbose) {
-                    jau_PLAIN_PRINT(true, "Program link failed: %u\n\t%s", programObj, getProgramInfoLog(gl, programObj).c_str());
+                    jau_PLAIN_PRINT(true, "Program link failed: %u\n\t%s", programObj, getProgramInfoLog(gl, programObj));
                 }
                 return false;
             }
@@ -133,7 +133,7 @@ namespace gamp::render::gl::glsl {
             glValidateProgram(programObj);
             if(!isProgramStatusValid(gl, programObj, GL_VALIDATE_STATUS)) {
                 if(verbose) {
-                    jau_PLAIN_PRINT(true, "Program validation failed: %u\n\t%s", programObj, getProgramInfoLog(gl, programObj).c_str());
+                    jau_PLAIN_PRINT(true, "Program validation failed: %u\n\t%s", programObj, getProgramInfoLog(gl, programObj));
                 }
                 return false;
             }

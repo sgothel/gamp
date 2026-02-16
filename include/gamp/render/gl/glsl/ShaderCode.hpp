@@ -201,7 +201,7 @@ namespace gamp::render::gl::glsl {
          */
         static ShaderCodeSRef create(GL& gl, GLenum type, size_t count, const string_list_t& sourceFiles) {
             if(!ShaderUtil::isShaderCompilerAvailable(gl)) {
-                jau_ERR_PRINT("No shader compiler available for %s", gl.toString().c_str());
+                jau_ERR_PRINT("No shader compiler available for %s", gl.toString());
                 return nullptr;
             }
             if( !isValidShaderType(type) ) {
@@ -766,7 +766,7 @@ namespace gamp::render::gl::glsl {
             const size_t shaderCount = m_shader.size();
             jau_PLAIN_PRINT(true, "");
             jau_PLAIN_PRINT(true, "ShaderCode[id=%zu, type=%s, valid=%d, compiled=%d, %zu/%zu shader:",
-                m_id, shaderTypeStr().c_str(), isValid(), m_compiled, m_shader.size(), shaderCount);
+                m_id, shaderTypeStr(), isValid(), m_compiled, m_shader.size(), shaderCount);
             if( 0 == shaderCount ) {
                 jau_PLAIN_PRINT(true, "none]");
             }
@@ -786,7 +786,7 @@ namespace gamp::render::gl::glsl {
                         string_t line;
                         while (std::getline(reader, line)) {
                             ++lineno;
-                            jau_PLAIN_PRINT(false, "%4d: %s", lineno, line.c_str());
+                            jau_PLAIN_PRINT(false, "%4d: %s", lineno, line);
                         }
                     }
                 }
@@ -985,7 +985,7 @@ namespace gamp::render::gl::glsl {
                         return false;
                     }
                     if( DEBUG_CODE ) {
-                        jau_PLAIN_PRINT(true, "readShaderSource: including '%s' -> '%s'", includeFile.c_str(), nextConn.c_str());
+                        jau_PLAIN_PRINT(true, "readShaderSource: including '%s' -> '%s'", includeFile, nextConn);
                     }
                     lineno = readShaderSource(nextConn, result, lineno);
                 } else {
@@ -1007,7 +1007,7 @@ namespace gamp::render::gl::glsl {
             const string_t path(path0);
             const string_t conn = gamp::resolve_asset(path);
             if( DEBUG_CODE ) {
-                jau_PLAIN_PRINT(true, "readShaderSource: %s -> %s", path.c_str(), conn.c_str());
+                jau_PLAIN_PRINT(true, "readShaderSource: %s -> %s", path, conn);
             }
             if (!conn.empty()) {
                 int lineno=0;

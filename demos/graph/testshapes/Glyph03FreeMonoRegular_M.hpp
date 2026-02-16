@@ -311,7 +311,7 @@ class Glyph03FreeMonoRegular_M {
             // 044: B1: line-to p0-p1
             // Shape.LineTo:
             shape.addVertex(pos0, 0.326000f, 0.169000f, 0, true);
-            jau_PLAIN_PRINT(true, "Glyph03FreeMonoRegular_M.shape01a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()).c_str());
+            jau_PLAIN_PRINT(true, "Glyph03FreeMonoRegular_M.shape01a.winding_area: %s", jau::math::geom::to_string(shape.windingOfLastOutline()));
             shape.closeLastOutline(false);
 
             // End Shape for Glyph 48

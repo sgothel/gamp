@@ -155,13 +155,8 @@ namespace gamp::render::gl::data {
         std::string elemStatsToString() const noexcept override {
             const size_t elem_limit = ( (usesClientMem() ? m_bufferptr->limit() : 0) * m_bytesPerComp ) / m_strideB;
             try {
-                return jau::format_string("sealed %d, elements %s cnt, [%s pos .. %s rem .. %s lim .. %s cap]",
-                                     sealed(),
-                                     jau::to_decstring(elemCount()).c_str(),
-                                     jau::to_decstring(elemPosition()).c_str(),
-                                     jau::to_decstring(remainingElems()).c_str(),
-                                     jau::to_decstring(elem_limit).c_str(),
-                                     jau::to_decstring(elemCapacity()).c_str());
+                return jau_format_string("sealed %s, elements %'d cnt, [%'zd pos .. %'zd rem .. %'zu lim .. %'zd cap]",
+                                     sealed(), elemCount(), elemPosition(), remainingElems(), elem_limit, elemCapacity());
             } catch (const std::exception &e) {
                jau_ERR_PRINT2("Caught exception %s", e.what());
                return "";
@@ -298,12 +293,8 @@ namespace gamp::render::gl::data {
             const size_t cnt_bytes = byteCount();
             const size_t cap_bytes = byteCapacity();
             const float  filled    = (float)cnt_bytes / (float)cap_bytes;
-            return jau::format_string("elements %s cnt / %s cap, bytes %s cnt / %s cap, filled %.1f%%, left %.1f%%",
-                                 jau::to_decstring(elemCount()).c_str(),
-                                 jau::to_decstring(elemCapacity()).c_str(),
-                                 jau::to_decstring(cnt_bytes).c_str(),
-                                 jau::to_decstring(cap_bytes).c_str(),
-                                 filled * 100.0f, (1.0f - filled) * 100.0f);
+            return jau::format_string("elements %'d cnt / %'zd cap, bytes %'zu cnt / %'zu cap, filled %.1f%%, left %.1f%%",
+                                 elemCount(), elemCapacity(), cnt_bytes, cap_bytes, filled * 100.0f, (1.0f - filled) * 100.0f);
         }
 
         //

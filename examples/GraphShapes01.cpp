@@ -223,7 +223,7 @@ class GraphRenderer {
             std::string passS = m_props.m_pass1 ? "-pass1-" : "-pass2-";
             std::string shaderSegment = string_t(source_dir).append("/").append(shader_basename).append(passS).append("curve_simple").append(".glsl"); // sms.tech+sms.sub+".glsl";
             if( Graph::DEBUG_MODE || ShaderCode::DEBUG_CODE ) {
-                jau_fprintf_td(stderr, "RegionRenderer.createShaderProgram.1: segment %s", shaderSegment.c_str());
+                jau_fprintf_td(stderr, "RegionRenderer.createShaderProgram.1: segment %s", shaderSegment);
             }
             posFp = rsFp->insertShaderSourceFile(0, posFp, shaderSegment);
             if( posFp == std::string::npos ) {
@@ -339,7 +339,7 @@ class GraphRegion {
 
   private:
     void pushVertex(const Vertex& v, const Vec3f& normal) {
-        // jau_fprintf_td(stderr, "pushVertex.0[%d]: v %s]", m_num_vertices, v.toString().c_str());
+        // jau_fprintf_td(stderr, "pushVertex.0[%d]: v %s]", m_num_vertices, v.toString());
         m_array->put3f(v.coord());
         m_array->put3f(v.texCoord());
         if( m_renderer.usesNormal() ) {
@@ -366,8 +366,8 @@ class GraphRegion {
         }
         if( Graph::DEBUG_MODE ) {
             jau_fprintf_td(stderr, "add.0 num[vertices %d, indices %d]", m_num_vertices, m_num_indices);
-            jau_fprintf_td(stderr, "add.0 array: %s", m_array->toString().c_str());
-            jau_fprintf_td(stderr, "add.0 indices: %s", m_indices->toString().c_str());
+            jau_fprintf_td(stderr, "add.0 array: %s", m_array->toString());
+            jau_fprintf_td(stderr, "add.0 indices: %s", m_indices->toString());
         }
         const TriangleRefList& trisIn = shape.getTriangles();
         const VertexList& vertsIn = shape.getVertices();
@@ -409,8 +409,8 @@ class GraphRegion {
         }
         if( Graph::DEBUG_MODE ) {
             jau_fprintf_td(stderr, "add.x num[vertices %d, indices %d]", m_num_vertices, m_num_indices);
-            jau_fprintf_td(stderr, "add.x array: %s", m_array->toString().c_str());
-            jau_fprintf_td(stderr, "add.x indices: %s", m_indices->toString().c_str());
+            jau_fprintf_td(stderr, "add.x array: %s", m_array->toString());
+            jau_fprintf_td(stderr, "add.x indices: %s", m_indices->toString());
         }
     }
 
@@ -617,13 +617,13 @@ class GraphShapes01 : public RenderListener {
     void setOneFrame() noexcept { m_animating=false; m_oneframe=true; }
 
     bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
-        jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString().c_str());
+        jau::fprintf_td(when.to_ms(), stdout, "RL::init: %s\n", toString());
         m_tlast = when;
 
         GL& gl = GL::downcast(win->renderContext());
 
         if( !m_renderer.init(gl, when) ) {
-            jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
+            jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString());
             win->dispose(when);
             return false;
         }
@@ -695,9 +695,9 @@ class GraphShapes01 : public RenderListener {
                 oshape.outlines()[0].setWinding(Winding::CCW);
                 oshape.outlines()[1].setWinding(Winding::CW);
                 jau_fprintf_td(stderr, "Special.frontShape.10.winding_area: %s -> %s",
-                    to_string(w10).c_str(), to_string(oshape.outlines()[0].getWinding()).c_str());
+                    to_string(w10), to_string(oshape.outlines()[0].getWinding()));
                 jau_fprintf_td(stderr, "Special.frontShape.11.winding_area: %s -> %s",
-                    to_string(w11).c_str(), to_string(oshape.outlines()[1].getWinding()).c_str());
+                    to_string(w11), to_string(oshape.outlines()[1].getWinding()));
             }
 
             frontShape->update(gl);
@@ -716,9 +716,9 @@ class GraphShapes01 : public RenderListener {
             backShape->scale().x *= 0.1f;
             backShape->scale().y *= 0.1f;
             jau_fprintf_td(stderr, "Special.backShape.10.winding_area: %s",
-                to_string(backShape->outlineShape().outlines()[0].getWinding()).c_str());
+                to_string(backShape->outlineShape().outlines()[0].getWinding()));
             jau_fprintf_td(stderr, "Special.backShape.11.winding_area: %s",
-                to_string(backShape->outlineShape().outlines()[1].getWinding()).c_str());
+                to_string(backShape->outlineShape().outlines()[1].getWinding()));
         }
         if ( true ) {
             ShapeRef frontShape = Shape::createShared(m_st, m_renderer);
@@ -774,7 +774,7 @@ class GraphShapes01 : public RenderListener {
 
         m_initialized = true;
         if( !m_initialized ) {
-            jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString().c_str());
+            jau::fprintf_td(when.to_ms(), stdout, "ERROR %s:%d: %s\n", E_FILE_LINE, toString());
             m_st.destroy(gl);
             win->dispose(when);
         }
@@ -783,7 +783,7 @@ class GraphShapes01 : public RenderListener {
 
     void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
         GL& gl = GL::downcast(win->renderContext());
-        jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", toString().c_str());
+        jau::fprintf_td(when.to_ms(), stdout, "RL::dispose: %s\n", toString());
         for(ShapeRef& s : m_shapes) {
             s->destroy(gl);
         }
@@ -794,7 +794,7 @@ class GraphShapes01 : public RenderListener {
 
     void reshape(const WindowSRef& win, const jau::math::Recti& viewport, const jau::fraction_timespec& when) override {
         GL& gl = GL::downcast(win->renderContext());
-        jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString().c_str());
+        jau::fprintf_td(when.to_ms(), stdout, "RL::reshape: %s\n", toString());
         m_viewport = viewport;
 
         PMVMat4f& pmv = m_renderer.pmv();
@@ -811,7 +811,7 @@ class GraphShapes01 : public RenderListener {
     }
 
     void display(const WindowSRef& win, const jau::fraction_timespec& when) override {
-        // jau::fprintf_td(when.to_ms(), stdout, "RL::display: %s, %s\n", toString().c_str(), win->toString().c_str());
+        // jau::fprintf_td(when.to_ms(), stdout, "RL::display: %s, %s\n", toString(), win->toString());
         if( !m_initialized ) {
             return;
         }
@@ -852,7 +852,7 @@ class Example : public GraphShapes01 {
         MyKeyListener(GraphShapes01& p) : m_parent(p) {}
 
         void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
+            jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString(), kt.pressedKeyCodes().count());
             if( e.keySym() == VKeyCode::VK_ESCAPE ) {
                 WindowSRef win = e.source().lock();
                 if( win ) {
@@ -864,11 +864,11 @@ class Example : public GraphShapes01 {
                 m_parent.setOneFrame();
             } else if( e.keySym() == VKeyCode::VK_W ) {
                 WindowSRef win = e.source().lock();
-                jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
+                jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString() : "null");
             }
         }
         void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
+            jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString(), kt.pressedKeyCodes().count());
         }
     };
     typedef std::shared_ptr<MyKeyListener> MyKeyListenerRef;

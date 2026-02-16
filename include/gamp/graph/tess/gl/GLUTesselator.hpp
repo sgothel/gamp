@@ -68,7 +68,7 @@ namespace gamp::graph::tess {
                 size_t i=0;
                 std::string r;
                 for(const Segment& s : segments ) {
-                    r.append( jau::format_string_n(256, "%sSegment[%zu]: %s\n", pre.c_str(), i++, s.toString().c_str()) );
+                    r.append( jau::format_string_n(256, "%sSegment[%zu]: %s\n", pre, i++, s) );
                 }
                 return r;
             }
@@ -134,14 +134,14 @@ namespace gamp::graph::tess {
             Segment s{.type=type, .first=castOrThrow<size_t, GLint>(os->m_array.elemCount()), .count=0 };
             os->m_segments.push_back(s);
             if( os->verbose() ) {
-                jau_INFO_PRINT("GLUtess begin %02u, type 0x%X, %s", os->m_curSegment, type, s.toString());
+                jau_INFO_PRINT("GLUtess begin %02u, type 0x%X, %s", os->m_curSegment, type, s);
             }
         }
         static void cbVertexData( void *data, void *polygonData ) {
             GLUtilTesselator* os = reinterpret_cast<GLUtilTesselator*>(polygonData);
             Vertex* v = reinterpret_cast<Vertex*>(data);
             if( os->verbose() ) {
-                jau_INFO_PRINT("GLUtess vertex %02u, %s", os->m_curSegment, v->coord().toString());
+                jau_INFO_PRINT("GLUtess vertex %02u, %s", os->m_curSegment, v->coord());
             }
             os->m_array.put3f(v->coord());
             if( os->useNormal() ) {
@@ -153,7 +153,7 @@ namespace gamp::graph::tess {
             Segment& s = os->m_segments.at(os->m_segments.size()-1);
             s.count = castOrThrow<size_t, GLsizei>(os->m_array.elemCount() - s.first);
             if( os->verbose() ) {
-                jau_INFO_PRINT("GLUtess end %02u, %s", os->m_curSegment, s.toString());
+                jau_INFO_PRINT("GLUtess end %02u, %s", os->m_curSegment, s);
             }
         }
         static void cbErrorData( GLenum errnum, void *polygonData ) {
@@ -198,7 +198,7 @@ namespace gamp::graph::tess {
                 if( !tess ) { return m_segments; }
                 m_normal = outlines.normal();
                 if( verbose() ) {
-                    jau_INFO_PRINT("GLUtess: normal: %s", m_normal.toString().c_str());
+                    jau_INFO_PRINT("GLUtess: normal: %s", m_normal);
                 }
                 gluTessNormal(tess, m_normal.x, m_normal.y, m_normal.z);
                 gluTessCallback(tess, GLU_TESS_BEGIN_DATA,   (_GLUfuncptr)cbBeginData);
@@ -210,7 +210,7 @@ namespace gamp::graph::tess {
                     gluTessBeginPolygon(tess, this);
                     for(const Outline& o : outlines.outlines()) {
                         if( verbose() ) {
-                            jau_INFO_PRINT("GLUtess: outline %zu: Vertices %zu, Winding %s", outlineCount, o.vertexCount(), to_string(o.getWinding()).c_str());
+                            jau_INFO_PRINT("GLUtess: outline %zu: Vertices %zu, Winding %s", outlineCount, o.vertexCount(), o.getWinding());
                         }
                         ++outlineCount;
                         gluTessBeginContour(tess);
@@ -234,11 +234,11 @@ namespace gamp::graph::tess {
             if( verbose() ) {
                 jau_INFO_PRINT("GLUtess: outlines: %zu", outlineCount);
                 jau_INFO_PRINT("GLUtess: segments: %zu", m_segments.size());
-                jau_INFO_PRINT("\n%s", Segment::toString("- ", m_segments).c_str() );
+                jau_INFO_PRINT("\n%s", Segment::toString("- ", m_segments) );
                 jau_INFO_PRINT("GLUtess: outline dirty: %d", odirty);
                 jau_INFO_PRINT("GLUtess: index next: %u", m_nextSegment);
                 jau_INFO_PRINT("GLUtess: vcache: %zu", m_vcache.size());
-                jau_INFO_PRINT("GLUtess: vertices: %s", m_array.toString().c_str());
+                jau_INFO_PRINT("GLUtess: vertices: %s", m_array.toString());
             }
             return m_segments;
         }

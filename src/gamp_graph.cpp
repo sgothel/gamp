@@ -237,7 +237,7 @@ const TriangleRefList& OutlineShape::getTriangles(VertexState destinationType) {
         if( updated ) {
             size_type i=0;
             for(TriangleRef& t : m_triangles) {
-                jau_PLAIN_PRINT(false, "- [%u]: %s", i++, t->toString().c_str());
+                jau_PLAIN_PRINT(false, "- [%u]: %s", i++, t->toString());
             }
         }
     }
@@ -264,7 +264,7 @@ const VertexList& OutlineShape::getVertices() {
         if( updated ) {
             size_type i=0;
             for(Vertex& v : m_vertices) {
-                jau_PLAIN_PRINT(false, "- [%u]: %s", i++, v.toString().c_str());
+                jau_PLAIN_PRINT(false, "- [%u]: %s", i++, v);
             }
         }
     }
