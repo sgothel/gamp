@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Jausoft - Gamp - Primitive Cobra MKIII</title>
+    <link href="/style.css" rel="stylesheet" type="text/css"/>
+    <link href="/style-alt1.css" rel="alternate stylesheet" title="default sans-serif font" type="text/css"/>
+    <link rel="icon" type="image/png" href="/favicon/jaugsweklogo-icon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon/jaugsweklogo-icon-76x76.svg" />
+    <link rel="shortcut icon" href="/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/jaugsweklogo-icon-180x180.png" />
+    <meta name="apple-mobile-web-app-title" content="Jausoft" />
+    <link rel="manifest" href="/favicon/site.webmanifest" />
+    <style>
+      html {padding:0; margin:0; color:#dddddd; background: #303030; }
+      a { color:#dddddd; }
+      a:hover { color:#ffffff; }
+
+      table {
+        border-collapse: collapse;
+        border-spacing: 1em;
+      }
+      th, td {
+        text-align: left;
+        padding: 0.25em;
+      }
+      tr:nth-child(even) {
+        background-color: #404040;
+      }
+      /* td:nth-child(even), th:nth-child(even) {
+        background-color: #e9e9e9;
+      }*/
+
+      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+      div.emscripten { text-align: center; }
+      div.emscripten_border { border: 0px none black; }
+      /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+      canvas.emscripten { border: 0px none; background-color: black; }
+
+      @-webkit-keyframes rotation {
+        from {-webkit-transform: rotate(0deg);}
+        to {-webkit-transform: rotate(360deg);}
+      }
+      @-moz-keyframes rotation {
+        from {-moz-transform: rotate(0deg);}
+        to {-moz-transform: rotate(360deg);}
+      }
+      @-o-keyframes rotation {
+        from {-o-transform: rotate(0deg);}
+        to {-o-transform: rotate(360deg);}
+      }
+      @keyframes rotation {
+        from {transform: rotate(0deg);}
+        to {transform: rotate(360deg);}
+      }
+
+      #status {
+        display: inline-block;
+        vertical-align: top;
+        margin-top: 30px;
+        margin-left: 20px;
+        font-size: 0.75em;
+        color: rgb(120, 120, 120);
+      }
+
+      #progress {
+        height: 20px;
+        width: 300px;
+      }
+
+      #controls {
+        display: inline-block;
+        float: right;
+        vertical-align: top;
+        margin-top: 30px;
+        margin-right: 20px;
+      }
+
+      #output {
+        width: 98%;
+        height: 12em;
+        font-size: 0.8em;
+        margin: 0 auto;
+        margin-top: 10px;
+        border-left: 0px;
+        border-right: 0px;
+        padding-left: 0px;
+        padding-right: 0px;
+        display: block;
+        background-color: black;
+        color: white;
+        font-family: 'Lucida Console', Monaco, monospace;
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="https://jausoft.com"><img src="/images/jaugsweklogo-hp-242x80.svg" alt="Jausoft" style="background-color: #555555"/></a>
+    <span style="padding:1em; font-size:2em;"><span class="acap">Cobra MKIII</span></span>... a <a href="https://jausoft.com/cgit/gamp.git/about/">Gamp Example</a>.
+
+    <div class="spinner" id='spinner'></div>
+    <div class="emscripten" id="status">Downloading...</div>
+
+<span id='controls'>
+  <!-- span><input type="button" value="Fullscreen" onclick="Module.requestFullscreen(true, true)"> <- pointerLock, resize -></span -->
+  <span><input type="number" id="SetFPS" min="0" max="60" step="10" value="0" style="width: 3em;" onchange="setForcedFPS(this.value)"/>fps</span>
+</span>
+
+    <div class="emscripten">
+      <progress value="0" max="100" id="progress" hidden=1></progress>
+    </div>
+
+    <div class="emscripten_border" id="canvas_border">
+      <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+    </div>
+    <textarea id="output" rows="8"></textarea>
+
+    <div>
+        <table>
+        <tr>
+            <th>Actor</th>
+            <th>Nose-Down</th>
+            <th>Nose-Up</th>
+            <th>Left-Turn</th>
+            <th>Right-Turn</th>
+            <th>Accelerate</th>
+            <th>Deaccelerate</th>
+            <th>Reset</th>
+            <th>Pause</th>
+            <th>Window info</th>
+        </tr>
+        <tr>
+            <td>Ship 1</td>
+            <td>Cursor-Up</td>
+            <td>Cursor-Down</td>
+            <td>Cursor-Left</td>
+            <td>Cursor-Right</td>
+            <td>A</td>
+            <td>S</td>
+            <td>R</td>
+            <td>P</td>
+            <td>W</td>
+        </tr>
+        </table>
+    </div>
+
+
+    <script type='text/javascript'>
+      var statusElement = document.getElementById('status');
+      var progressElement = document.getElementById('progress');
+      var spinnerElement = document.getElementById('spinner');
+      var wasm_set_forced_fps, wasm_set_window_size;
+
+      var Module = {
+        onRuntimeInitialized: function() {
+            wasm_set_forced_fps = Module.cwrap('set_forced_fps', 'null', ['number'])
+            wasm_set_window_size = Module.cwrap('set_window_size', 'null', ['number', 'number', 'number', 'number']);
+            var devicePixelRatio = window.devicePixelRatio || 1;
+            maximizeCanvas(0.98, devicePixelRatio, devicePixelRatio);
+        },
+        preRun: [],
+        postRun: [],
+        print: (function() {
+          var element = document.getElementById('output');
+          if (element) element.value = ''; // clear browser cache
+          return function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            console.log(text);
+            if (element) {
+              element.value += text + "\n";
+              element.scrollTop = element.scrollHeight; // focus on bottom
+            }
+          };
+        })(),
+        canvas: (function() {
+          var canvas = document.getElementById('canvas');
+          // As a default initial behavior, pop up an alert when webgl context is lost. To make your
+          // application robust, you may want to override this behavior before shipping!
+          // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
+          canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+
+          return canvas;
+        })(),
+        setStatus: function(text) {
+          if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+          if (text === Module.setStatus.last.text) return;
+          var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+          var now = Date.now();
+          if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+          Module.setStatus.last.time = now;
+          Module.setStatus.last.text = text;
+          if (m) {
+            text = m[1];
+            progressElement.value = parseInt(m[2])*100;
+            progressElement.max = parseInt(m[4])*100;
+            progressElement.hidden = false;
+            spinnerElement.hidden = false;
+          } else {
+            progressElement.value = null;
+            progressElement.max = null;
+            progressElement.hidden = true;
+            if (!text) spinnerElement.style.display = 'none';
+          }
+          statusElement.innerHTML = text;
+        },
+        totalDependencies: 0,
+        monitorRunDependencies: function(left) {
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+        }
+      };
+      Module.setStatus('Downloading...');
+      window.onerror = function(event) {
+        // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
+        Module.setStatus('Exception thrown, see JavaScript console');
+        spinnerElement.style.display = 'none';
+        Module.setStatus = function(text) {
+          if (text) Module.printErr('[post-exception status] ' + text);
+        };
+      };
+
+      function setForcedFPS(v) {
+          if( null != wasm_set_forced_fps ) {
+              wasm_set_forced_fps(v);
+          }
+      }
+      function maximizeCanvas(scale, devicePixelRatioX, devicePixelRatioY) {
+        var ecr = document.getElementById('canvas_border').getBoundingClientRect();
+        var h = ecr.width*scale*9/16; // ecr.height is not maxed-out
+        wasm_set_window_size(ecr.width*scale, Math.min(h, window.innerHeight), devicePixelRatioX, devicePixelRatioY);
+      }
+    </script>
+    <script async type="text/javascript" src="PrimitivesCobraMK3.js"></script>
+  </body>
+</html>
+
+

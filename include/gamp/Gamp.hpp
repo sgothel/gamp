@@ -200,6 +200,10 @@ namespace gamp {
  * This C++ example demonstrates simple polylines using the the GLU tesselator and per-pixel-lighting.
  */
 
+/** \example PrimitivesCobraMK3.cpp
+ * This C++ example demonstrates an interactive 3D mesh using the the GLU tesselator and per-pixel-lighting.
+ */
+
 /** \example GraphShapes01.cpp
  * This is the first C++ example demonstrating Graph resolution independent GPU curve rendering.
  * Multiple complex shapes are rotated with front- and back-face as well as per-pixel-lighting.
