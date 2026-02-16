@@ -32,21 +32,30 @@ utilizing Rami Santina's *Resolution independent NURBS curves rendering using pr
 functionality including linear algebra and geometry.
 
 ### Coverage
-* [Introduction Video](doc/20250305-GampIntro01.html)
+* Video Clips
+  - [Early Introduction](doc/20250305-GampIntro01.html)
+  - [2025-11-02 GraphShape01](doc/20251102-Gamp-GraphShape01.html)
+  - [2025-11-13 SolInSpace](doc/20251113-Gamp-SolInSpace.html)
+  - [2026-01-25 CobraMK3](doc/20260125-Gamp-CobraMK3-001.html)
 
 ## Online WebAssembly Examples
-* [Gears](https://jausoft.com/projects/gamp/GearsES2.html) (source: [rendering](https://jausoft.com/projects/gamp/build/documentation/cpp/html/GearsES2_8hpp-example.html), [input](https://jausoft.com/projects/gamp/build/documentation/cpp/html/GearsES2_8cpp-example.html))
-  - The infamous gears example, here with per-pixel-lighting and ray-cast AABBox selection.
-* [GraphShapes01](https://jausoft.com/projects/gamp/GraphShapes01.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/GraphShapes01_8cpp-example.html))
-  - This is the first C++ example demonstrating [Graph resolution independent GPU curve rendering](https://jausoft.com/blog/tag/graph_type_rendering/).
-    Multiple complex shapes are rotated with front- and back-face using per-pixel-lighting.
-* [Primitives02](https://jausoft.com/projects/gamp/Primitives02.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/Primitives02_8cpp-example.html))
-  - This C++ example demonstrates simple polylines using the the GLU tesselator and per-pixel-lighting.
-* [RedSquare](https://jausoft.com/projects/gamp/RedSquareES2.html) (source: [rendering](https://jausoft.com/projects/gamp/build/documentation/cpp/html/RedSquareES2_8hpp-example.html), [input](https://jausoft.com/projects/gamp/build/documentation/cpp/html/RedSquareES2_8cpp-example.html))
-  - The mandatory most simple example.
+* Graph Rendering
+  - [GraphShapes01](https://jausoft.com/projects/gamp/GraphShapes01.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/GraphShapes01_8cpp-example.html))
+    - This is the first C++ example demonstrating [Graph resolution independent GPU curve rendering](https://jausoft.com/blog/tag/graph_type_rendering/).
+      Multiple complex shapes are rotated with front- and back-face using per-pixel-lighting.
+* Primitive Tesselation
+  - [Cobra MKIII](https://jausoft.com/projects/gamp/PrimitivesCobraMK3.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/PrimitivesCobraMK3_8cpp-example.html))
+    - This C++ example demonstrates an interactive 3D mesh using the the GLU tesselator and per-pixel-lighting.
+  - [Primitives02](https://jausoft.com/projects/gamp/Primitives02.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/Primitives02_8cpp-example.html))
+    - This C++ example demonstrates simple polylines using the the GLU tesselator and per-pixel-lighting.
 * Primitive Shader
   - [SolInSpace](https://jausoft.com/projects/gamp/SolInSpace.html) ([source](https://jausoft.com/projects/gamp/build/documentation/cpp/html/SolInSpace_8cpp-example.html))
     - Simple solar fragment-shader w/ core- and halo-radius.
+* Simple Classics
+  - [Gears](https://jausoft.com/projects/gamp/GearsES2.html) (source: [rendering](https://jausoft.com/projects/gamp/build/documentation/cpp/html/GearsES2_8hpp-example.html), [input](https://jausoft.com/projects/gamp/build/documentation/cpp/html/GearsES2_8cpp-example.html))
+    - The infamous gears example, here with per-pixel-lighting and ray-cast AABBox selection.
+  - [RedSquare](https://jausoft.com/projects/gamp/RedSquareES2.html) (source: [rendering](https://jausoft.com/projects/gamp/build/documentation/cpp/html/RedSquareES2_8hpp-example.html), [input](https://jausoft.com/projects/gamp/build/documentation/cpp/html/RedSquareES2_8cpp-example.html))
+    - The mandatory most simple example.
 
 ## Earlier Work
 [gfxbox2](https://jausoft.com/cgit/cs_class/gfxbox2.git/about/) of our CS class
