@@ -14,15 +14,26 @@
         <link rel="apple-touch-icon" sizes="180x180" href="/favicon/jaugsweklogo-icon-180x180.png" />
         <meta name="apple-mobile-web-app-title" content="Jausoft" />
         <link rel="manifest" href="/favicon/site.webmanifest" />
-
+        <link href="video_style.css" rel="stylesheet" type="text/css"/>
     </head>
 
     <body>
-
-        <!-- video width="1776" height="2080" controls -->
-        <video height="720" controls>
-            <source src="https://jausoft.com/Files/media/20251113-Gamp-SolInSpace.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
+        <div class="video_elem" id="video_div_border">
+            <video class="video_elem" id="video_border" height="720px" controls>
+                <source src="20260125-Gamp-CobraMK3-001.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        <textarea id="output" rows="3"></textarea>
+        
+        <script async type="text/javascript" src="rescale_to_device.js"></script>
+        <script type='text/javascript'>
+          var textoutelem = document.getElementById('output');
+          if (textoutelem) textoutelem.value = ''; // clear browser cache
+          window.onload=function(){
+            println('onload');
+            fixResolution('video_border', devicePixelRatio, devicePixelRatio);
+          };
+        </script>
     </body>
 </html>

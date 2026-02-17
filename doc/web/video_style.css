@@ -1,0 +1,23 @@
+  .video_elem { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+  /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+  video.video_border { border: 0px none; background-color: white; }
+  /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+  video.video_elem { border: 0px none; background-color: white; }
+
+  #output {
+    width: 50%;
+    height: 5em;
+    font-size: 0.8em;
+    margin: 0 auto;
+    margin-top: 10px;
+    border-left: 0px;
+    border-right: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
+    display: block;
+    background-color: white;
+    color: black;
+    font-family: 'Lucida Console', Monaco, monospace;
+    outline: none;
+  }
+
