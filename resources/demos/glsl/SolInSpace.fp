@@ -2,7 +2,7 @@
 
 uniform mat4 gcu_PMVMatrix[2]; // P, Mv
 
-layout(std140) struct SolInSpace {
+struct SolInSpace {
     vec4 winCenter; // center in win-coord
     vec4 coreColor;
     vec4 haloColor;
@@ -22,7 +22,7 @@ void main (void)
         float coreRadius = gcu_solInSpace.coreRadius;
         float n_cdist = 1.0 - n_rdist;
         if( n_rdist <= seam ) {
-            mgl_FragColor =  vec4(gcu_solInSpace.haloColor.rgb, 0.5);
+            mgl_FragColor =  vec4(gcu_solInSpace.haloColor.rgb/2.0, 0.2);
         } else if( n_cdist < coreRadius ) {
             mgl_FragColor = gcu_solInSpace.coreColor;
             // mgl_FragColor = vec4(0, 0, 0.5, 0.5); // gcu_solInSpace.coreColor;

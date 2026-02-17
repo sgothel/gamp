@@ -33,9 +33,7 @@ functionality including linear algebra and geometry.
 
 ### Coverage
 * Video Clips
-  - [Early Introduction](doc/20250305-GampIntro01.html)
-  - [2025-11-02 GraphShape01](doc/20251102-Gamp-GraphShape01.html)
-  - [2025-11-13 SolInSpace](doc/20251113-Gamp-SolInSpace.html)
+  - [Early Introduction](doc/20250305-GampIntro01.html), [2025-11-02 GraphShape01](doc/20251102-Gamp-GraphShape01.html), [2025-11-13 SolInSpace](doc/20251113-Gamp-SolInSpace.html)
   - [2026-01-25 CobraMK3](doc/20260125-Gamp-CobraMK3-001.html)
 
 ## Online WebAssembly Examples
