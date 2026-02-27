@@ -26,6 +26,7 @@
 
 #include <string>
 #include <vector>
+#include "jau/string_cfmt.hpp"
 
 #include <jau/enum_util.hpp>
 #include <jau/int_math_ct.hpp>
@@ -88,12 +89,8 @@ namespace gamp::wt::event {
         constexpr bool consumed() const noexcept { return m_consumed; }
         /** Consumed events will stop traversing through listener. */
         constexpr void setConsumed(bool v) noexcept { m_consumed = v; }
-        std::string toString() const noexcept {
-            std::string s = "WTEvent[consumed ";
-            s.append(m_consumed ? "true" : "false");
-            s.append(", when ").append(m_when.toString());
-            s.append("]");
-            return s;
+        virtual std::string toString() const noexcept {
+            return jau_format_string_h(40, "WTEvent[consumed %s, when %s]", m_consumed, m_when);
         }
     };
     inline std::ostream& operator<<(std::ostream& out, const WTEvent& v) {
@@ -262,7 +259,7 @@ namespace gamp::wt::event {
 
             const InputButton_info_t& ei = InputButton_info_t::get();
             InputButton_info_t::iterator end = ei.end();
-            for(typename InputButton_info_t::iterator iter = ei.begin(); iter != end; ++iter) {
+            for(InputButton_info_t::iterator iter = ei.begin(); iter != end; ++iter) {
                 const InputButton ev = *iter;
                 if( isButtonDown(ev) ) { res.push_back( ev ); }
             }
@@ -299,12 +296,8 @@ namespace gamp::wt::event {
             return is_set(InputModifier::invisible);
         }
 
-        std::string toString() const noexcept {
-            std::string s = "InputEvent[modifier";
-            s.append(to_string(m_mods));
-            s.append(", ").append(WTEvent::toString());
-            s.append("]");
-            return s;
+        std::string toString() const noexcept override {
+            return jau_format_string_h(40, "InputEvent[modifier %s, %s]", m_mods, WTEvent::toString());
         }
     };
     inline std::ostream& operator<<(std::ostream& out, const InputEvent& v) {

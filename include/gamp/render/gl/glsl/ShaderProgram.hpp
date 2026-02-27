@@ -358,12 +358,12 @@ namespace std
      *
      */
 
-    template<> struct hash<gamp::render::gl::glsl::ShaderProgram> {
+    template<> struct hash<gamp::render::gl::glsl::ShaderProgram> { // NOLINT(bugprone-std-namespace-modification,-warnings-as-errors)
         std::size_t operator()(gamp::render::gl::glsl::ShaderProgram const& a) const noexcept {
             return a.hash_code();
         }
     };
-    template<> struct hash<gamp::render::gl::glsl::ShaderProgramSRef> {
+    template<> struct hash<gamp::render::gl::glsl::ShaderProgramSRef> { // NOLINT(bugprone-std-namespace-modification,-warnings-as-errors)
         std::size_t operator()(gamp::render::gl::glsl::ShaderProgramSRef const& a) const noexcept {
             return a->hash_code();
         }

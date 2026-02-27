@@ -57,6 +57,9 @@ namespace gamp::wt::event {
                       PointerType ptype, uint16_t id,
                       jau::math::Vec2i pos, uint16_t clickCount, InputButton button,
                       jau::math::Vec3f rotation, float rotationScale) noexcept {
+            if (!source) {
+                return;
+            }
             if( InputButton::none != button ) {
                 if( EVENT_POINTER_PRESSED == type ) {
                     m_buttonDown.push_back(button);

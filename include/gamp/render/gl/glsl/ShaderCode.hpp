@@ -967,7 +967,7 @@ namespace gamp::render::gl::glsl {
                         string_t s = line.substr(9);
                         jau::trimInPlace( s );
                         // Bug 1283: Remove shader include filename quotes if exists at start and end only
-                        if( s.starts_with("\"") && s.ends_with("\"")) {
+                        if( s.starts_with('\"') && s.ends_with('\"')) {
                             s = s.substr(1, s.length()-2);
                         }
                         includeFile = s;
@@ -1203,7 +1203,7 @@ namespace gamp::render::gl::glsl {
                 defaultPrecision = "";
             }
             if( defaultPrecision.length() > 0 ) {
-                pos = insertShaderSource(0, pos, string_t(defaultPrecision));
+                pos = insertShaderSource(0, pos, defaultPrecision);
             }
             return pos;
         }
@@ -1346,12 +1346,12 @@ namespace std
      *
      */
 
-    template<> struct hash<gamp::render::gl::glsl::ShaderCode> {
+    template<> struct hash<gamp::render::gl::glsl::ShaderCode> { // NOLINT(bugprone-std-namespace-modification,-warnings-as-errors)
         std::size_t operator()(gamp::render::gl::glsl::ShaderCode const& a) const noexcept {
             return a.hash_code();
         }
     };
-    template<> struct hash<gamp::render::gl::glsl::ShaderCodeSRef> {
+    template<> struct hash<gamp::render::gl::glsl::ShaderCodeSRef> { // NOLINT(bugprone-std-namespace-modification,-warnings-as-errors)
         std::size_t operator()(gamp::render::gl::glsl::ShaderCodeSRef const& a) const noexcept {
             return a->hash_code();
         }

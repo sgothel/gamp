@@ -399,36 +399,31 @@ namespace gamp::wt::event {
          */
         constexpr float rotationScale() const noexcept { return m_rotationScale; }
 
-        std::string toString() const noexcept {
-            std::string sb = "PointerEvent[";
-            sb.append(getEventTypeString())
-              .append(", pos[")
-              .append(jau::to_string(m_pos))
-              .append("], button ")
-              .append(to_string(m_button))
-              .append(", count ")
-              .append(std::to_string(m_clickCount));
+        std::string toString() const noexcept override {
+            std::string res;
+            res.reserve(40);
+            jau::append_string(res, "PointerEvent[");
+            jau::append_string(res, getEventTypeString());
+            jau_append_string(res, ", pos[%s], button %s, count %u", jau::to_string(m_pos), m_button, m_clickCount);
             if( type() == EVENT_POINTER_WHEEL ) {
-              sb.append(", rotation [")
-                .append(m_rotation.toString())
-                .append("] * ")
-                .append(std::to_string(m_rotationScale));
+              jau_append_string(res, ", rotation [%s] * %f", m_rotation, m_rotationScale);
             }
             if( m_pointerID.size() > 0 ) {
-                sb.append(", pointer<").append(std::to_string(m_pointerID.size())).append(">[");
+                jau_append_string(res, ", pointer<%zu>[", m_pointerID.size());
                 for( size_t i = 0; i < m_pointerID.size(); i++ ) {
                     if( i > 0 ) {
-                        sb.append(", ");
+                        jau::append_string(res, ", ");
                     }
-                    sb.append(std::to_string(m_pointerID[i])).append("/").append(to_string(m_pointerType[i])).append(": ")
-                      .append(m_pos[i].toString()).append(", ")
-                      .append("p[").append(std::to_string(m_pressure[i])).append("/").append(std::to_string(m_maxPressure)).append("=")
-                      .append(std::to_string(m_pressure[i] / m_maxPressure)).append("]");
+                    jau_append_string(res, "%u/%s: %s, p[%f/%f=%f]",
+                        m_pointerID[i], m_pointerType[i], m_pos[i],
+                        m_pressure[i], m_maxPressure, m_pressure[i]/m_maxPressure);
                 }
-                sb.append("]");
+                jau::append_string(res, "]");
             }
-            sb.append(", ").append(InputEvent::toString()).append("]");
-            return sb;
+            jau::append_string(res, ", ");
+            jau::append_string(res, InputEvent::toString());
+            jau::append_string(res, "]");
+            return res;
         }
 
       private:

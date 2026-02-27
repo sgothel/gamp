@@ -54,7 +54,7 @@ namespace gamp::wt {
             Vec2i m_surface_size;
             CapabilitiesPtr m_capsptr_req;
             CapabilitiesPtr m_capsptr_chosen;
-            gamp::render::RenderContextPtr m_renderContext;
+            gamp::render::RenderContextSRef m_renderContext;
 
             jau::RecursiveLock m_surface_lock;
 
@@ -66,15 +66,13 @@ namespace gamp::wt {
             static void setCaps(handle_t surface_handle, const Capabilities& requested) noexcept;
             struct Private{ explicit Private() = default; };
 
-            template <typename ChildT>
-            std::shared_ptr<ChildT> shared_from_base() {
-                return std::static_pointer_cast<ChildT>(shared_from_this());
-            }
-
-            void setSurfaceSize(const Vec2i& sz) noexcept { m_surface_size = sz; }
-
             virtual lock_status_t nativeSurfaceLock() noexcept { return lock_status_t::locked_same; }
             virtual void nativeSurfaceUnlock() noexcept { }
+
+            template <typename ChildT>
+            std::shared_ptr<ChildT> shared_from_base() noexcept {
+                return std::static_pointer_cast<ChildT>(sharedSurface());
+            }
 
         public:
             /** Private ctor for single Surface::create() method w/o public ctor. */
@@ -97,14 +95,22 @@ namespace gamp::wt {
                 }
             }
 
+            SurfaceSRef sharedSurface() noexcept {
+                try {
+                    return enable_shared_from_this<Surface>::shared_from_this();
+                } catch (...) {
+                    jau::fput_exception(stderr, std::current_exception(), E_FILE_LINE);
+                    return nullptr;
+                }
+            }
+
             virtual void disposedNotify(const jau::fraction_timespec&) noexcept {
                 m_surface_handle = 0;
                 m_renderContext = nullptr;
             }
             virtual void dispose(const jau::fraction_timespec&) noexcept {
                 if( m_renderContext ) {
-                    m_renderContext->dispose();
-                    m_renderContext = nullptr;
+                    m_renderContext = nullptr; // context dtor, if single shared
                 }
                 if( m_surface_handle ) {
                     disposeImpl(m_surface_handle);
@@ -112,21 +118,8 @@ namespace gamp::wt {
                 }
             }
 
-            const SurfaceSRef shared() { return shared_from_this(); }
-
-            bool createContext(const gamp::render::RenderProfile& profile, const gamp::render::RenderContextFlags& contextFlags) {
-                gamp::render::RenderContextPtr rc = createContext(shared(), profile, contextFlags, nullptr);
-                if( rc && rc->isValid() ) {
-                    m_renderContext = std::move(rc);
-                    m_capsptr_chosen = retrieveCaps(shared());
-                    return true;
-                }
-                return false;
-            }
-            static gamp::render::RenderContextPtr createContext(const wt::SurfaceSRef& surface,
-                                                      const gamp::render::RenderProfile& profile,
-                                                      const gamp::render::RenderContextFlags& contextFlags,
-                                                      gamp::render::RenderContext* shareWith) noexcept;
+            /// Set new gamp::render::RenderContext, returns previous one
+            gamp::render::RenderContextSRef setContext(const gamp::render::RenderContextSRef& ctx) noexcept;
 
             const gamp::render::RenderContext* renderContext() const noexcept {
                 return m_renderContext ? m_renderContext.get() : nullptr;
@@ -176,6 +169,8 @@ namespace gamp::wt {
             /** Returns the surface size of the client area excluding insets (window decorations) in pixel units. */
             constexpr const Vec2i& surfaceSize() const noexcept { return m_surface_size; }
 
+            void setSurfaceSize(const Vec2i& sz) noexcept { m_surface_size = sz; }
+
             /**
              * Returns the handle to the surface for this NativeSurface. <P>
              *
@@ -194,6 +189,9 @@ namespace gamp::wt {
             constexpr handle_t surfaceHandle() const noexcept { return m_surface_handle; }
 
             virtual bool isValid() const noexcept { return 0 != m_surface_handle; }
+
+            virtual void notifySurfaceResize(const jau::fraction_timespec& /*when*/,
+                                             const jau::math::Vec2i& /*surfSize*/) noexcept { }
 
             /**
              * Provide a mechanism to utilize custom (pre-) swap surface
@@ -271,7 +269,7 @@ namespace gamp::wt {
                 m_surface_lock.unlock();
             }
 
-            std::string toString() const noexcept {
+            virtual std::string toString() const noexcept {
                 std::string res = "Surface[";
                 res.append("handle ").append(jau::toHexString(m_surface_handle))
                    .append(", ").append(m_renderContext ? m_renderContext->toString() : "nil-ctx")

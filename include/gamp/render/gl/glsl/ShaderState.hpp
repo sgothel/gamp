@@ -17,6 +17,7 @@
 #include <jau/io/file_util.hpp>
 #include <jau/io/io_util.hpp>
 #include <jau/string_util.hpp>
+#include <jau/string_cfmt.hpp>
 
 #include <gamp/Gamp.hpp>
 #include <gamp/render/gl/GLTypes.hpp>
@@ -1113,41 +1114,44 @@ namespace gamp::render::gl::glsl {
         }
 
       public:
-        string_t toString(bool alsoUnlocated=DEBUG_STATE) const {
+        string_t toString(bool alsoUnlocated=DEBUG_STATE) const noexcept {
             string_t sb;
-            sb.append("ShaderState[\n ");
+            jau::reserve_string(sb, 1024);
+            jau::append_string(sb, "ShaderState[\n ");
             if(m_shaderProgram) {
-                sb.append(m_shaderProgram->toString());
+                jau::append_string(sb, m_shaderProgram->toString());
             } else {
-                sb.append("ShaderProgram: null");
+                jau::append_string(sb, "ShaderProgram: null");
             }
-            sb.append("\n ],").append(" activeAttributes [");
+            jau::append_string(sb, "\n ], activeAttributes [");
             for (const std::pair<const std::string_view, impl::DataLoc>& n : m_activeAttribMap.map()) {
                 const impl::DataLoc& dl = n.second;
-                sb.append("\n  ").append(n.first)
-                  .append(": enabled ").append(jau::to_string(dl.enabled())).append(", ");
+                jau_append_string(sb, "\n %s: enabled %s, ", n.first, dl.enabled());
                 if( dl.data() ) {
-                    sb.append(dl.data()->toString());
+                    jau::append_string(sb, dl.data()->toString());
                 } else {
-                    sb.append("location ").append(jau::to_string(dl.location()));
+                    jau_append_string(sb, "location %d", dl.location());
                 }
             }
-            sb.append("\n ],").append(" managedAttributes [");
+            jau::append_string(sb, "\n ], managedAttributes [");
             for(const GLArrayDataSRef& ad : m_managedAttributes) {
-                sb.append("\n  ").append(ad->toString());
+                jau::append_string(sb, "\n  ");
+                jau::append_string(sb, ad->toString());
             }
-            sb.append("\n ],").append(" activeUniforms [");
+            jau::append_string(sb, "\n ], activeUniforms [");
             for (const std::pair<const std::string_view, GLUniformData*>& n : m_activeUniformMap.map()) {
                 const GLUniformData *ud = n.second;
                 if( alsoUnlocated || ud->hasLocation() ) {
-                    sb.append("\n  ").append(ud->toString());
+                    jau::append_string(sb, "\n  ");
+                    jau::append_string(sb, ud->toString());
                 }
             }
-            sb.append("\n ],").append(" managedUniforms [");
+            jau::append_string(sb, "\n ], managedUniforms [");
             for(const GLUniformData *ud : m_managedUniforms) {
-                sb.append("\n  ").append(ud->toString());
+                jau::append_string(sb, "\n  ");
+                jau::append_string(sb, ud->toString());
             }
-            sb.append("\n ]").append("\n]");
+            jau::append_string(sb, "\n ]\n]");
             return sb;
         }
 

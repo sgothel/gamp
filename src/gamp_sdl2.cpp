@@ -24,9 +24,8 @@
 #include <gamp/Gamp.hpp>
 #include <gamp/GampTypes.hpp>
 #include "gamp/Version.hpp"
-#include <gamp/render/gl/GLLiterals.hpp>
-#include <gamp/render/gl/GLTypes.hpp>
-#include <gamp/render/gl/GLVersionNum.hpp>
+#include <gamp/render/gl/GLCapabilities.hpp>
+// #include <gamp/render/vk/VKCapabilities.hpp>
 #include <gamp/wt/event/Event.hpp>
 #include <gamp/wt/Window.hpp>
 
@@ -36,9 +35,6 @@
 #include <SDL2/SDL_video.h>
 
 #include <SDL2/SDL_scancode.h>
-// #include <SDL2/SDL_surface.h>
-// #include <SDL2/SDL_ttf.h>
-// #include <SDL2/SDL_image.h>
 
 using namespace jau::int_literals;
 using namespace jau::fractions_i64_literals;
@@ -89,14 +85,14 @@ static void on_window_resized(Window* win, int wwidth, int wheight, const jau::f
     if( !win || !win->isValid() ) { return; }
     SDL_Window* sdl_win = reinterpret_cast<SDL_Window*>(win->windowHandle()); // NOLINT
     if( verbose ) {
-        jau_printf("Window::resized:: %d x %d: %s\n", wwidth, wheight, win->toString());
+        jau_fprintf_td(stdout, "Window::resized:: %d x %d: %s\n", wwidth, wheight, win->toString());
     }
     jau::math::Vec2i window_size = win->windowSize();
     {
         int wwidth2 = 0, wheight2 = 0;
         SDL_GetWindowSize(sdl_win, &wwidth2, &wheight2);
         if( verbose ) {
-            jau_printf("Window::resized: Size %d x %d -> %d x %d (given), %d x %d (query)\n", window_size.x, window_size.y, wwidth, wheight, wwidth2, wheight2);
+            jau_fprintf_td(stdout, "Window::resized: Size %d x %d -> %d x %d (given), %d x %d (query)\n", window_size.x, window_size.y, wwidth, wheight, wwidth2, wheight2);
         }
         if (0 == wwidth || 0 == wheight) {
             wwidth = wwidth2;
@@ -105,17 +101,17 @@ static void on_window_resized(Window* win, int wwidth, int wheight, const jau::f
     }
     window_size.set(wwidth, wheight);
 
-    // jau_printf("SDL: Couldn't fetch renderer (window resize): %s\n", SDL_GetError());
+    // jau_fprintf_td(stdout, "SDL: Couldn't fetch renderer (window resize): %s\n", SDL_GetError());
     int fb_width = static_cast<int>(static_cast<float>(wwidth) * devicePixelRatio.x);
     int fb_height = static_cast<int>(static_cast<float>(wheight) * devicePixelRatio.y);
     if( verbose ) {
-        jau_printf("Window::resized: DevicePixelRatio Size %f x %f -> %d x %d\n",
+        jau_fprintf_td(stdout, "Window::resized: DevicePixelRatio Size %f x %f -> %d x %d\n",
                    devicePixelRatio.x, devicePixelRatio.y, fb_width, fb_height);
     }
 
     jau::math::Vec2i surface_size(fb_width, fb_height);
     if( verbose ) {
-        printf("Window::resized: VP Size %s\n", surface_size.toString().c_str());
+        jau_fprintf_td(stdout, "Window::resized: VP Size %s\n", surface_size.toString().c_str());
     }
     {
         SDL_DisplayMode mode;
@@ -123,14 +119,14 @@ static void on_window_resized(Window* win, int wwidth, int wheight, const jau::f
         jau::zero_bytes_sec(&mode, sizeof(mode));
         SDL_GetCurrentDisplayMode(win_display_idx, &mode);  // SDL_GetWindowDisplayMode(..) fails on some systems (wrong refresh_rate and logical size
         if( verbose ) {
-            printf("Window::resized: WindowDisplayMode: %d x %d @ %d Hz @ display %d\n", mode.w, mode.h, mode.refresh_rate, win_display_idx);
+            jau_fprintf_td(stdout, "Window::resized: WindowDisplayMode: %d x %d @ %d Hz @ display %d\n", mode.w, mode.h, mode.refresh_rate, win_display_idx);
         }
         if( mode.refresh_rate > 0 ) {
             monitor_frames_per_sec = mode.refresh_rate;
         }
     }
     if( verbose ) {
-        printf("Window::resized:: %s\n", win->toString().c_str());
+        jau_fprintf_td(stdout, "Window::resized:: %s\n", win->toString().c_str());
     }
     win->notifyWindowResize(when, window_size, surface_size);
 }
@@ -153,11 +149,11 @@ bool gamp::init_gfx_subsystem(const char* exe_path) {
         return gfx_subsystem_init;
     }
     lookup_and_register_asset_dir(exe_path);
-    printf("Gamp API %s, lib %s\n", gamp::VERSION_API, gamp::VERSION.toString().c_str());
-    printf("%s\n", jau::os::get_platform_info().c_str());
+    jau_fprintf_td(stdout, "Gamp API %s, lib %s\n", gamp::VERSION_API, gamp::VERSION.toString().c_str());
+    jau_fprintf_td(stdout, "%s\n", jau::os::get_platform_info().c_str());
 
     if (SDL_Init(SDL_INIT_TIMER) != 0) {  // SDL_INIT_EVERYTHING
-        printf("SDL: Error initializing TIMER: %s\n", SDL_GetError());
+        jau_fprintf_td(stdout, "SDL: Error initializing TIMER: %s\n", SDL_GetError());
         return false;
     }
     {
@@ -167,23 +163,23 @@ bool gamp::init_gfx_subsystem(const char* exe_path) {
         const int64_t s = sdl_ms/1000;
         const int64_t ns = ( sdl_ms - s*1000 ) *1'000'000;
         const jau::fraction_timespec sdl_t1(s, ns);
-        // printf("SDL Timer-Sync: jau_t0: %s\n", init_gfx_t0.to_string().c_str());
-        // printf("SDL Timer-Sync: jau_t1: %s\n", jau_t1.to_string().c_str());
-        // printf("SDL Timer-Sync: sdl_t1: %s\n", sdl_t1.to_string().c_str());
+        // jau_fprintf_td(stdout, "SDL Timer-Sync: jau_t0: %s\n", init_gfx_t0.to_string().c_str());
+        // jau_fprintf_td(stdout, "SDL Timer-Sync: jau_t1: %s\n", jau_t1.to_string().c_str());
+        // jau_fprintf_td(stdout, "SDL Timer-Sync: sdl_t1: %s\n", sdl_t1.to_string().c_str());
         const jau::fraction_timespec td = jau_t1 - sdl_t1;
-        printf("SDL Timer-Sync:     td: %s\n", td.toString().c_str());
+        jau_fprintf_td(stdout, "SDL Timer-Sync:     td: %s\n", td.toString().c_str());
     }
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {  // SDL_INIT_EVERYTHING
-        printf("SDL: Error initializing VIDEO/EVENTS: %s\n", SDL_GetError());
+        jau_fprintf_td(stdout, "SDL: Error initializing VIDEO/EVENTS: %s\n", SDL_GetError());
         return false;
     }
 #if 0
     if ( ( IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG ) != IMG_INIT_PNG ) {
-        printf("SDL_image: Error initializing: %s\n", SDL_GetError());
+        jau_fprintf_td(stdout, "SDL_image: Error initializing: %s\n", SDL_GetError());
         return false;
     }
     if( 0 != TTF_Init() ) {
-        printf("SDL_TTF: Error initializing: %s\n", SDL_GetError());
+        jau_fprintf_td(stdout, "SDL_TTF: Error initializing: %s\n", SDL_GetError());
         return false;
     }
 #endif
@@ -197,11 +193,17 @@ WindowSRef Window::create(const char* title, int wwidth, int wheight, const Capa
         return nullptr;
     }
     if( verbose ) {
-        printf("Window::create: '%s', %d x %d\n", title, wwidth, wheight);
+        jau_fprintf_td(stdout, "Window::create: '%s', %d x %d\n", title, wwidth, wheight);
     }
     // SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, std::to_string(gamp_filter_quality).c_str());
 
-    const Uint32 win_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;  //  | SDL_WINDOW_SHOWN;
+    Uint32 win_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;  //  | SDL_WINDOW_SHOWN;
+    if (requested.signature() == gamp::render::gl::GLCapabilities::GLSignature()) {
+        win_flags |= SDL_WINDOW_OPENGL;
+    // } else if (requested.signature() == gamp::render::vk::VKCapabilities::VKSignature()) {
+    //    win_flags |= SDL_WINDOW_VULKAN;
+    // FIXME
+    }
 
     SDL_Window* sdl_win = nullptr;
     Uint32 sdl_win_id = 0;
@@ -214,13 +216,13 @@ WindowSRef Window::create(const char* title, int wwidth, int wheight, const Capa
                                wwidth, wheight,
                                win_flags);
     if (nullptr == sdl_win) {
-        printf("SDL: Error initializing window: %s\n", SDL_GetError());
+        jau_fprintf_td(stdout, "SDL: Error initializing window: %s\n", SDL_GetError());
         return nullptr;
     }
 
     sdl_win_id = SDL_GetWindowID(sdl_win);
     if (0 == sdl_win_id) {
-        printf("SDL: Error retrieving window ID: %s\n", SDL_GetError());
+        jau_fprintf_td(stdout, "SDL: Error retrieving window ID: %s\n", SDL_GetError());
         SDL_DestroyWindow(sdl_win);
         return nullptr;
     }
@@ -235,7 +237,7 @@ WindowSRef Window::create(const char* title, int wwidth, int wheight, const Capa
     reset_gpu_fps(gpu_forced_fps_ > 0 ? gpu_forced_fps_ : monitor_frames_per_sec);
     window_list.push_back(res);
     if( verbose ) {
-        printf("Window::create: %zu windows: %s\n", (size_t)window_list.size(), res->toString().c_str());
+        jau_fprintf_td(stdout, "Window::create: %zu windows: %s\n", (size_t)window_list.size(), res->toString().c_str());
     }
     return res;
 }
@@ -251,7 +253,7 @@ void Window::disposeImpl(handle_t handle) noexcept {
     } catch (std::exception &err) {
         jau_ERR_PRINT("gamp::handle_events: Caught exception %s", err.what());
     }
-    printf("Window Closed: Remaining windows: %zu\n", (size_t)window_list.size());
+    jau_fprintf_td(stdout, "Window Closed: Remaining windows: %zu\n", (size_t)window_list.size());
 }
 
 extern "C" {
@@ -275,12 +277,12 @@ extern "C" {
             }
             if (std::abs(win_size.x - ww) > 1 || std::abs(win_size.y - wh) > 1) {
                 if( initial_call || 0 == win_size.x || 0 == win_size.y) {
-                    printf("JS Window Initial Size: Win %d x %d -> %d x %d, devPixelRatio %s\n",
+                    jau_fprintf_td(stdout, "JS Window Initial Size: Win %d x %d -> %d x %d, devPixelRatio %s\n",
                            win_size.x, win_size.y, ww, wh, devicePixelRatio.toString().c_str());
                     win_size.x = ww;
                     win_size.y = wh;
                 } else {
-                    printf("JS Window Resized: Win %d x %d -> %d x %d, devPixelRatio %s\n",
+                    jau_fprintf_td(stdout, "JS Window Resized: Win %d x %d -> %d x %d, devPixelRatio %s\n",
                            win_size.x, win_size.y, ww, wh, devicePixelRatio.toString().c_str());
                     SDL_SetWindowSize(reinterpret_cast<SDL_Window*>(win->windowHandle()), ww, wh); // NOLINT
                     warn_once = true;
@@ -288,11 +290,11 @@ extern "C" {
                 }
             } else if (warn_once) {
                 warn_once = false;
-                printf("JS Window Resize Ignored: Win %d x %d -> %d x %d, devPixelRatio %s\n",
+                jau_fprintf_td(stdout, "JS Window Resize Ignored: Win %d x %d -> %d x %d, devPixelRatio %s\n",
                        win_size.x, win_size.y, ww, wh, devicePixelRatio.toString().c_str());
             }
         } else {
-            printf("JS Window Resize Same-Size: Win %d x %d -> %d x %d, devPixelRatio %s\n",
+            jau_fprintf_td(stdout, "JS Window Resize Same-Size: Win %d x %d -> %d x %d, devPixelRatio %s\n",
                    win_size.x, win_size.y, ww, wh, devicePixelRatio.toString().c_str());
         }
     }
@@ -340,7 +342,7 @@ static void gamp_swap_gpu_buffer(bool swapAllWindows, int fps) noexcept {
             ts.tv_sec = static_cast<decltype(ts.tv_sec)>(td_diff.tv_sec); // signed 32- or 64-bit integer
             ts.tv_nsec = td_diff.tv_nsec - fudge.tv_nsec;
             nanosleep( &ts, nullptr );
-            // pixel::log_printf("soft-sync [exp %zd > has %zd]ms, delay %" PRIi64 "ms (%lds, %ldns)\n",
+            // pixel::log_jau_fprintf_td(stdout, "soft-sync [exp %zd > has %zd]ms, delay %" PRIi64 "ms (%lds, %ldns)\n",
             //         ms_per_frame, ms_this_frame, td_ns/pixel::NanoPerMilli, ts.tv_sec, ts.tv_nsec);
         }
         gpu_swap_t1 = getElapsedMonotonicTime();
@@ -561,9 +563,9 @@ size_t gamp::handle_events() noexcept {
         const jau::fraction_timespec when(s, ns);
         switch (sdl_event.type) {
             case SDL_QUIT: {
-                printf("App Close Requested\n");
+                jau_fprintf_td(stdout, "App Close Requested\n");
                 for(const WindowSRef& win : *window_list.snapshot() ) {
-                    win->dispose(when);
+                    win->dispose(when); // removes instance from window_list
                 }
                 window_list.clear(true);
               } break;
@@ -573,27 +575,27 @@ size_t gamp::handle_events() noexcept {
                 if( win ) {
                     switch (sdl_event.window.event) {
                         case SDL_WINDOWEVENT_CLOSE: {
-                            win->dispose(when);
-                            printf("Window Close Requested: %zu windows\n", (size_t)window_list.size());
+                            jau_fprintf_td(stdout, "Window Close Requested: %zu windows\n", (size_t)window_list.size());
+                            win->dispose(when); // removes instance from window_list
                           } break;
                         case SDL_WINDOWEVENT_SHOWN:
-                            printf("Window Shown\n");
+                            jau_fprintf_td(stdout, "Window Shown\n");
                             win->notifyWindowEvent(EVENT_WINDOW_VISIBILITY_CHANGED, when, true);
                             break;
                         case SDL_WINDOWEVENT_HIDDEN:
-                            printf("Window Hidden\n");
+                            jau_fprintf_td(stdout, "Window Hidden\n");
                             win->notifyWindowEvent(EVENT_WINDOW_VISIBILITY_CHANGED, when, false);
                             break;
                         case SDL_WINDOWEVENT_MOVED:
-                            printf("Window Moved: %d x %d\n", sdl_event.window.data1, sdl_event.window.data2);
+                            jau_fprintf_td(stdout, "Window Moved: %d x %d\n", sdl_event.window.data1, sdl_event.window.data2);
                             win->notifyWindowMoved(when, jau::math::Vec2i(sdl_event.window.data1, sdl_event.window.data2));
                             break;
                         case SDL_WINDOWEVENT_RESIZED:
-                            printf("Window Resized: %d x %d\n", sdl_event.window.data1, sdl_event.window.data2);
+                            jau_fprintf_td(stdout, "Window Resized: %d x %d\n", sdl_event.window.data1, sdl_event.window.data2);
                             on_window_resized(win, sdl_event.window.data1, sdl_event.window.data2, when);
                             break;
                         case SDL_WINDOWEVENT_SIZE_CHANGED:
-                            printf("Window SizeChanged: %d x %d\n", sdl_event.window.data1, sdl_event.window.data2);
+                            jau_fprintf_td(stdout, "Window SizeChanged: %d x %d\n", sdl_event.window.data1, sdl_event.window.data2);
                             break;
 
                         default: break;
@@ -707,7 +709,7 @@ bool gamp::mainloop_default() noexcept { // NOLINT
 }
 void gamp::mainloop_void() noexcept {
     if( !mainloop_default() ) {
-        printf("Exit Application\n");
+        jau_fprintf_td(stdout, "Exit Application\n");
         #if defined(__EMSCRIPTEN__)
             emscripten_cancel_main_loop();
         #else

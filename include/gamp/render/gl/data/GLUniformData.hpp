@@ -43,7 +43,7 @@ namespace gamp::render::gl::data {
     class GLUniformData {
       public:
         /** Signature, denoting a uniform buffer, i.e. GLUniformBuffer. */
-        static const jau::type_info& bufferSignature() { return jau::static_ctti<void*>(); }
+        static constexpr jau::type_info bufferSignature() { return jau::make_ctti<void*>(); }
 
         virtual ~GLUniformData() noexcept = default;
 
@@ -121,7 +121,7 @@ namespace gamp::render::gl::data {
               .append(", count ").append(std::to_string(m_count));
             sb.append(", data ");
             if( isMatrix() ) {
-                if( compSignature() == jau::float_ctti::f32() ) {
+                if( compSignature() == jau::float_ctti::f() ) {
                     sb.append("\n");
                     const GLfloat* d = reinterpret_cast<const GLfloat*>(data());
                     for( GLsizei i = 0; i < m_count; ++i ) {
@@ -131,12 +131,12 @@ namespace gamp::render::gl::data {
                     }
                 }
             } else if( isVector() ) {
-                if( compSignature() == jau::float_ctti::f32() ) {
+                if( compSignature() == jau::float_ctti::f() ) {
                     const GLfloat* d = reinterpret_cast<const GLfloat*>(data());
                     jau::row_to_string<GLfloat>(sb, "%10.5f", d, 1, m_columns, false, 0);
                 }
             } else {
-                if( compSignature() == jau::float_ctti::f32() ) {
+                if( compSignature() == jau::float_ctti::f() ) {
                     const GLfloat d = *reinterpret_cast<const GLfloat*>(data());
                     sb.append(std::to_string(d));
                 } else if( compSignature() == jau::int_ctti::i32() ) {
@@ -170,7 +170,7 @@ namespace gamp::render::gl::data {
          * For plain uniforms
          * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
          */
-        GLUniformData(const jau::type_info &sig, stringview_t name,
+        GLUniformData(jau::type_info sig, stringview_t name,
                       GLsizei rows, GLsizei columns, size_t count)
         : m_signature(sig), m_name(name), m_location(-1),
           m_rows(rows), m_columns(columns), m_count(castOrThrow<size_t, GLsizei>(count)),
@@ -187,7 +187,7 @@ namespace gamp::render::gl::data {
           m_bufferSize(bufferSize), m_bufferName(0), m_bufferGlobalBinding(globalBufferBinding) {}
 
       private:
-        const jau::type_info& m_signature;
+        jau::type_info m_signature;
         stringview_t m_name;
         union {
             GLint   m_location;
@@ -316,7 +316,7 @@ namespace gamp::render::gl::data {
          * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
          */
         GLUniformVec4f(stringview_t name, const jau::math::Vec4f& v)
-        : GLUniformData(jau::float_ctti::f32(), name,
+        : GLUniformData(jau::float_ctti::f(), name,
                         /*rows=*/1, /*columns=*/4, /*count=*/1),
           m_data(v) {}
 
@@ -344,7 +344,7 @@ namespace gamp::render::gl::data {
          * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
          */
         GLUniformVec3f(stringview_t name, const jau::math::Vec3f& v)
-        : GLUniformData(jau::float_ctti::f32(), name,
+        : GLUniformData(jau::float_ctti::f(), name,
                         /*rows=*/1, /*columns=*/3, /*count=*/1),
           m_data(v) {}
 
@@ -372,7 +372,7 @@ namespace gamp::render::gl::data {
          * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
          */
         GLUniformVec2f(stringview_t name, const jau::math::Vec2f& v)
-        : GLUniformData(jau::float_ctti::f32(), name,
+        : GLUniformData(jau::float_ctti::f(), name,
                         /*rows=*/1, /*columns=*/2, /*count=*/1),
           m_data(v) {}
 
@@ -400,7 +400,7 @@ namespace gamp::render::gl::data {
          * @param name persistent std::string_view name of uniform, must be valid through the lifecycle of this instance
          */
         GLUniformScalarF32(stringview_t name, float v)
-        : GLUniformData(jau::float_ctti::f32(), name,
+        : GLUniformData(jau::float_ctti::f(), name,
                         /*rows=*/1, /*columns=*/1, /*count=*/1),
           m_data(v) {}
 

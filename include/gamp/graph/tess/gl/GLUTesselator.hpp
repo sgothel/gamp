@@ -25,6 +25,7 @@
 #include <gamp/graph/Outline.hpp>
 #include <gamp/graph/OutlineShape.hpp>
 #include <gamp/render/gl/data/GLArrayDataServer.hpp>
+#include "jau/string_cfmt.hpp"
 
 namespace gamp::graph::tess {
 
@@ -67,8 +68,10 @@ namespace gamp::graph::tess {
             inline static std::string toString(const std::string& pre, const SegmentList& segments) noexcept {
                 size_t i=0;
                 std::string r;
-                for(const Segment& s : segments ) {
-                    r.append( jau::format_string_n(256, "%sSegment[%zu]: %s\n", pre, i++, s) );
+                if (jau::reserve_string(r, 512)) {
+                    for(const Segment& s : segments ) {
+                        jau::cfmt::append(r, "%sSegment[%u]: %s\n", pre, i++, s);
+                    }
                 }
                 return r;
             }

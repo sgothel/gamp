@@ -83,8 +83,8 @@ namespace gamp::render {
         constexpr RenderProfile() noexcept : m_profile(RP_UNDEF), m_version() {}
 
         /** Create an instance w/ unique name.*/
-        constexpr RenderProfile(const std::string_view profile, const jau::util::VersionNumber& version) noexcept
-        : m_profile(profile), m_version(version)
+        constexpr RenderProfile(const std::string_view profile, jau::util::VersionNumber version) noexcept
+        : m_profile(profile), m_version(std::move(version))
         {}
 
         virtual ~RenderProfile() noexcept = default;
@@ -107,8 +107,10 @@ namespace gamp::render {
         return out << v.toString();
     }
 
+    typedef std::shared_ptr<RenderContext> RenderContextSRef;
+
     /** Rendering Context */
-    class RenderContext {
+    class RenderContext : public std::enable_shared_from_this<RenderContext> {
       private:
         gamp::handle_t m_context;
         jau::util::VersionNumber m_version;
@@ -119,6 +121,13 @@ namespace gamp::render {
         struct Private { explicit Private() = default; };
         gamp::wt::SurfaceSRef m_surface;
 
+        constexpr gamp::handle_t& context() noexcept { return m_context; }
+
+        template <typename ChildT>
+        std::shared_ptr<ChildT> shared_from_base() noexcept {
+            return std::static_pointer_cast<ChildT>(sharedRenderContext());
+        }
+
       public:
         /** Private: Create an invalid instance.*/
         RenderContext(Private) noexcept
@@ -127,8 +136,8 @@ namespace gamp::render {
         /** Private: Create an instance. Given profile tag must be a valid implementation profile. */
         RenderContext(Private, gamp::handle_t context,
            RenderContextFlags contextFlags,
-           const jau::util::VersionNumber& version) noexcept
-        : m_context(context), m_version(version), m_flags(contextFlags) { }
+           jau::util::VersionNumber version) noexcept
+        : m_context(context), m_version(std::move(version)), m_flags(contextFlags) { }
 
         virtual ~RenderContext() noexcept = default;
 
@@ -136,11 +145,21 @@ namespace gamp::render {
 
         virtual const RenderProfile& renderProfile() const noexcept { return RenderProfile::getUndef(); }
 
-        constexpr bool isValid() const noexcept { return 0 != m_context; }
+        RenderContextSRef sharedRenderContext() noexcept {
+            try {
+                return shared_from_this();
+            } catch (...) {
+                jau::fput_exception(stderr, std::current_exception(), E_FILE_LINE);
+                return nullptr;
+            }
+        }
+
+        virtual bool isValid() const noexcept { return 0 != m_context; }
         constexpr gamp::handle_t context() const noexcept { return m_context; }
-        constexpr const jau::util::VersionNumber& version() const { return m_version; }
+        constexpr const jau::util::VersionNumber& version() const noexcept { return m_version; }
 
         constexpr RenderContextFlags contextFlags() const noexcept { return m_flags; }
+        constexpr jau::util::VersionNumber& version() noexcept { return m_version; }
 
         virtual void dispose() noexcept {}
 
@@ -173,9 +192,8 @@ namespace gamp::render {
         /** Removes attached object if exists and returns it, otherwise returns nullptr. */
         AttachableSRef detachObject(std::string_view key) { return m_attachables.remove2(key); }
 
-        virtual std::string toString() const;
+        virtual std::string toString() const noexcept;
     };
-    typedef std::unique_ptr<RenderContext> RenderContextPtr;
 
     inline std::ostream& operator<<(std::ostream& out, const RenderContext& v) {
         return out << v.toString();

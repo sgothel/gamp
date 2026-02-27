@@ -161,9 +161,11 @@ namespace gamp::wt {
                 SelfWinListener(Window* self) noexcept : m_self(self) {}
                 void windowResized(WindowEvent&, const Vec2i& winSize, const jau::math::Vec2i& surfSize) override {
                     m_self->setWindowSize(winSize);
-                    m_self->setSurfaceSize(surfSize);
-                    for(const RenderListenerSRef& l : *m_self->m_render_listener.snapshot()) {
-                        write(l->pendingActions(), RenderActions::reshape, true);
+                    if (m_self->surfaceSize() != surfSize) {
+                        m_self->setSurfaceSize(surfSize);
+                        for(const RenderListenerSRef& l : *m_self->m_render_listener.snapshot()) {
+                            write(l->pendingActions(), RenderActions::reshape, true);
+                        }
                     }
                 }
                 void windowMoved(WindowEvent&, const Vec2i& winPos) override { m_self->setWindowPos(winPos); }
@@ -175,6 +177,7 @@ namespace gamp::wt {
             };
             WindowListenerSRef m_win_selflistener;
 
+            void setRenderViewport(const jau::math::Recti &viewport);
             void disposeImpl(handle_t handle) noexcept;
 
         public:
@@ -217,14 +220,7 @@ namespace gamp::wt {
              */
             ~Window() noexcept override = default;
 
-            /**
-             * Returns the associated {@link Surface} of this {@link SurfaceHolder}.
-             * <p>
-             * Returns this instance, which <i>is-a</i> {@link Surface}.
-             * </p>
-             */
-            SurfaceSRef nativeSurface() { return shared_from_this(); }
-            const WindowSRef shared() { return Surface::shared_from_base<Window>(); }
+            WindowSRef sharedWindow() noexcept { return Surface::shared_from_base<Window>(); }
 
             /** Returns the window top-lect position of client-area in window units */
             constexpr Vec2i windowPos() const noexcept { return m_window_bounds.getPosition(); }
@@ -276,18 +272,24 @@ namespace gamp::wt {
             //
             //
             void notifyWindowEvent(uint16_t type, const jau::fraction_timespec& when, bool value=true) noexcept {
-                m_win_evt_mngr.dispatch(type, when, shared(), value);
+                m_win_evt_mngr.dispatch(type, when, sharedWindow(), value);
             }
             void notifyWindowResize(const jau::fraction_timespec& when,
                                     const jau::math::Vec2i& winSize, const jau::math::Vec2i& surfSize) noexcept {
                 if( m_window_bounds.getSize() != winSize || Surface::surfaceSize() != surfSize ) {
-                    m_win_evt_mngr.dispatchResize(when, shared(), winSize, surfSize);
+                    m_win_evt_mngr.dispatchResize(when, sharedWindow(), winSize, surfSize);
+                }
+            }
+            void notifySurfaceResize(const jau::fraction_timespec& when,
+                                     const jau::math::Vec2i& surfSize) noexcept override {
+                if( Surface::surfaceSize() != surfSize ) {
+                    m_win_evt_mngr.dispatchResize(when, sharedWindow(), m_window_bounds.getSize(), surfSize);
                 }
             }
             void notifyWindowMoved(const jau::fraction_timespec& when,
                                    const jau::math::Vec2i& winPos) noexcept {
                 if( m_window_bounds.getPosition() != winPos ) {
-                    m_win_evt_mngr.dispatchMoved(when, shared(), winPos);
+                    m_win_evt_mngr.dispatchMoved(when, sharedWindow(), winPos);
                 }
             }
 
@@ -302,10 +304,10 @@ namespace gamp::wt {
             const KeyboardTracker& keyTracker() const noexcept { return m_key_evt_mngr; }
 
             void notifyKeyPressed(const jau::fraction_timespec& when, VKeyCode keySym, InputModifier keySymMods, uint16_t keyChar) noexcept {
-                m_key_evt_mngr.dispatchPressed(when, shared(), keySym, keySymMods, keyChar);
+                m_key_evt_mngr.dispatchPressed(when, sharedWindow(), keySym, keySymMods, keyChar);
             }
             void notifyKeyReleased(const jau::fraction_timespec& when, VKeyCode keySym, InputModifier keySymMods, uint16_t keyChar) noexcept {
-                m_key_evt_mngr.dispatchReleased(when, shared(), keySym, keySymMods, keyChar);
+                m_key_evt_mngr.dispatchReleased(when, sharedWindow(), keySym, keySymMods, keyChar);
             }
             void addKeyListener(const KeyListenerSRef& l) { m_key_evt_mngr.addListener(l); }
             size_t removeKeyListener(const KeyListenerSRef& l) { return m_key_evt_mngr.removeListener(l); }
@@ -319,7 +321,7 @@ namespace gamp::wt {
                                PointerType ptype, uint16_t id,
                                jau::math::Vec2i pos, uint16_t clickCount, InputButton button,
                                jau::math::Vec3f rotation, float rotationScale) noexcept {
-                m_ptr_evt_mngr.dispatch(type, when, shared(), keyTracker().modifier(), ptype, id, pos, clickCount, button, rotation, rotationScale);
+                m_ptr_evt_mngr.dispatch(type, when, sharedWindow(), keyTracker().modifier(), ptype, id, pos, clickCount, button, rotation, rotationScale);
             }
             void addPointerListener(const PointerListenerSRef& l) { m_ptr_evt_mngr.addListener(l); }
             size_t removePointerListener(const PointerListenerSRef& l) { return m_ptr_evt_mngr.removeListener(l); }
@@ -366,7 +368,7 @@ namespace gamp::wt {
             //
             //
 
-            std::string toString() const noexcept;
+            std::string toString() const noexcept override;
     };
 
     /**@}*/

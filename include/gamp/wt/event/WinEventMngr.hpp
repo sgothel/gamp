@@ -46,6 +46,9 @@ namespace gamp::wt::event {
 
       public:
         void dispatch(uint16_t type, const jau::fraction_timespec& when, const WindowSRef& source, bool value=true) noexcept {
+            if (!source) {
+                return;
+            }
             WindowEvent evt(type, when, source);
             for(const WindowListenerSRef& kl : *m_windowListener.snapshot()) {
                 try {
@@ -65,6 +68,9 @@ namespace gamp::wt::event {
         }
         void dispatchResize(const jau::fraction_timespec& when, const WindowSRef& source,
                             const jau::math::Vec2i& winSize, const jau::math::Vec2i& surfSize) noexcept {
+            if (!source) {
+                return;
+            }
             WindowEvent evt(EVENT_WINDOW_RESIZED, when, source);
             for(const WindowListenerSRef& kl : *m_windowListener.snapshot()) {
                 try {
@@ -77,6 +83,9 @@ namespace gamp::wt::event {
         }
         void dispatchMoved(const jau::fraction_timespec& when, const WindowSRef& source,
                            const jau::math::Vec2i& winPos) noexcept {
+            if (!source) {
+                return;
+            }
             WindowEvent evt(EVENT_WINDOW_MOVED, when, source);
             for(const WindowListenerSRef& kl : *m_windowListener.snapshot()) {
                 try {

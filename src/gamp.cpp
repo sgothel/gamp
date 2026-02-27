@@ -59,13 +59,10 @@ gamp::GampEnv::GampEnv() noexcept
         DEBUG_GLOBAL, DEBUG_WT_EVENT, DEBUG_RENDER_GL_GLSL_CODE, DEBUG_RENDER_GL_GLSL_STATE);
 }
 
-std::string gamp::render::RenderContext::toString() const {
-    return std::string("RC[")
-       .append(signature().name()).append(", ")
-       .append(jau::toHexString(m_context)).append(", ")
-       .append(to_string(contextFlags())).append(", ")
-       .append(version().toString()).append(" -> surface ")
-       .append(m_surface?jau::toHexString(m_surface->surfaceHandle()):"nil").append("]");
+std::string gamp::render::RenderContext::toString() const noexcept {
+    return jau_format_string("Ctx[%s, %#zx, %s, %s -> surface %#zx]",
+       signature().name(), m_context, to_string(contextFlags()),
+       version().toString(), m_surface?m_surface->surfaceHandle():0);
 }
 
 bool gamp::render::gl::glsl::ShaderCode::DEBUG_CODE = GampEnv::get().DEBUG_RENDER_GL_GLSL_CODE;

@@ -11,6 +11,7 @@
       "displayName": "Debug (cc, C++20)",
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
+        "USE_LTO_FOR_ALL_TARGETS": "OFF",
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/debug",
         "JAU_CMAKE_FIX_INSTALL_PREFIX": "ON",
@@ -49,6 +50,7 @@
       "displayName": "Release (cc, C++20)",
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
+        "USE_LTO_FOR_ALL_TARGETS": "ON",
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/dist/release",
         "JAU_CMAKE_FIX_INSTALL_PREFIX": "ON"

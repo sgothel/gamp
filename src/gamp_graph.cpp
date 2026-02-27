@@ -48,11 +48,13 @@ bool Outline::computeIsComplex() const noexcept {
 // OutlineShape prost-processing
 //
 
-static struct SizeDescending {
-    bool operator()(Outline& a, Outline& b) const {
-        return a.compareTo(b) >= 1;
-    }
-} sizeDescending;
+namespace {
+    static struct SizeDescending {
+        bool operator()(Outline& a, Outline& b) const {
+            return a.compareTo(b) >= 1;
+        }
+    } sizeDescending;
+}
 
 void OutlineShape::sortOutlines() {
     std::sort(m_outlines.begin(), m_outlines.end(), sizeDescending); // NOLINT(modernize-use-ranges)

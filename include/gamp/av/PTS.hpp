@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <gamp/GampTypes.hpp>
 #include <gamp/av/TimeFrameI.hpp>
+#include "jau/string_cfmt.hpp"
 
 namespace gamp::av {
 
@@ -160,7 +161,7 @@ namespace gamp::av {
          * @param addFractions toggle for fractions of seconds
          * @see #toTimeStr(long)
          */
-        std::string toTimeStr(uint64_t millis, bool addFractions) const noexcept {
+        static std::string toTimeStr(uint64_t millis, bool addFractions) noexcept {
             using namespace std::chrono;
             milliseconds ms(millis);
             seconds sec = duration_cast<seconds>(ms);
@@ -172,15 +173,15 @@ namespace gamp::av {
 
             if( addFractions ) {
                 if( 0 < h.count() ) {
-                    return jau::unsafe::format_string_n(12, "%02d:%02d:%02d.%03d", h, m, sec, millis);
+                    return jau_format_string_h(12, "%02" PRIi64 ":%02" PRIi64 ":%02" PRIi64 ".%03" PRIu64, h.count(), m.count(), sec.count(), millis);
                 } else {
-                    return jau::unsafe::format_string_n( 9, "%02d:%02d.%03d", m, sec, millis);
+                    return jau_format_string_h( 9,               "%02" PRIi64 ":%02" PRIi64 ".%03" PRIu64, m.count(), sec.count(), millis);
                 }
             } else {
                 if( 0 < h.count() ) {
-                    return jau::unsafe::format_string_n(12, "%02d:%02d:%02d", h, m, sec);
+                    return jau_format_string_h(12, "%02" PRIi64 ":%02" PRIi64 ":%02" PRIi64, h.count(), m.count(), sec.count());
                 } else {
-                    return jau::unsafe::format_string_n( 5, "%02d:%02d", m, sec);
+                    return jau_format_string_h( 5,                          "%02" PRIi64 ":%02" PRIi64, m.count(), sec.count());
                 }
             }
         }
@@ -190,7 +191,7 @@ namespace gamp::av {
          * @param millis complete time in milliseconds
          * @see #toTimeStr(long, boolean)
          */
-        std::string toTimeStr(uint64_t millis) {
+        static std::string toTimeStr(uint64_t millis) noexcept {
             using namespace std::chrono;
             milliseconds ms(millis);
             seconds sec = duration_cast<seconds>(ms);
@@ -199,7 +200,7 @@ namespace gamp::av {
             sec -= duration_cast<seconds>(m);
             hours h = duration_cast<hours>(m);
             m -= duration_cast<minutes>(h);
-            return jau::unsafe::format_string_n(12, "%02d:%02d:%02d.%03d", h, m, sec, millis);
+            return jau_format_string_h(12, "%02" PRIi64 ":%02" PRIi64 ":%02" PRIi64 ".%03" PRIu64, h.count(), m.count(), sec.count(), millis);
         }
 
         /**

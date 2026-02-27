@@ -52,8 +52,8 @@ bool Surface::setSwapIntervalImpl(int v) noexcept {
     return false;
 }
 
-CapabilitiesPtr Surface::retrieveCaps(const wt::SurfaceSRef& surface) noexcept {
-    if (!surface->isValid()) {
+CapabilitiesPtr Surface::retrieveCaps(const SurfaceSRef& surface) noexcept {
+    if (!surface || !surface->isValid()) {
         return nullptr;
     }
     // SDL_Window* sdl_win = reinterpret_cast<SDL_Window*>(surface->surfaceHandle()); // NOLINT
@@ -122,29 +122,29 @@ void Surface::setCaps(handle_t surface_handle, const Capabilities& requested) no
     }
 }
 
-gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceSRef& surface,
-                                          const gamp::render::RenderProfile& profile,
-                                          const gamp::render::RenderContextFlags& contextFlags,
-                                          gamp::render::RenderContext* shareWith) noexcept {
-    // const wt::SurfaceSRef& surface, render::gl::GLProfileMask profile, render::gl::GLContextFlags contextFlags, render::gl::GL* shareWith
+GLContextSRef GLContext::create(const SurfaceSRef& surface,
+                                const RenderProfile& profile,
+                                RenderContextFlags contextFlags,
+                                RenderContext* shareWith) noexcept {
+    // const SurfaceSRef& surface, render::gl::GLProfileMask profile, render::gl::GLContextFlags contextFlags, render::gl::GL* shareWith
     if( !surface->isValid() ) {
-        printf("SDL: Error creating GL context: Invalid surface: %s\n", surface->toString().c_str());
+        jau_ERR_PRINT3("Invalid surface: %s", surface->toString());
         return nullptr;
     }
-    const bool verbose = is_set(contextFlags, gamp::render::RenderContextFlags::verbose);
+    const bool verbose = is_set(contextFlags, RenderContextFlags::verbose);
     if( verbose ) {
-        printf("Surface::createContext: shareWith %p, profile %s, ctx %s, surface %s\n",
-            (void*)shareWith, profile.toString().c_str(), to_string(contextFlags).c_str(), surface->toString().c_str());
+        jau_fprintf_td(stdout, "GLContext::create: shareWith %p, profile %s, ctx %s, surface %s\n",
+            shareWith, profile.toString(), contextFlags, surface->toString());
     }
     SDL_Window* sdl_win = reinterpret_cast<SDL_Window*>(surface->surfaceHandle()); // NOLINT
     // Create OpenGL context on SDL window
-    surface->setSwapIntervalImpl( surface->swapInterval() );
+    // surface->setSwapIntervalImpl( surface->swapInterval() );
     {
         int ctxFlags = 0;
-        if( is_set(contextFlags, gamp::render::RenderContextFlags::debug) ) {
+        if( is_set(contextFlags, RenderContextFlags::debug) ) {
             ctxFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
         }
-        if( is_set(contextFlags, gamp::render::RenderContextFlags::robust) ) {
+        if( is_set(contextFlags, RenderContextFlags::robust) ) {
             ctxFlags |= SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
         }
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, ctxFlags);
@@ -154,13 +154,13 @@ gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceSRef& sur
         SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
     }
     if( verbose ) {
-        printf("Surface::createContext.1: surface %s\n", surface->toString().c_str());
+        jau_fprintf_td(stdout, "GLContext::create: surface %s\n", surface->toString());
     }
 
     GLProfile glp_in;
     bool use_glp_core = false;
-    if( profile.signature() == GLProfile::GLSignature() ) {
-        glp_in = GLProfile::downcast(profile);
+    if( GLProfile::isValid(profile) ) {
+        glp_in = static_cast<const GLProfile&>(profile);
         if( !glp_in.isGLES() ) {
             use_glp_core = true;
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -179,27 +179,27 @@ gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceSRef& sur
     SDL_GLContext sdl_glc = SDL_GL_CreateContext(sdl_win);
     if (nullptr == sdl_glc) {
         if( use_glp_core ) {
-            printf("SDL: Error creating %s context: %s\n", glp_in.toString().c_str(), SDL_GetError());
+            jau_ERR_PRINT3("Creating %s context: %s", glp_in.toString(), SDL_GetError());
             return nullptr;
         }
-        printf("SDL: Error creating GL ES 3 context: %s\n", SDL_GetError());
+        jau_fprintf_td(stdout, "GLContext::create: Failed GL ES 3 context: %s\n", SDL_GetError());
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
         sdl_glc = SDL_GL_CreateContext(sdl_win);
         if (nullptr == sdl_glc) {
-            printf("SDL: Error creating GL ES 2 context: %s\n", SDL_GetError());
+            jau_ERR_PRINT3("Creating GL ES 2 context: %s", SDL_GetError());
             return nullptr;
         }
     }
     if (0 != SDL_GL_MakeCurrent(sdl_win, sdl_glc)) {
-        printf("SDL: Error making GL context current: %s\n", SDL_GetError());
+        jau_ERR_PRINT3("Making GL context current: %s", SDL_GetError());
         SDL_GL_DeleteContext(sdl_glc);
         return nullptr;
     }
     const char* gl_version_cstr = reinterpret_cast<const char*>( glGetString(GL_VERSION) );
     if (nullptr == gl_version_cstr) {
-        printf("SDL: Error retrieving GL version: %s\n", SDL_GetError());
+        jau_ERR_PRINT3("Retrieving GL version: %s", SDL_GetError());
         SDL_GL_DeleteContext(sdl_glc);
         return nullptr;
     }
@@ -211,7 +211,7 @@ gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceSRef& sur
     ok = ok && GetGLAttribute(SDL_GL_CONTEXT_FLAGS, nContextFlags);
     ok = ok && GetGLAttribute(SDL_GL_CONTEXT_PROFILE_MASK, nProfileMask);
     if( !ok ) {
-        printf("SDL: Error retrieving GL context version information: %s\n", SDL_GetError());
+        jau_ERR_PRINT3("Retrieving GL context version information: %s", SDL_GetError());
         SDL_GL_DeleteContext(sdl_glc);
         return nullptr;
     }
@@ -223,26 +223,34 @@ gamp::render::RenderContextPtr Surface::createContext(const wt::SurfaceSRef& sur
     } else if( 0 != ( nProfileMask & SDL_GL_CONTEXT_PROFILE_ES ) ) {
         profileMask |= render::gl::GLProfileMask::es;
     }
-    gamp::render::RenderContextFlags ctxFlags = gamp::render::RenderContextFlags::none;
+    RenderContextFlags ctxFlags = RenderContextFlags::none;
     if( 0 != ( nContextFlags & SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG ) ) {
-        ctxFlags |= gamp::render::RenderContextFlags::compatible;
+        ctxFlags |= RenderContextFlags::compatible;
     }
     if( 0 != ( nContextFlags & SDL_GL_CONTEXT_DEBUG_FLAG ) ) {
-        ctxFlags |= gamp::render::RenderContextFlags::debug;
+        ctxFlags |= RenderContextFlags::debug;
     }
     if( 0 != ( nContextFlags & SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG ) ) {
-        ctxFlags |= gamp::render::RenderContextFlags::robust;
+        ctxFlags |= RenderContextFlags::robust;
+    }
+    if (verbose) {
+        ctxFlags |= RenderContextFlags::verbose;
     }
     GLVersionNumber glv = GLVersionNumber::create(gl_version_cstr);
-    render::gl::GLProfile glp_out(glv, profileMask);
+    GLProfile glp(glv, profileMask);
     if( verbose ) {
-        render::gl::GLProfile glp_out0(jau::util::VersionNumber(major, minor, 0), profileMask);
-        printf("Surface::createContext.2: GLProfile (query)   %s\n", glp_out0.toString().c_str());
-        printf("Surface::createContext.2: GLProfile (version) %s\n", glp_out.toString().c_str());
+        GLProfile glp0(jau::util::VersionNumber(major, minor, 0), profileMask);
+        jau_fprintf_td(stdout, "GLContext::create: GLProfile (query)   %s\n", glp0.toString());
+        jau_fprintf_td(stdout, "GLContext::create: GLProfile (version) %s\n", glp.toString());
     }
-    return render::gl::GLContext::create(surface, (handle_t)sdl_glc, std::move(glp_out), ctxFlags, gl_version_cstr); // current!
+    GLContextSRef ctx = std::make_shared<GLContext>(GLContext::Private(), surface, (handle_t)sdl_glc, std::move(glp), ctxFlags, glv); // current!
+    surface->setContext(ctx);
+    return ctx;
 }
 
+void Window::setRenderViewport(const jau::math::Recti &viewport) {
+    ::glViewport(viewport.x(), viewport.y(), viewport.width(), viewport.height());
+}
 
 bool Window::surfaceSwap() noexcept {
     if( isValid() ) {
@@ -259,7 +267,11 @@ bool Window::surfaceSwap() noexcept {
 thread_local render::gl::GLContext* render::gl::GLContext::m_current = nullptr;
 
 void render::gl::GLContext::dispose() noexcept {
+    const bool verbose = is_set(contextFlags(), RenderContextFlags::verbose);
     SDL_GLContext sdl_glc = reinterpret_cast<SDL_GLContext>(context()); // NOLINT
+    if (verbose) {
+        jau_fprintf_td(stdout, "GLContext::dispose: %s\n", toString());
+    }
     if( sdl_glc ) {
         if( isCurrent() ) {
             releaseContext();
@@ -269,10 +281,9 @@ void render::gl::GLContext::dispose() noexcept {
     disposedNotify();
 }
 
-bool gamp::render::gl::GLContext::makeCurrentImpl(const gamp::wt::SurfaceSRef& surface, gamp::handle_t context) noexcept {
+bool GLContext::makeCurrentImpl(const SurfaceSRef& surface, gamp::handle_t context) noexcept {
     if( !surface || !surface->isValid() || !context) {
-        printf("SDL: Error GLContext::makeCurrent: Invalid surface/context: surface %s, context %p\n",
-            surface ? surface->toString().c_str() : "nil", (void*)context); // NOLINT
+        jau_ERR_PRINT3("Invalid surface/context: surface %s, context %p", surface ? surface->toString() : "nil", (void*)context); // NOLINT
         return false;
     }
     SDL_Window* sdl_win = reinterpret_cast<SDL_Window*>(surface->surfaceHandle()); // NOLINT
@@ -283,10 +294,9 @@ bool gamp::render::gl::GLContext::makeCurrentImpl(const gamp::wt::SurfaceSRef& s
     return true;
 }
 
-void gamp::render::gl::GLContext::releaseContextImpl(const gamp::wt::SurfaceSRef& surface) noexcept {
+void GLContext::releaseContextImpl(const SurfaceSRef& surface) noexcept {
     if( !surface || !surface->isValid() ) {
-        printf("SDL: Error GLContext::release: Invalid surface: surface %s\n",
-            surface ? surface->toString().c_str() : "nil");
+        jau_ERR_PRINT3("Invalid surface: surface %s", surface ? surface->toString() : "nil");
         return;
     }
     SDL_Window* sdl_win = reinterpret_cast<SDL_Window*>(surface->surfaceHandle()); // NOLINT

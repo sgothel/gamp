@@ -72,7 +72,7 @@ namespace gamp::render::gl {
      * Returns GL_NONE if type is not supported.
      */
     inline GLenum glType(const jau::type_info& t) noexcept {
-        if( jau::float_ctti::f32() == t ) {
+        if( jau::float_ctti::f() == t || jau::float_ctti::f32() == t) {
             return GL_FLOAT;
         } else if( jau::int_ctti::i32() == t ) {
             return GL_INT;

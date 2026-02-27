@@ -34,6 +34,7 @@
 #include <jau/string_util.hpp>
 
 #include <gamp/wt/event/Event.hpp>
+#include "jau/string_cfmt.hpp"
 
 namespace gamp::wt::event {
     /** \addtogroup Gamp_WT
@@ -852,22 +853,26 @@ namespace gamp::wt::event {
             return isPrintableKey() && !is_set(InputModifier::repeat);
         }
 
-        std::string toString() const noexcept {
-            std::string res = "KeyEvent[";
-            res.append(getEventTypeString()).append(", sym ").append(jau::toHexString(*m_keySym))
-               .append(", char ").append(jau::toHexString(m_keyChar));
+        std::string toString() const noexcept override {
+            std::string res;
+            res.reserve(40);
+            jau::append_string(res, "KeyEvent[");
+            jau::append_string(res, getEventTypeString());
+            jau_append_string(res, ", sym %#x, char %#x", *m_keySym, m_keyChar);
             if( isPrintableKey() ) {
-                res.append(" `").append(std::string(1, (char)m_keyChar)).append("`");
+                jau_append_string(res, ", `%c`", (char)m_keyChar);
             }
-            res.append("), ");
+            jau::append_string(res, "), ");
             if( isPrintableKey() ) {
-                res.append("printable");
+                jau::append_string(res, "printable");
             } else if( isModifierKey() ) {
-                res.append("modifier");
+                jau::append_string(res, "modifier");
             } else if( isActionKey() ) {
-                res.append("actionkey");
+                jau::append_string(res, "actionkey");
             }
-            res.append(", ").append(InputEvent::toString()).append("]");
+            jau::append_string(res, ", ");
+            jau::append_string(res, InputEvent::toString());
+            jau::append_string(res, "]");
             return res;
         }
     };

@@ -377,7 +377,7 @@ bool gamp::render::gl::data::GLUniformData::send(const GL&) noexcept {
         ::glBindBuffer(GL_UNIFORM_BUFFER, 0);
     } else if( columns() > 1 ) {
         if( rows() > 1 ) {
-            if( compSignature() != jau::float_ctti::f32() ) {
+            if( compSignature() != jau::float_ctti::f() ) {
                 return false;
             }
             switch( columns() ) {
@@ -387,7 +387,7 @@ bool gamp::render::gl::data::GLUniformData::send(const GL&) noexcept {
                 default: return false;
             }
         } else {
-            if( compSignature() == jau::float_ctti::f32() ) {
+            if( compSignature() == jau::float_ctti::f() ) {
                 switch( components() ) {
                     case 1:  ::glUniform1fv(location(), count(), reinterpret_cast<const GLfloat*>(data())); break;
                     case 2:  ::glUniform2fv(location(), count(), reinterpret_cast<const GLfloat*>(data())); break;
@@ -410,7 +410,7 @@ bool gamp::render::gl::data::GLUniformData::send(const GL&) noexcept {
     } else {
         if( compSignature() == jau::int_ctti::i32() ) {
             ::glUniform1i(location(), *reinterpret_cast<const GLint*>(data()));
-        } else if( compSignature() == jau::float_ctti::f32() ) {
+        } else if( compSignature() == jau::float_ctti::f() ) {
             ::glUniform1f(location(), *reinterpret_cast<const GLfloat*>(data()));
         } else {
             return false;

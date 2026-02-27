@@ -79,11 +79,11 @@ namespace gamp::render::gl {
     enum class GLProfileMask : uint32_t {
       none    = 0,
       /** Desktop compatibility profile. */
-      compat  = 1U <<  0,
+      compat  = 1U <<  1,
       /** Desktop core profile. */
-      core    = 1U <<  1,
+      core    = 1U <<  2,
       /** ES profile */
-      es      = 1U <<  2
+      es      = 1U <<  3
     };
     JAU_MAKE_BITFIELD_ENUM_STRING(GLProfileMask, compat, core, es);
 

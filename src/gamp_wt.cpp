@@ -9,29 +9,34 @@
  * you can obtain one at https://opensource.org/license/mit/.
  */
 
+#include <jau/basic_types.hpp>
+#include <jau/string_util.hpp>
+
 #include <gamp/GampTypes.hpp>
 #include <gamp/wt/Surface.hpp>
 #include <gamp/wt/event/KeyEvent.hpp>
+#include <gamp/wt/Surface.hpp>
 #include <gamp/wt/Window.hpp>
 #include <gamp/render/gl/GLHeader.hpp>
-#include <jau/basic_types.hpp>
-#include <jau/string_util.hpp>
+#include "jau/cpp_lang_util.hpp"
 
 using namespace jau;
 using namespace gamp::wt::event;
 
-class NonPrintableRange {
-  public:
-    /** min. unicode value, inclusive */
-    uint16_t min;
-    /** max. unicode value, inclusive */
-    uint16_t max;
-    /** true if valid for keyChar values as well, otherwise only valid for keyCode and keySym due to collision. */
-    bool inclKeyChar;
+namespace {
+    class NonPrintableRange {
+      public:
+        /** min. unicode value, inclusive */
+        uint16_t min;
+        /** max. unicode value, inclusive */
+        uint16_t max;
+        /** true if valid for keyChar values as well, otherwise only valid for keyCode and keySym due to collision. */
+        bool inclKeyChar;
 
-    constexpr NonPrintableRange(uint16_t min_, uint16_t max_, bool inclKeyChar_) noexcept
-    : min(min_), max(max_), inclKeyChar(inclKeyChar_) {}
-};
+        constexpr NonPrintableRange(uint16_t min_, uint16_t max_, bool inclKeyChar_) noexcept
+        : min(min_), max(max_), inclKeyChar(inclKeyChar_) {}
+    };
+}
 
 /**
  * Non printable key ranges, currently fixed to an array of size 4.
@@ -75,14 +80,29 @@ bool gamp::wt::event::isPrintableKey(uint16_t uniChar, bool isKeyChar) noexcept 
     return VKeyCode::none != uniCode;
 }
 
+gamp::render::RenderContextSRef gamp::wt::Surface::setContext(const gamp::render::RenderContextSRef& rc) noexcept {
+    if( rc && rc->isValid() ) {
+        gamp::render::RenderContextSRef old = m_renderContext;
+        m_renderContext = rc;
+        m_capsptr_chosen = retrieveCaps(sharedSurface());
+        setSwapIntervalImpl( swapInterval() );
+        return old;
+    }
+    return nullptr;
+}
+
 void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
     if( !is_set(m_state, WindowState::visible) ) {
         return;
     }
     const jau::math::Recti viewport(0, 0, surfaceSize().x, surfaceSize().y);
-    const WindowSRef& self = shared();
+    WindowSRef self = sharedWindow();
+    if (!self) {
+        return;
+    }
+    bool renderViewportSet = false;
     for(const RenderListenerSRef& l : *m_render_listener.snapshot()) {
-        std::exception_ptr eptr;
+        bool exception_occured = false;
         try {
             const gamp::render::RenderContext* ctx = renderContext();
             bool initOK = ctx && ctx->isValid();
@@ -97,20 +117,23 @@ void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
             }
             if( initOK ) {
                 if( is_set(l->pendingActions(), RenderActions::reshape) ) {
-                    ::glViewport(viewport.x(), viewport.y(), viewport.width(), viewport.height());
+                    if (!renderViewportSet) {
+                        setRenderViewport(viewport);
+                        renderViewportSet = true;
+                    }
                     l->reshape(self, viewport, when);
                     write(l->pendingActions(), RenderActions::reshape, false);
                 }
                 l->display(self, when);
             }
         } catch (const std::exception &e) {
-            eptr = std::current_exception();
+            exception_occured = true;
             jau_ERR_PRINT2("Caught exception %s", e.what());
         } catch (...) {
-            eptr = std::current_exception();
-            jau_ERR_PRINT2("Caught unknown exception");
+            exception_occured = true;
+            jau::fput_exception(stderr, std::current_exception(), E_FILE_LINE);
         }
-        if( eptr ) {
+        if( exception_occured ) {
             try {
                 RenderListenerSRef l2 = l;
                 m_render_listener.erase_if(false,
@@ -127,7 +150,10 @@ void gamp::wt::Window::display(const jau::fraction_timespec& when) noexcept {
 }
 
 void gamp::wt::Window::disposeRenderListener(bool clearRenderListener, const jau::fraction_timespec& when) noexcept {
-    const WindowSRef& self = shared();
+    WindowSRef self = sharedWindow();
+    if (!self) {
+        return;
+    }
     for(const RenderListenerSRef& l : *m_render_listener.snapshot()) {
         try {
             l->dispose(self, when);

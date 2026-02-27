@@ -74,7 +74,7 @@ namespace gamp::render::gl::data {
         static client_sref createGLSL(std::string_view name, GLsizei compsPerElement,
                                      bool normalized, size_t initialElementCount)
         {
-            client_sref r = std::make_shared<GLArrayDataClient>(Private(),
+            client_sref r = std::make_shared<client_t>(Private(),
                 name, compsPerElement,
                 normalized, /*stride=*/0, initialElementCount, DEFAULT_GROWTH_FACTOR,
                 /*isVertexAttribute=*/true, std::move(std::make_unique<impl::GLSLArrayHandler<value_type>>()),
@@ -97,7 +97,7 @@ namespace gamp::render::gl::data {
         static client_sref createGLSL(std::string_view name, GLsizei compsPerElement,
                                      bool normalized, GLsizei stride, buffer_t&& buffer)
         {
-            client_sref r = std::make_shared<GLArrayDataClient>(Private(),
+            client_sref r = std::make_shared<client_t>(Private(),
                 name, compsPerElement,
                 normalized, stride, std::move(buffer), DEFAULT_GROWTH_FACTOR, 0 /* mappedElementCount */,
                 /*isVertexAttribute=*/true, std::move(std::make_unique<impl::GLSLArrayHandler<value_type>>()),
@@ -112,7 +112,7 @@ namespace gamp::render::gl::data {
             return jau::static_ctti<client_t>();
         }
 
-        const GLArrayDataClientSRef<value_type> shared() { return GLArrayData::shared_from_base<GLArrayDataClient>(); }
+        const GLArrayDataClientSRef<value_type> sharedDataClient() { return GLArrayData::shared_from_base<GLArrayDataClient>(); }
 
         void associate(ShaderState& st, bool enable) override {
             if( enable ) {
@@ -321,11 +321,11 @@ namespace gamp::render::gl::data {
             return static_cast<T>( m_buffer.get() );
         }
 
-        template<typename... Targs,
-            std::enable_if_t< jau::is_all_same_v<Targs...> &&
-                              sizeof(value_type) >= sizeof(jau::first_type<Targs...>) &&
-                              ( std::is_integral_v<jau::first_type<Targs...>> ||
-                                std::is_floating_point_v<jau::first_type<Targs...>> ), bool> = true>
+        template<typename... Targs>
+            requires jau::req::is_all_same<Targs...> &&
+                     ( sizeof(value_type) >= sizeof(jau::req::first_type<Targs...>) ) &&
+                     ( std::is_integral_v<jau::req::first_type<Targs...>> ||
+                       std::is_floating_point_v<jau::req::first_type<Targs...>> )
         constexpr_cxx20 client_t& putN(const Targs&...args) {
             if( !proxy_t::sealed() ) {
                 growIfNeeded(sizeof...(args));

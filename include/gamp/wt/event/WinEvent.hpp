@@ -60,10 +60,8 @@ namespace gamp::wt::event {
         : WTEvent(type, when, source)
         { }
 
-        std::string toString() const noexcept {
-            std::string res = "WindowEvent[";
-            res.append(getEventTypeString()).append(", ").append(WTEvent::toString()).append("]");
-            return res;
+        std::string toString() const noexcept override {
+            return jau_format_string_h(40, "WindowEvent[%s, %s]", getEventTypeString(), WTEvent::toString());
         }
     };
     inline std::ostream& operator<<(std::ostream& out, const WindowEvent& v) {

@@ -45,7 +45,14 @@ namespace gamp::render::gl::data {
       public:
         virtual ~GLArrayData() noexcept = default;
 
-        const GLArrayDataSRef shared() { return shared_from_this(); }
+        GLArrayDataSRef sharedData() noexcept {
+            try {
+                return enable_shared_from_this<GLArrayData>::shared_from_this();
+            } catch (...) {
+                jau::fput_exception(stderr, std::current_exception(), E_FILE_LINE);
+                return nullptr;
+            }
+        }
 
         /**
          * Implementation and type dependent object association.
@@ -234,7 +241,7 @@ namespace gamp::render::gl::data {
         /** The component's GL data type, e.g. GL_FLOAT */
         constexpr GLenum compType() const noexcept { return m_compType; }
 
-        /** The component's static compile-time-type-info (CTTI) jau::type_info, e.g. jau::float_ctti::f32(). */
+        /** The component's static compile-time-type-info (CTTI) jau::type_info, e.g. jau::float_ctti::f(). */
         constexpr const jau::type_info& compTypeSignature() const noexcept { return m_compTypeSignature; }
 
         /** The component's size in bytes */
@@ -375,8 +382,8 @@ namespace gamp::render::gl::data {
         struct Private{ explicit Private() = default; };
 
         template <typename ChildT>
-        std::shared_ptr<ChildT> shared_from_base() {
-            return std::static_pointer_cast<ChildT>(shared_from_this());
+        std::shared_ptr<ChildT> shared_from_base() noexcept {
+            return std::static_pointer_cast<ChildT>(sharedData());
         }
 
       public:

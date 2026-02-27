@@ -175,14 +175,20 @@ namespace gamp {
     /**@}*/
 }  // namespace gamp
 
+/** \example RedSquare01.cpp
+ * This C++ demo showcases a simple gamp::wt::RenderListener,
+ * using all manual OpenGL code in one file.
+ */
+
 /** \example RedSquareES2.cpp
  * This C++ example stub showcases the simple Launcher01.hpp mainloop framework integration. It creates a window, provides
- * keyboard interaction and uses RedSquareES2 gamp::wt::RenderListener for rendering.
+ * keyboard interaction and uses RedSquareES2.hpp gamp::wt::RenderListener for rendering.
+ * It uses gamp::render::gl::glsl::ShaderState setup with attributes, uniforms and gamp::render::gl::glsl::ShaderCode.
  */
 
 /** \example RedSquareES2.hpp
- * This C++ demo showcases a simple gamp::wt::RenderListener, implementing rendering using
- * gamp::render::gl::glsl::ShaderState setup with attributes, uniforms and gamp::render::gl::glsl::ShaderCode.
+ * This C++ demo showcases a simple gamp::wt::RenderListener,
+ * using gamp::render::gl::glsl::ShaderState setup with attributes, uniforms and gamp::render::gl::glsl::ShaderCode.
  */
 
 /** \example GearsES2.cpp

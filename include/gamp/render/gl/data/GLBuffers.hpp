@@ -137,10 +137,10 @@ namespace gamp::render::gl::data {
                     return sizeof(uint64_t);
 
                 case GL_FLOAT:
-                    return sizeof(jau::float32_t);
+                    return sizeof(float);
 
                 case GL_DOUBLE: // GL2GL3
-                    return sizeof(jau::float64_t);
+                    return sizeof(double);
 
                 default: return 0;
             }
@@ -218,10 +218,10 @@ namespace gamp::render::gl::data {
                     return jau::DataBuffer<uint64_t, glmemsize_t>::create(numElements);
 
                 case GL_FLOAT:
-                    return jau::DataBuffer<jau::float32_t, glmemsize_t>::create(numElements);
+                    return jau::DataBuffer<float, glmemsize_t>::create(numElements);
 
                 case GL_DOUBLE: // GL2GL3
-                    return jau::DataBuffer<jau::float64_t, glmemsize_t>::create(numElements);
+                    return jau::DataBuffer<double, glmemsize_t>::create(numElements);
 
                 default: return nullptr;
             }

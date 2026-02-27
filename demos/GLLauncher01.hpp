@@ -32,6 +32,8 @@ using namespace jau::math::util;
 using namespace gamp::wt;
 using namespace gamp::wt::event;
 
+using namespace gamp::render::gl;
+
 #if !defined(__EMSCRIPTEN__)
     // TODO: Should be moved into a GLDebugListener
     static void GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
@@ -41,9 +43,9 @@ using namespace gamp::wt::event;
 #endif
 
 struct GLLaunchProps {
-    gamp::render::gl::GLProfile profile;
-    gamp::render::RenderContextFlags contextFlags;
-    gamp::render::gl::GLCapabilities requestedCaps;
+    GLProfile profile;
+    RenderContextFlags contextFlags;
+    GLCapabilities requestedCaps;
 };
 
 inline int launch(std::string_view sfile, GLLaunchProps props, const RenderListenerSRef& demo, int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
@@ -59,8 +61,8 @@ inline int launch(std::string_view sfile, GLLaunchProps props, const RenderListe
     {
         for(int i=1; i<argc; ++i) {
             if( 0 == strcmp("-gl", argv[i]) && i+1<argc) {
-                if( gamp::render::gl::GLProfile::isValidTag(argv[i+1]) ) {
-                    props.profile = gamp::render::gl::GLProfile(argv[i+1]);
+                if( GLProfile::isValidTag(argv[i+1]) ) {
+                    props.profile = GLProfile(argv[i+1]);
                 }
             } else if( 0 == strcmp("-width", argv[i]) && i+1<argc) {
                 win_width = atoi(argv[i+1]);
@@ -84,48 +86,45 @@ inline int launch(std::string_view sfile, GLLaunchProps props, const RenderListe
         std::cout << "Exit (0)...\n";
         return 1;
     }
-    const bool verbose = is_set(props.contextFlags, gamp::render::RenderContextFlags::verbose);
-    WindowSRef main_win = Window::create(demo_name.c_str(), win_width, win_height, props.requestedCaps, verbose);
-    if( !main_win ) {
-        std::cout << "Exit (1): Failed to create window.\n";
-        return 1;
-    }
     {
-        const int w = main_win->surfaceSize().x;
-        const int h = main_win->surfaceSize().y;
-        const float a = (float)w / (float)h;
-        jau_printf("FB %d x %d [w x h], aspect %f [w/h]; Win %s\n", w, h, a, main_win->windowBounds().toString());
-    }
-    // main_win->createContext(const gamp::render::RenderProfile &profile, const gamp::render::RenderContextFlags &contextFlags);
-
-    if( !main_win->createContext(props.profile, props.contextFlags) ) {
-        std::cout << "Exit (2): Failed to create context\n";
-        main_win->dispose(jau::getMonotonicTime());
-        return 1;
-    }
-    jau_printf("Window: %s\n", main_win->toString());
-    {
-        gamp::render::gl::GL& gl = gamp::render::gl::GL::downcast(main_win->renderContext());
-
-        jau_printf("GL Context: %s\n", gl.toString());
+        const bool verbose = is_set(props.contextFlags, RenderContextFlags::verbose);
+        WindowSRef main_win = Window::create(demo_name.c_str(), win_width, win_height, props.requestedCaps, verbose);
+        if( !main_win ) {
+            std::cout << "Exit (1): Failed to create window.\n";
+            return 1;
+        }
+        {
+            const int w = main_win->surfaceSize().x;
+            const int h = main_win->surfaceSize().y;
+            const float a = (float)w / (float)h;
+            jau_printf("FB %d x %d [w x h], aspect %f [w/h]; Win %s\n", w, h, a, main_win->windowBounds().toString());
+        }
+        GLContextSRef ctx = GLContext::create(main_win, props.profile, props.contextFlags); // drop ctx, single ref in surface
+        if (!ctx) {
+            std::cout << "Exit (2): Failed to create context\n";
+            main_win->dispose(jau::getMonotonicTime());
+            return 1;
+        }
+        jau_printf("Window: %s\n", main_win->toString());
+        jau_printf("GL Context: %s\n", ctx->toString());
 
         #if !defined(__EMSCRIPTEN__)
             // TODO: Should be hooked with a GLDebugListener manager
-            if( is_set(gl.contextFlags(), gamp::render::RenderContextFlags::debug) ) {
+            if( is_set(ctx->contextFlags(), RenderContextFlags::debug) ) {
                 ::glDebugMessageCallback(GLDebugCallback, nullptr);
                 GLuint ids[] = { 0 };
                 ::glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, ids, GL_TRUE);
             }
         #endif
+        main_win->addRenderListener(demo);
     }
-    main_win->addRenderListener(demo);
 
     #if defined(__EMSCRIPTEN__)
         emscripten_set_main_loop(gamp::mainloop_void, 0, 1);
     #else
         while( gamp::mainloop_default() ) { }
     #endif
-    jau_printf("Exit: %s\n", main_win->toString());
+    jau_printf("Exit: %s\n", demo_name);
     return 0;
 }
 

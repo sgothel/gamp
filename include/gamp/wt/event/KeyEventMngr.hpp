@@ -77,6 +77,9 @@ namespace gamp::wt::event {
         void dispatchPressed(const jau::fraction_timespec& when, const WindowSRef& source,
                              VKeyCode keySym, InputModifier keySymMods, uint16_t keyChar) noexcept
         {
+            if (!source) {
+                return;
+            }
             const InputModifier clrRepeatMod =  is_set(m_modifiers, InputModifier::repeat) &&
                                                !is_set(keySymMods, InputModifier::repeat) ? InputModifier::repeat : InputModifier::none;
             m_modifiers |= keySymMods;
@@ -95,6 +98,9 @@ namespace gamp::wt::event {
         void dispatchReleased(const jau::fraction_timespec& when, const WindowSRef& source,
                               VKeyCode keySym, InputModifier keySymMods, uint16_t keyChar) noexcept
         {
+            if (!source) {
+                return;
+            }
             const InputModifier clrRepeatMod =  is_set(m_modifiers, InputModifier::repeat) &&
                                                !is_set(keySymMods, InputModifier::repeat) ? InputModifier::repeat : InputModifier::none;
             m_modifiers &= ~clrRepeatMod;

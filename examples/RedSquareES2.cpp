@@ -32,52 +32,54 @@ using namespace jau::math::util;
 using namespace gamp::wt;
 using namespace gamp::wt::event;
 
-class Example : public RedSquareES2 {
-  private:
-    class MyKeyListener : public KeyListener {
+namespace {
+    class Example : public RedSquareES2 {
       private:
-        RedSquareES2& m_parent;
-      public:
-        MyKeyListener(RedSquareES2& p) : m_parent(p) {}
+        class MyKeyListener : public KeyListener {
+          private:
+            RedSquareES2& m_parent;
+          public:
+            MyKeyListener(RedSquareES2& p) : m_parent(p) {}
 
-        void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
-            if( e.keySym() == VKeyCode::VK_ESCAPE ) {
-                WindowSRef win = e.source().lock();
-                if( win ) {
-                    win->dispose(e.when());
+            void keyPressed(KeyEvent& e, const KeyboardTracker& kt) override {
+                jau::fprintf_td(e.when().to_ms(), stdout, "KeyPressed: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
+                if( e.keySym() == VKeyCode::VK_ESCAPE ) {
+                    WindowSRef win = e.source().lock();
+                    if( win ) {
+                        win->dispose(e.when());
+                    }
+                } else if( e.keySym() == VKeyCode::VK_PAUSE || e.keySym() == VKeyCode::VK_P ) {
+                    m_parent.animating() = !m_parent.animating();
+                } else if( e.keySym() == VKeyCode::VK_W ) {
+                    WindowSRef win = e.source().lock();
+                    jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
                 }
-            } else if( e.keySym() == VKeyCode::VK_PAUSE || e.keySym() == VKeyCode::VK_P ) {
-                m_parent.animating() = !m_parent.animating();
-            } else if( e.keySym() == VKeyCode::VK_W ) {
-                WindowSRef win = e.source().lock();
-                jau::fprintf_td(e.when().to_ms(), stdout, "Source: %s\n", win ? win->toString().c_str() : "null");
             }
+            void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
+                jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
+            }
+        };
+        typedef std::shared_ptr<MyKeyListener> MyKeyListenerRef;
+        MyKeyListenerRef m_kl;
+
+      public:
+        Example()
+        : RedSquareES2(),
+          m_kl(std::make_shared<MyKeyListener>(*this)) {  }
+
+        bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
+            if( !RedSquareES2::init(win, when) ) {
+                return false;
+            }
+            win->addKeyListener(m_kl);
+            return true;
         }
-        void keyReleased(KeyEvent& e, const KeyboardTracker& kt) override {
-            jau::fprintf_td(e.when().to_ms(), stdout, "KeyRelease: %s; keys %zu\n", e.toString().c_str(), kt.pressedKeyCodes().count());
+        void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
+            win->removeKeyListener(m_kl);
+            RedSquareES2::dispose(win, when);
         }
     };
-    typedef std::shared_ptr<MyKeyListener> MyKeyListenerRef;
-    MyKeyListenerRef m_kl;
-
-  public:
-    Example()
-    : RedSquareES2(),
-      m_kl(std::make_shared<MyKeyListener>(*this)) {  }
-
-    bool init(const WindowSRef& win, const jau::fraction_timespec& when) override {
-        if( !RedSquareES2::init(win, when) ) {
-            return false;
-        }
-        win->addKeyListener(m_kl);
-        return true;
-    }
-    void dispose(const WindowSRef& win, const jau::fraction_timespec& when) override {
-        win->removeKeyListener(m_kl);
-        RedSquareES2::dispose(win, when);
-    }
-};
+}
 
 int main(int argc, char *argv[]) // NOLINT(bugprone-exception-escape)
 {

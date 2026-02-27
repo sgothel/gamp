@@ -72,7 +72,7 @@ namespace gamp::render::gl::data {
          */
         static proxy_sref createGLSL(std::string_view name, GLsizei componentsPerElement, bool normalized, GLsizei stride,
                                      buffer_t& buffer, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget) {
-            return std::make_shared<GLArrayDataProxy>(Private(),
+            return std::make_shared<proxy_t>(Private(),
                 name, componentsPerElement, normalized, stride, buffer,
                 /*isVertexAttribute=*/true, vboName, vboOffset, vboUsage, vboTarget);
         }
@@ -99,7 +99,7 @@ namespace gamp::render::gl::data {
          */
         static proxy_sref createGLSL(std::string_view name, GLsizei componentsPerElement, bool normalized, GLsizei stride,
                                      GLsizei mappedElementCount, GLuint vboName, uintptr_t vboOffset, GLenum vboUsage, GLenum vboTarget) {
-            return std::make_shared<GLArrayDataProxy>(Private(),
+            return std::make_shared<proxy_t>(Private(),
                 name, componentsPerElement, normalized, stride, mappedElementCount,
                 /*isVertexAttribute=*/true, vboName, vboOffset, vboUsage, vboTarget);
         }
@@ -115,7 +115,7 @@ namespace gamp::render::gl::data {
             return jau::static_ctti<proxy_t>();
         }
 
-        const GLArrayDataProxySRef<value_type> shared() { return GLArrayData::shared_from_base<GLArrayDataProxy>(); }
+        const GLArrayDataProxySRef<value_type> sharedDataProxy() { return GLArrayData::shared_from_base<GLArrayDataProxy>(); }
 
         /** Returns client-data pointer at current position if usesClientMem(), otherwise nullptr */
         const void* data() const noexcept override { return usesClientMem() ? reinterpret_cast<const void*>(m_bufferptr->position_ptr()) : nullptr; }
@@ -293,7 +293,7 @@ namespace gamp::render::gl::data {
             const size_t cnt_bytes = byteCount();
             const size_t cap_bytes = byteCapacity();
             const float  filled    = (float)cnt_bytes / (float)cap_bytes;
-            return jau::format_string("elements %'d cnt / %'zd cap, bytes %'zu cnt / %'zu cap, filled %.1f%%, left %.1f%%",
+            return jau::cfmt::format("elements %'d cnt / %'d cap, bytes %'u cnt / %'u cap, filled %.1f%%, left %.1f%%",
                                  elemCount(), elemCapacity(), cnt_bytes, cap_bytes, filled * 100.0f, (1.0f - filled) * 100.0f);
         }
 

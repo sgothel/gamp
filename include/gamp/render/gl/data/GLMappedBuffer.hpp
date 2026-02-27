@@ -156,9 +156,9 @@ namespace gamp::render::gl::data {
         std::string toString(bool skipMappedBuffer=false) const {
             std::string s0;
             if( isMutableStorage() ) {
-                s0 = jau::format_string("GLMappedBuffer[name %u, size %zu, mutable usage 0x%X", m_name, m_size, m_mutableUsage);
+                s0 = jau::cfmt::format("GLMappedBuffer[name %u, size %zu, mutable usage 0x%X", m_name, m_size, m_mutableUsage);
             } else {
-                s0 = jau::format_string("GLMappedBuffer[name %u, size %zu, immutable flags 0x%X", m_name, m_size, m_immutableFlags);
+                s0 = jau::cfmt::format("GLMappedBuffer[name %u, size %zu, immutable flags 0x%X", m_name, m_size, m_immutableFlags);
             }
             if(skipMappedBuffer) {
                 return s0.append("]");
